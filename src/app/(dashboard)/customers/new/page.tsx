@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 export default function NewCustomerPage() {
   const router = useRouter();
@@ -11,7 +13,8 @@ export default function NewCustomerPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     const res = await fetch('/api/customers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -21,33 +24,82 @@ export default function NewCustomerPage() {
     if (res.status === 409) { router.push(`/customers/${data.customer.id}`); return; }
     if (!res.ok) {
       setError(data.error?.fieldErrors?.phone?.[0] ?? 'Something went wrong');
-      setLoading(false); return;
+      setLoading(false);
+      return;
     }
     router.push(`/customers/${data.id}`);
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '0.75rem 1rem',
+    background: '#141414', border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 4, color: 'white', fontSize: '1rem',
+    outline: 'none', fontFamily: 'var(--font-inter, sans-serif)',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+    textTransform: 'uppercase', letterSpacing: '0.08em',
+    color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem',
+    fontFamily: 'var(--font-barlow, sans-serif)',
+  };
+
   return (
-    <div className="max-w-sm mx-auto mt-8">
-      <h1 className="text-2xl font-bold mb-6">Add customer</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Phone number *</label>
-          <input type="tel" inputMode="tel" placeholder="07700 900 001" value={phone}
-            onChange={e => setPhone(e.target.value)} required
-            className="w-full text-xl h-14 px-4 border-2 border-neutral-200 rounded-xl focus:outline-none focus:border-black" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Name (optional)</label>
-          <input type="text" placeholder="First name" value={name}
-            onChange={e => setName(e.target.value)}
-            className="w-full h-12 px-4 border border-neutral-200 rounded-xl focus:outline-none focus:border-black" />
-        </div>
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        <button type="submit" disabled={loading}
-          className="w-full h-14 bg-black text-white text-lg rounded-xl disabled:opacity-50">
-          {loading ? 'Saving…' : 'Add customer'}
-        </button>
-      </form>
+    <div style={{ maxWidth: 420 }}>
+      {/* Back */}
+      <Link href="/customers" style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem',
+        textDecoration: 'none', marginBottom: '1.5rem',
+      }}>
+        <ArrowLeft size={14} /> All customers
+      </Link>
+
+      <h1 style={{
+        fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900,
+        fontSize: '2rem', textTransform: 'uppercase', color: 'white',
+        letterSpacing: '-0.01em', marginBottom: '1.5rem',
+      }}>
+        Add customer
+      </h1>
+
+      <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Phone number *</label>
+            <input
+              type="tel"
+              inputMode="tel"
+              placeholder="07700 900 001"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              required
+              style={{ ...inputStyle, fontSize: '1.25rem' }}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Name (optional)</label>
+            <input
+              type="text"
+              placeholder="First name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+          {error && (
+            <p style={{ color: '#f87171', fontSize: '0.875rem' }}>{error}</p>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-lime"
+            style={{ padding: '0.875rem', borderRadius: 4, fontSize: '1rem', marginTop: '0.5rem', border: 'none', display: 'block', width: '100%' }}
+          >
+            {loading ? 'Saving…' : 'Add customer'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
