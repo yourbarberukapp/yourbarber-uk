@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { buildCustomerWhereClause, normalizePhone } from '@/lib/customerHelpers';
+import { generateUniqueAccessCode } from '@/lib/accessCode';
 
 const createSchema = z.object({
   phone: z.string().min(7).max(20),
@@ -45,8 +46,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Customer with this phone already exists', customer: existing }, { status: 409 });
   }
 
+  const accessCode = await generateUniqueAccessCode();
   const customer = await db.customer.create({
-    data: { shopId, phone, name: parsed.data.name },
+    data: { shopId, phone, name: parsed.data.name, accessCode },
   });
   return NextResponse.json(customer, { status: 201 });
 }

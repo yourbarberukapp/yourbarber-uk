@@ -3,10 +3,21 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
+const cutDetailsSchema = z.object({
+  style: z.array(z.string()).default([]),
+  sidesGrade: z.string().default(''),
+  topLength: z.string().default(''),
+  beard: z.string().default(''),
+  products: z.array(z.string()).default([]),
+  techniques: z.array(z.string()).default([]),
+}).optional();
+
 const createVisitSchema = z.object({
   notes: z.string().max(2000).optional(),
   smsOptIn: z.enum(['yes', 'no', 'not_asked']),
   visitedAt: z.string().datetime().optional(),
+  cutDetails: cutDetailsSchema,
+  recommendation: z.string().max(500).optional(),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -26,7 +37,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const [visit] = await db.$transaction([
     db.visit.create({
-      data: { shopId, customerId: params.id, barberId, notes: parsed.data.notes, visitedAt },
+      data: {
+        shopId,
+        customerId: params.id,
+        barberId,
+        notes: parsed.data.notes,
+        cutDetails: parsed.data.cutDetails ?? undefined,
+        recommendation: parsed.data.recommendation,
+        visitedAt,
+      },
     }),
     db.customer.update({
       where: { id: params.id },
