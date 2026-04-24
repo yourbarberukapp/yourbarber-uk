@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PhotoCapture } from '@/components/PhotoCapture';
 
 interface Props {
   customer: { id: string; name: string | null; phone: string; smsOptIn: string };
@@ -32,24 +33,7 @@ export function VisitRecordClient({ customer }: Props) {
   }
 
   if (step === 'photos') {
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-neutral-500">Visit saved! Add photos below (or skip).</p>
-        <div className="grid grid-cols-2 gap-3">
-          {['front', 'back', 'left', 'right'].map(angle => (
-            <div key={angle} className="border-2 border-dashed border-neutral-300 rounded-xl aspect-square flex flex-col items-center justify-center bg-neutral-50">
-              <span className="text-3xl">📷</span>
-              <span className="text-xs text-neutral-500 capitalize mt-1">{angle}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-neutral-400 text-center">Photo upload coming in next step</p>
-        <button onClick={() => router.push(`/customers/${customer.id}`)}
-          className="w-full h-12 bg-black text-white rounded-xl text-base">
-          Done
-        </button>
-      </div>
-    );
+    return <PhotoCapture visitId={visitId!} onDone={() => router.push(`/customers/${customer.id}`)} />;
   }
 
   return (
