@@ -42,6 +42,7 @@ model Customer {
   shop        Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
   phone       String
   name        String?
+  accessCode  String?    @unique
   smsOptIn    String     @default("not_asked")
   lastVisitAt DateTime?
   createdAt   DateTime   @default(now())
@@ -62,8 +63,10 @@ model Visit {
   barberId   String
   barber     Barber       @relation(fields: [barberId], references: [id])
   visitedAt  DateTime     @default(now())
-  notes      String?
-  photos     VisitPhoto[]
+  notes          String?
+  cutDetails     Json?
+  recommendation String?
+  photos         VisitPhoto[]
   createdAt  DateTime     @default(now())
 
   @@index([customerId])
