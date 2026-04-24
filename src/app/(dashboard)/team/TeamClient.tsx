@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { UserPlus, X, Trash2, Shield, User } from 'lucide-react';
 
 interface Barber { id: string; name: string; email: string; role: string; }
 interface Props { barbers: Barber[]; currentBarberId: string; }
@@ -7,8 +8,11 @@ interface Props { barbers: Barber[]; currentBarberId: string; }
 export function TeamClient({ barbers: initial, currentBarberId }: Props) {
   const [barbers, setBarbers] = useState(initial);
   const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
-  const [saving, setSaving] = useState(false); const [error, setError] = useState('');
+  const [name, setName] = useState(''); 
+  const [email, setEmail] = useState(''); 
+  const [password, setPassword] = useState('');
+  const [saving, setSaving] = useState(false); 
+  const [error, setError] = useState('');
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setError('');
@@ -29,47 +33,98 @@ export function TeamClient({ barbers: initial, currentBarberId }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      {barbers.map(b => (
-        <div key={b.id} className="bg-white border border-neutral-200 rounded-xl px-4 py-3 flex items-center justify-between">
-          <div>
-            <p className="font-medium">{b.name}</p>
-            <p className="text-sm text-neutral-500">{b.email}</p>
+    <div className="space-y-4">
+      <div className="grid gap-3">
+        {barbers.map(b => (
+          <div key={b.id} className="bg-[#111] border border-white/5 rounded-2xl px-5 py-4 flex items-center justify-between group transition-all hover:border-white/10">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/40">
+                <User size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-white">{b.name} {b.id === currentBarberId && <span className="text-white/30 text-xs ml-1">(You)</span>}</p>
+                <p className="text-sm text-white/40">{b.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                b.role === 'owner' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-white/5 text-white/40 border border-white/10'
+              }`}>
+                {b.role === 'owner' && <Shield size={10} />}
+                {b.role}
+              </div>
+              {b.id !== currentBarberId && (
+                <button 
+                  onClick={() => handleRemove(b.id)} 
+                  className="p-2 text-white/20 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`text-xs px-2 py-1 rounded-full font-medium ${b.role === 'owner' ? 'bg-black text-white' : 'bg-neutral-100 text-neutral-600'}`}>
-              {b.role}
-            </span>
-            {b.id !== currentBarberId && (
-              <button onClick={() => handleRemove(b.id)} className="text-sm text-red-500 hover:text-red-700">Remove</button>
-            )}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {showForm ? (
-        <form onSubmit={handleInvite} className="border-2 border-neutral-200 rounded-xl p-4 space-y-3">
-          <h3 className="font-semibold">Add barber</h3>
-          {[['Name', 'text', name, setName], ['Email', 'email', email, setEmail], ['Temp password (8+ chars)', 'password', password, setPassword]].map(([label, type, val, setter]) => (
-            <div key={label as string}>
-              <label className="block text-sm font-medium mb-1">{label as string}</label>
-              <input type={type as string} value={val as string} onChange={e => (setter as any)(e.target.value)} required minLength={type === 'password' ? 8 : undefined}
-                className="w-full h-11 px-3 border border-neutral-200 rounded-lg focus:outline-none focus:border-black" />
-            </div>
-          ))}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="flex-1 h-11 bg-black text-white rounded-lg text-sm disabled:opacity-50">
+        <form onSubmit={handleInvite} className="bg-[#111] border border-primary/20 rounded-2xl p-6 space-y-5 animate-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center justify-between">
+            <h3 className="font-barlow font-bold text-xl text-white uppercase tracking-tight">Add new barber</h3>
+            <button type="button" onClick={() => setShowForm(false)} className="text-white/30 hover:text-white">
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            {[
+              { label: 'Name', type: 'text', value: name, setter: setName, placeholder: 'Barber name' },
+              { label: 'Email', type: 'email', value: email, setter: setEmail, placeholder: 'barber@example.com' },
+              { label: 'Temporary Password', type: 'password', value: password, setter: setPassword, placeholder: '8+ characters' }
+            ].map((field) => (
+              <div key={field.label}>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-white/40 mb-1.5 ml-1">{field.label}</label>
+                <input 
+                  type={field.type} 
+                  value={field.value} 
+                  onChange={e => field.setter(e.target.value)} 
+                  placeholder={field.placeholder}
+                  required 
+                  minLength={field.type === 'password' ? 8 : undefined}
+                  className="w-full h-12 px-4 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all" 
+                />
+              </div>
+            ))}
+          </div>
+
+          {error && <p className="text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20">{error}</p>}
+          
+          <div className="flex gap-3 pt-2">
+            <button 
+              type="submit" 
+              disabled={saving} 
+              className="flex-1 btn-lime h-12 rounded-xl text-sm font-bold shadow-lg shadow-primary/10 disabled:opacity-50"
+            >
               {saving ? 'Adding…' : 'Add barber'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm">Cancel</button>
+            <button 
+              type="button" 
+              onClick={() => setShowForm(false)} 
+              className="flex-1 h-12 border border-white/10 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       ) : (
-        <button onClick={() => setShowForm(true)} className="w-full h-12 border-2 border-dashed border-neutral-200 rounded-xl text-sm text-neutral-500 hover:border-black hover:text-black">
-          + Add barber
+        <button 
+          onClick={() => setShowForm(true)} 
+          className="w-full h-16 border border-dashed border-white/10 rounded-2xl text-sm font-medium text-white/40 hover:border-primary/50 hover:text-primary hover:bg-primary/[0.02] transition-all flex items-center justify-center gap-2 group"
+        >
+          <UserPlus size={18} className="group-hover:scale-110 transition-transform" />
+          Add barber
         </button>
       )}
     </div>
   );
 }
+

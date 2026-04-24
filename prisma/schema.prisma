@@ -39,6 +39,8 @@ model Barber {
   isActive     Boolean  @default(true)
   bio          String?
   photoUrl     String?
+  resetToken       String?  @unique
+  resetTokenExpiry DateTime?
   createdAt    DateTime @default(now())
   visits       Visit[]
 

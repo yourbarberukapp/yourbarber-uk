@@ -13,9 +13,19 @@ export default async function SettingsPage() {
   });
 
   return (
-    <div className="max-w-sm space-y-6">
-      <h1 className="text-2xl font-bold">Shop settings</h1>
-      {shop && <SettingsForm shop={shop} />}
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="font-barlow font-black text-4xl uppercase text-white tracking-tight">
+          Shop Settings
+        </h1>
+        <p className="text-white/40 text-sm mt-1">
+          Configure your shop profile and public presence.
+        </p>
+      </div>
+      <div className="max-w-md">
+        {shop && <SettingsForm shop={shop} />}
+      </div>
     </div>
   );
 }
+

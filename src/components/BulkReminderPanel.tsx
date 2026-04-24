@@ -1,9 +1,13 @@
 'use client';
 import { useState } from 'react';
+import { Check, Send } from 'lucide-react';
 
 interface Customer {
-  id: string; phone: string; name: string | null;
-  smsOptIn: string; lastVisitAt: string | null;
+  id: string;
+  phone: string;
+  name: string | null;
+  smsOptIn: string;
+  lastVisitAt: string | null;
 }
 
 interface Props { customers: Customer[]; }
@@ -35,36 +39,91 @@ export function BulkReminderPanel({ customers: initial }: Props) {
 
   if (result) {
     return (
-      <div className="text-center py-8 space-y-3">
-        <p className="text-3xl font-bold">{result.sent} sent ✓</p>
-        {result.failed > 0 && <p className="text-red-600 text-sm">{result.failed} failed</p>}
-        <button onClick={() => setResult(null)} className="border border-neutral-200 rounded-xl px-6 py-2 text-sm">Done</button>
+      <div className="bg-[#111] border border-white/5 rounded-2xl p-12 text-center animate-in fade-in zoom-in duration-300">
+        <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4">
+          <Check size={22} className="text-primary" />
+        </div>
+        <p className="font-barlow font-black text-4xl text-white">
+          {result.sent} sent
+        </p>
+        {result.failed > 0 && (
+          <p className="text-red-400 text-sm mt-2">{result.failed} failed</p>
+        )}
+        <button
+          onClick={() => setResult(null)}
+          className="mt-6 px-6 py-2.5 border border-white/10 rounded-full bg-transparent text-white/60 text-sm hover:text-white hover:border-white/20 transition-colors font-medium"
+        >
+          Done
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-neutral-500">{selected.size} of {initial.length} selected</p>
-        <div className="flex gap-2">
-          <button onClick={() => setSelected(new Set(initial.map(c => c.id)))}
-            className="text-xs border border-neutral-200 rounded-lg px-3 py-1">All</button>
-          <button onClick={() => setSelected(new Set())}
-            className="text-xs border border-neutral-200 rounded-lg px-3 py-1">None</button>
+    <div className="flex flex-col gap-4">
+      {/* Selection controls */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-white/40 text-sm">
+          <span className="text-white font-semibold">{selected.size}</span> of {initial.length} selected
+        </p>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => setSelected(new Set(initial.map(c => c.id)))}
+            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 rounded-lg bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all font-barlow"
+          >
+            All
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 rounded-lg bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all font-barlow"
+          >
+            None
+          </button>
         </div>
       </div>
-      {initial.map(c => (
-        <button key={c.id} onClick={() => toggle(c.id)}
-          className={`w-full text-left bg-white border-2 rounded-xl px-4 py-3 transition-colors ${selected.has(c.id) ? 'border-black' : 'border-neutral-200'}`}>
-          <p className="font-medium">{c.name ?? 'No name'}</p>
-          <p className="text-sm text-neutral-500">{c.phone} · {c.lastVisitAt ? new Date(c.lastVisitAt).toLocaleDateString('en-GB') : 'Never'}</p>
-        </button>
-      ))}
-      <button onClick={handleSend} disabled={sending || !selected.size}
-        className="w-full h-14 bg-black text-white rounded-xl text-base font-medium disabled:opacity-50">
+
+      {/* Customer list */}
+      <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/[0.03]">
+        {initial.map((c) => {
+          const isSelected = selected.has(c.id);
+          return (
+            <button
+              key={c.id}
+              onClick={() => toggle(c.id)}
+              className={`w-full text-left px-5 py-4 flex items-center gap-4 transition-all duration-150 group ${
+                isSelected ? 'bg-primary/[0.03]' : 'hover:bg-white/[0.02]'
+              }`}
+            >
+              {/* Checkbox */}
+              <div className={`w-5 h-5 rounded-md flex-shrink-0 border transition-all duration-200 flex items-center justify-center ${
+                isSelected 
+                  ? 'bg-primary border-primary shadow-[0_0_10px_rgba(200,241,53,0.3)]' 
+                  : 'bg-transparent border-white/20 group-hover:border-white/40'
+              }`}>
+                {isSelected && <Check size={12} className="text-black stroke-[3px]" />}
+              </div>
+              {/* Info */}
+              <div>
+                <p className="text-white text-[15px] font-medium leading-tight">{c.name ?? 'No name'}</p>
+                <p className="text-white/30 text-xs mt-1 font-mono tracking-tight">
+                  {c.phone} &middot; {c.lastVisitAt ? new Date(c.lastVisitAt).toLocaleDateString('en-GB') : 'Never'}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Send button */}
+      <button
+        onClick={handleSend}
+        disabled={sending || !selected.size}
+        className="btn-lime w-full py-4 rounded-xl flex items-center justify-center gap-2 text-base font-bold shadow-xl shadow-primary/10 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98]"
+      >
+        <Send size={18} className={sending ? 'animate-pulse' : ''} />
         {sending ? 'Sending…' : `Send SMS to ${selected.size} customer${selected.size !== 1 ? 's' : ''}`}
       </button>
     </div>
   );
 }
+

@@ -26,7 +26,18 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+
+# development
+.claude/
+scratch/
+.next_old/
+manus/
+*.webp
+*.png
+!public/*.png
+!public/*.webp
 
 # vercel
 .vercel

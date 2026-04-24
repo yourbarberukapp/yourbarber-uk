@@ -10,7 +10,12 @@ export function buildSmsMessage(params: {
   name: string | null;
   shopName: string;
   barberName: string;
+  accessCode?: string | null;
 }): string {
   const greeting = params.name ? `Hi ${params.name}` : 'Hi';
-  return `${greeting}, it's been 6 weeks since your cut at ${params.shopName}. Time to book in with ${params.barberName}? Reply STOP to opt out.`;
+  const base = `${greeting}, it's been 6 weeks since your cut at ${params.shopName}. Time to book in with ${params.barberName}?`;
+  const portal = params.accessCode
+    ? ` View your cut: yourbarber.uk/c?code=${params.accessCode}`
+    : '';
+  return `${base}${portal} Reply STOP to opt out.`;
 }

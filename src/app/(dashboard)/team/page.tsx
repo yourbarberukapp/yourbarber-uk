@@ -14,9 +14,17 @@ export default async function TeamPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Team</h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="font-barlow font-black text-4xl uppercase text-white tracking-tight">
+          Team
+        </h1>
+        <p className="text-white/40 text-sm mt-1">
+          Manage your barbers and access roles.
+        </p>
+      </div>
       <TeamClient barbers={barbers} currentBarberId={session.barberId} />
     </div>
   );
 }
+
