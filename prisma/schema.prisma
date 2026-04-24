@@ -13,11 +13,19 @@ model Shop {
   logoUrl            String?
   address            String?
   subscriptionStatus String     @default("active")
+  phone              String?
+  about              String?
+  coverPhotoUrl      String?
+  googleMapsUrl      String?
+  bookingUrl         String?
+  openingHours       Json?
   createdAt          DateTime   @default(now())
   barbers            Barber[]
   customers          Customer[]
   visits             Visit[]
   smsLogs            SmsLog[]
+  photos             ShopPhoto[]
+  services           ShopService[]
 }
 
 model Barber {
@@ -29,6 +37,8 @@ model Barber {
   passwordHash String
   role         String   @default("barber")
   isActive     Boolean  @default(true)
+  bio          String?
+  photoUrl     String?
   createdAt    DateTime @default(now())
   visits       Visit[]
 
@@ -92,4 +102,31 @@ model SmsLog {
   twilioSid  String?
   status     String   @default("sent")
   sentAt     DateTime @default(now())
+}
+
+model ShopPhoto {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([shopId])
+}
+
+model ShopService {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name        String
+  price       String?
+  duration    Int?
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([shopId])
 }
