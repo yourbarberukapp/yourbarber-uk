@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Shop {
+  id                 String     @id @default(cuid())
+  name               String
+  slug               String     @unique
+  logoUrl            String?
+  address            String?
+  subscriptionStatus String     @default("active")
+  createdAt          DateTime   @default(now())
+  barbers            Barber[]
+  customers          Customer[]
+  visits             Visit[]
+  smsLogs            SmsLog[]
+}
+
+model Barber {
+  id           String   @id @default(cuid())
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name         String
+  email        String
+  passwordHash String
+  role         String   @default("barber")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  visits       Visit[]
+
+  @@unique([email, shopId])
+  @@index([shopId])
+}
+
+model Customer {
+  id          String     @id @default(cuid())
+  shopId      String
+  shop        Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  phone       String
+  name        String?
+  smsOptIn    String     @default("not_asked")
+  lastVisitAt DateTime?
+  createdAt   DateTime   @default(now())
+  visits      Visit[]
+  smsLogs     SmsLog[]
+
+  @@unique([phone, shopId])
+  @@index([shopId, phone])
+  @@index([shopId, name])
+}
+
+model Visit {
+  id         String       @id @default(cuid())
+  shopId     String
+  shop       Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer     @relation(fields: [customerId], references: [id])
+  barberId   String
+  barber     Barber       @relation(fields: [barberId], references: [id])
+  visitedAt  DateTime     @default(now())
+  notes      String?
+  photos     VisitPhoto[]
+  createdAt  DateTime     @default(now())
+
+  @@index([customerId])
+  @@index([shopId, visitedAt])
+}
+
+model VisitPhoto {
+  id        String   @id @default(cuid())
+  visitId   String
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  url       String
+  angle     String
+  createdAt DateTime @default(now())
+}
+
+model SmsLog {
+  id         String   @id @default(cuid())
+  shopId     String
+  shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  message    String
+  twilioSid  String?
+  status     String   @default("sent")
+  sentAt     DateTime @default(now())
+}
