@@ -10,27 +10,43 @@ import { Camera, Upload, X, Check, Loader2 } from 'lucide-react';
 
 const ANGLES = ['front', 'back', 'left', 'right'] as const;
 
-function applyWatermark(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+function applyWatermark(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, shopName?: string) {
   const { width, height } = canvas;
-  const fontSize = Math.max(16, Math.round(width * 0.038));
+  const fontSize = Math.max(14, Math.round(width * 0.036));
+  const subFontSize = Math.max(11, Math.round(width * 0.026));
   const padding = Math.round(fontSize * 0.5);
-  const text = 'YOURBARBER';
+  const brand = 'YOURBARBER';
 
-  ctx.font = `900 ${fontSize}px 'Arial Black', 'Impact', sans-serif`;
   ctx.textBaseline = 'bottom';
-  const textWidth = ctx.measureText(text).width;
+  ctx.font = `900 ${fontSize}px 'Arial Black', 'Impact', sans-serif`;
+  const brandWidth = ctx.measureText(brand).width;
 
-  const x = width - textWidth - padding * 2;
-  const y = height - padding;
+  ctx.font = `700 ${subFontSize}px 'Arial Narrow', 'Arial', sans-serif`;
+  const subWidth = shopName ? ctx.measureText(shopName.toUpperCase()).width : 0;
 
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  ctx.fillRect(x - padding, y - fontSize - padding, textWidth + padding * 2, fontSize + padding * 1.5);
+  const blockW = Math.max(brandWidth, subWidth) + padding * 2;
+  const blockH = fontSize + (shopName ? subFontSize + 3 : 0) + padding * 1.5;
+  const bx = width - blockW - padding;
+  const by = height - padding;
 
-  ctx.fillStyle = 'rgba(200,241,53,0.9)';
-  ctx.fillText(text, x, y);
+  // Dark background pill
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(bx - padding * 0.5, by - blockH, blockW + padding, blockH + padding * 0.5);
+
+  // YOURBARBER in lime
+  ctx.font = `900 ${fontSize}px 'Arial Black', 'Impact', sans-serif`;
+  ctx.fillStyle = 'rgba(200,241,53,0.95)';
+  ctx.fillText(brand, bx, by - (shopName ? subFontSize + 3 : 0));
+
+  // Shop name in white below
+  if (shopName) {
+    ctx.font = `700 ${subFontSize}px 'Arial Narrow', 'Arial', sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText(shopName.toUpperCase(), bx, by);
+  }
 }
 
-async function watermarkFile(file: File): Promise<File> {
+async function watermarkFile(file: File, shopName?: string): Promise<File> {
   return new Promise((resolve) => {
     const img = new Image();
     const blobUrl = URL.createObjectURL(file);
@@ -40,7 +56,7 @@ async function watermarkFile(file: File): Promise<File> {
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0);
-      applyWatermark(canvas, ctx);
+      applyWatermark(canvas, ctx, shopName);
       URL.revokeObjectURL(blobUrl);
       canvas.toBlob(
         (blob) => resolve(new File([blob!], file.name, { type: 'image/jpeg' })),
@@ -62,9 +78,10 @@ export interface CapturedPhoto {
 interface PhotoCaptureProps {
   visitId: string;
   onDone: () => void;
+  shopName?: string;
 }
 
-export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
+export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
   const [photos, setPhotos] = useState<Partial<Record<Angle, CapturedPhoto>>>({});
   const [activeAngle, setActiveAngle] = useState<Angle | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -117,7 +134,7 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
     canvasRef.current.width = videoRef.current.videoWidth;
     canvasRef.current.height = videoRef.current.videoHeight;
     context.drawImage(videoRef.current, 0, 0);
-    applyWatermark(canvasRef.current, context);
+    applyWatermark(canvasRef.current, context, shopName);
 
     canvasRef.current.toBlob((blob) => {
       if (!blob || !activeAngle) return;
@@ -144,7 +161,7 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
   };
 
   const handleFileUpload = async (angle: Angle, file: File) => {
-    const marked = await watermarkFile(file);
+    const marked = await watermarkFile(file, shopName);
     const preview = URL.createObjectURL(marked);
     setPhotos(prev => ({
       ...prev,

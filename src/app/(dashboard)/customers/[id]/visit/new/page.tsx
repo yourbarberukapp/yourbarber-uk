@@ -40,7 +40,7 @@ export default async function NewVisitPage({ params }: { params: { id: string } 
       </div>
 
       <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '1.5rem' }}>
-        <VisitRecordClient customer={customer} />
+        <VisitRecordClient customer={customer} shopName={session.shopName} />
       </div>
     </div>
   );

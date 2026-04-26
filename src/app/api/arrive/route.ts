@@ -9,6 +9,8 @@ const schema = z.object({
   phone: z.string().min(7).max(20),
   name: z.string().max(100).optional(),
   note: z.string().max(300).optional(),
+  preferredStyle: z.string().max(500).optional(),
+  final: z.boolean().optional(), // true on the submit call, absent on the lookup call
 });
 
 export async function POST(req: NextRequest) {
@@ -16,7 +18,7 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
 
-  const { shopSlug, phone: rawPhone, name, note } = parsed.data;
+  const { shopSlug, phone: rawPhone, name, note, preferredStyle, final: isFinal } = parsed.data;
   const phone = normalizePhone(rawPhone);
 
   const shop = await db.shop.findUnique({ where: { slug: shopSlug } });
@@ -32,6 +34,12 @@ export async function POST(req: NextRequest) {
     customer = await db.customer.create({
       data: { shopId: shop.id, phone, name, accessCode },
     });
+  }
+
+  // Lookup call (first step) — just identify the customer, don't create WalkIn yet
+  if (!isFinal) {
+    if (!customer) return NextResponse.json({ needsName: true });
+    return NextResponse.json({ proceedToStyle: true });
   }
 
   // Don't double-add if already on the active list today
@@ -58,7 +66,12 @@ export async function POST(req: NextRequest) {
   }
 
   const walkIn = await db.walkIn.create({
-    data: { shopId: shop.id, customerId: customer.id, note: note || null },
+    data: {
+      shopId: shop.id,
+      customerId: customer.id,
+      note: note || null,
+      preferredStyle: preferredStyle || null,
+    },
   });
 
   const position = await db.walkIn.count({

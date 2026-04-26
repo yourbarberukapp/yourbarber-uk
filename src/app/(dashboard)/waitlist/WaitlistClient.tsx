@@ -16,6 +16,7 @@ interface WalkInCustomer {
 interface WalkIn {
   id: string;
   note: string | null;
+  preferredStyle: string | null;
   status: WalkInStatus;
   arrivedAt: string;
   customer: WalkInCustomer;
@@ -130,6 +131,26 @@ export default function WaitlistClient({ initialWalkIns }: { initialWalkIns: Wal
                     <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: 2 }}>
                       {w.customer.phone}
                     </div>
+                    {w.preferredStyle && (() => {
+                      try {
+                        const styles: string[] = JSON.parse(w.preferredStyle);
+                        return styles.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: 5 }}>
+                            {styles.map(s => (
+                              <span key={s} style={{
+                                fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
+                                background: 'rgba(200,241,53,0.1)', color: '#C8F135',
+                                border: '1px solid rgba(200,241,53,0.2)', borderRadius: 3,
+                                padding: '0.1rem 0.4rem',
+                                fontFamily: 'var(--font-barlow, sans-serif)',
+                              }}>
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null;
+                      } catch { return null; }
+                    })()}
                     {w.note && (
                       <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: 4, fontStyle: 'italic' }}>
                         &ldquo;{w.note}&rdquo;

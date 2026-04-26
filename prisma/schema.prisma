@@ -248,17 +248,18 @@ model Appointment {
 }
 
 model WalkIn {
-  id         String    @id @default(cuid())
-  shopId     String
-  shop       Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  customerId String
-  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  note       String?
-  status     String    @default("waiting") // "waiting"|"in_progress"|"done"|"no_show"
-  arrivedAt  DateTime  @default(now())
-  startedAt  DateTime?
-  doneAt     DateTime?
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(cuid())
+  shopId         String
+  shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  note           String?
+  preferredStyle String?   // client-selected styles from arrival screen, JSON array
+  status         String    @default("waiting") // "waiting"|"in_progress"|"done"|"no_show"
+  arrivedAt      DateTime  @default(now())
+  startedAt      DateTime?
+  doneAt         DateTime?
+  createdAt      DateTime  @default(now())
 
   @@index([shopId, arrivedAt])
   @@index([shopId, status])

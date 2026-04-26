@@ -9,6 +9,7 @@ type WalkInStatus = 'waiting' | 'in_progress' | 'done' | 'no_show';
 interface WalkIn {
   id: string;
   note: string | null;
+  preferredStyle: string | null;
   status: WalkInStatus;
   arrivedAt: string;
   customer: { id: string; name: string | null; phone: string; lastVisitAt: string | null };
@@ -201,6 +202,26 @@ export default function BarberClient({ initialWalkIns }: { initialWalkIns: WalkI
                         <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', fontFamily: 'monospace', marginTop: 2 }}>
                           {timeAgo(w.arrivedAt)} · {w.customer.phone}
                         </div>
+                        {w.preferredStyle && (() => {
+                          try {
+                            const styles: string[] = JSON.parse(w.preferredStyle);
+                            return styles.length > 0 ? (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: 5 }}>
+                                {styles.map(s => (
+                                  <span key={s} style={{
+                                    fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
+                                    background: 'rgba(200,241,53,0.1)', color: '#C8F135',
+                                    border: '1px solid rgba(200,241,53,0.2)', borderRadius: 3,
+                                    padding: '0.1rem 0.4rem',
+                                    fontFamily: 'var(--font-barlow, sans-serif)',
+                                  }}>
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null;
+                          } catch { return null; }
+                        })()}
                         {w.note && (
                           <div style={{
                             color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem',

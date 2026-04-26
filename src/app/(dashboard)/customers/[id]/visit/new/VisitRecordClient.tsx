@@ -8,9 +8,10 @@ import { FeedbackScreen } from '@/components/FeedbackScreen';
 
 interface Props {
   customer: { id: string; name: string | null; phone: string; smsOptIn: string };
+  shopName: string;
 }
 
-type OuterTab = 'style' | 'grade' | 'beard' | 'notes';
+type OuterTab = 'style' | 'grade' | 'beard' | 'notes' | 'photos';
 type ShopStyle = { id: string; name: string; category: string; imageUrl?: string | null };
 type SmsOptIn = 'yes' | 'no' | 'not_asked';
 
@@ -19,6 +20,7 @@ const OUTER_TABS: { id: OuterTab; label: string }[] = [
   { id: 'grade', label: 'Grade' },
   { id: 'beard', label: 'Beard' },
   { id: 'notes', label: 'Notes' },
+  { id: 'photos', label: 'Photos' },
 ];
 
 const STYLE_CATS = [
@@ -28,7 +30,7 @@ const STYLE_CATS = [
   { value: 'natural', label: 'Natural' },
 ] as const;
 
-export function VisitRecordClient({ customer }: Props) {
+export function VisitRecordClient({ customer, shopName }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<'details' | 'photos' | 'feedback'>('details');
   const [visitId, setVisitId] = useState<string | null>(null);
@@ -76,7 +78,7 @@ export function VisitRecordClient({ customer }: Props) {
     setCutDetails({ ...cutDetails, [field]: cutDetails[field] === val ? '' : val });
   }
 
-  async function handleSave() {
+  async function handleSave(thenGoToPhotos = false) {
     setSaving(true);
     setError('');
     const res = await fetch(`/api/customers/${customer.id}/visits`, {
@@ -91,12 +93,9 @@ export function VisitRecordClient({ customer }: Props) {
       return;
     }
     setVisitId(data.id);
-    setStep('photos');
+    if (thenGoToPhotos) setOuterTab('photos');
+    else setStep('photos');
     setSaving(false);
-  }
-
-  if (step === 'photos') {
-    return <PhotoCapture visitId={visitId!} onDone={() => setStep('feedback')} />;
   }
 
   if (step === 'feedback') {
@@ -126,6 +125,7 @@ export function VisitRecordClient({ customer }: Props) {
     grade: hasGrade,
     beard: hasBeard,
     notes: hasNotes,
+    photos: !!visitId,
   };
 
   return (
@@ -327,18 +327,44 @@ export function VisitRecordClient({ customer }: Props) {
             </div>
           </>
         )}
+        {/* PHOTOS tab */}
+        {outerTab === 'photos' && (
+          visitId ? (
+            <PhotoCapture
+              visitId={visitId}
+              shopName={shopName}
+              onDone={() => setStep('feedback')}
+            />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '2rem 0', textAlign: 'center' }}>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', margin: 0 }}>
+                Save cut details first, then add photos.
+              </p>
+              <button
+                onClick={() => handleSave(true)}
+                disabled={saving}
+                className="btn-lime"
+                style={{ padding: '0.75rem 1.5rem', borderRadius: 4, fontSize: '0.875rem', border: 'none' }}
+              >
+                {saving ? 'Saving…' : 'Save details & go to photos'}
+              </button>
+            </div>
+          )
+        )}
       </div>
 
       {error && <p style={{ color: '#f87171', fontSize: '0.875rem', margin: 0 }}>{error}</p>}
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="btn-lime"
-        style={{ padding: '0.875rem', borderRadius: 4, fontSize: '1rem', border: 'none', width: '100%' }}
-      >
-        {saving ? 'Saving…' : 'Save & add photos'}
-      </button>
+      {outerTab !== 'photos' && (
+        <button
+          onClick={() => handleSave(false)}
+          disabled={saving}
+          className="btn-lime"
+          style={{ padding: '0.875rem', borderRadius: 4, fontSize: '1rem', border: 'none', width: '100%' }}
+        >
+          {saving ? 'Saving…' : 'Save & add photos →'}
+        </button>
+      )}
     </div>
   );
 }
