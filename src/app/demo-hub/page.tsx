@@ -10,9 +10,11 @@ import {
   ShieldCheck, 
   Zap, 
   CheckCircle2,
-  Lock
+  Lock,
+  LogOut
 } from 'lucide-react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -92,6 +94,16 @@ export default function DemoHubPage() {
             <p className="text-white/45 font-inter text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
               YourBarber isn't just one app. It's an ecosystem designed for the specific needs of the Customer, the Barber, and the Owner.
             </p>
+
+            <div className="flex justify-center items-center gap-4 p-4 bg-white/[0.03] border border-white/5 rounded-full max-w-md mx-auto mb-8">
+              <span className="text-xs font-barlow font-bold uppercase tracking-widest text-white/40">Switching personas?</span>
+              <button 
+                onClick={() => signOut({ callbackUrl: '/demo-hub' })}
+                className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#C8F135] hover:text-white transition-colors"
+              >
+                <LogOut size={14} /> Sign Out First
+              </button>
+            </div>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-24">

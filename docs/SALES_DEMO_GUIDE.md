@@ -53,6 +53,9 @@ Use these to show the different app modes. These are pre-seeded in the database.
 | **Barber** | `jake@benjbarbers.com` | `barber123` |
 | **Kiosk** | `/arrive/benj-barbers` | (Public) |
 
+> [!IMPORTANT]
+> **Switching Accounts**: Your browser remembers who you are. If you log in as a Barber, you must **Sign Out** before you can log in as the Owner. I've added a "Sign Out First" button to the `/demo-hub` to make this easy during your pitch.
+
 ---
 
 ## 5. Technical Setup (For Work PC)
