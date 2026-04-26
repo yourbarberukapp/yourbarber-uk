@@ -1,13 +1,14 @@
 'use client';
 import { useState } from 'react';
-import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon } from 'lucide-react';
+import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon, BellRing, ShieldAlert } from 'lucide-react';
 
-interface Props { shop: { name: string; address: string | null; logoUrl: string | null; slug: string }; }
+interface Props { shop: { name: string; address: string | null; logoUrl: string | null; slug: string; allowBarberReminders: boolean }; }
 
 export function SettingsForm({ shop }: Props) {
   const [name, setName] = useState(shop.name);
   const [address, setAddress] = useState(shop.address ?? '');
   const [logoUrl, setLogoUrl] = useState(shop.logoUrl ?? '');
+  const [allowBarberReminders, setAllowBarberReminders] = useState(shop.allowBarberReminders);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -15,7 +16,7 @@ export function SettingsForm({ shop }: Props) {
     e.preventDefault(); setSaving(true);
     await fetch('/api/settings', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, address, logoUrl }),
+      body: JSON.stringify({ name, address, logoUrl, allowBarberReminders }),
     });
     setSaved(true); setSaving(false);
     setTimeout(() => setSaved(false), 2000);
@@ -63,6 +64,35 @@ export function SettingsForm({ shop }: Props) {
             />
           </div>
         ))}
+      </div>
+
+      {/* Permissions Section */}
+      <div className="pt-4 border-t border-white/5 space-y-4">
+        <div className="flex items-center gap-2 mb-2 ml-1">
+          <ShieldAlert size={12} className="text-white/30" />
+          <label className="text-[11px] font-bold uppercase tracking-widest text-white/40">Permissions & Costs</label>
+        </div>
+        
+        <div 
+          onClick={() => setAllowBarberReminders(!allowBarberReminders)}
+          className={`
+            flex items-center justify-between p-4 bg-[#111] border rounded-2xl cursor-pointer transition-all
+            ${allowBarberReminders ? 'border-primary/20 bg-primary/[0.02]' : 'border-white/5 hover:border-white/10'}
+          `}
+        >
+          <div className="flex items-center gap-4">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${allowBarberReminders ? 'bg-primary/20 text-primary' : 'bg-white/5 text-white/20'}`}>
+              <BellRing size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white uppercase tracking-tight">Barber Reminders</p>
+              <p className="text-xs text-white/30 font-inter">Allow staff to send manual SMS reminders</p>
+            </div>
+          </div>
+          <div className={`w-10 h-6 rounded-full relative transition-colors ${allowBarberReminders ? 'bg-primary' : 'bg-white/10'}`}>
+            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${allowBarberReminders ? 'left-5' : 'left-1'}`} />
+          </div>
+        </div>
       </div>
 
       <button 

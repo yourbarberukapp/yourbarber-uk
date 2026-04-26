@@ -13,16 +13,20 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { shopId, name: sessionBarberName } = session.user as any;
+  const { shopId, name: sessionBarberName, role } = session.user as any;
   const body = await req.json();
   const parsed = previewSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const shop = await db.shop.findUnique({
     where: { id: shopId },
-    select: { name: true },
+    select: { name: true, allowBarberReminders: true },
   });
   if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+
+  if (role === 'barber' && !shop.allowBarberReminders) {
+    return NextResponse.json({ error: 'Forbidden: Barber reminders are disabled' }, { status: 403 });
+  }
 
   const customer = await db.customer.findFirst({
     where: { id: parsed.data.customerId, shopId },

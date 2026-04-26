@@ -12,14 +12,18 @@ const sendSchema = z.object({
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { shopId, name: barberName } = session.user as any;
+  const { shopId, name: barberName, role } = session.user as any;
 
   const body = await req.json();
   const parsed = sendSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const shop = await db.shop.findUnique({ where: { id: shopId }, select: { name: true } });
+  const shop = await db.shop.findUnique({ where: { id: shopId }, select: { name: true, allowBarberReminders: true } });
   if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+
+  if (role === 'barber' && !shop.allowBarberReminders) {
+    return NextResponse.json({ error: 'Forbidden: Barber reminders are disabled' }, { status: 403 });
+  }
 
   const customers = await db.customer.findMany({
     where: { id: { in: parsed.data.customerIds }, shopId, smsOptIn: 'yes' },

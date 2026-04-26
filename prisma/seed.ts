@@ -55,7 +55,7 @@ async function main() {
   const customer = await prisma.customer.create({
     data: {
       shopId: shop.id,
-      phone: '07700900001',
+      phone: '07700900000',
       name: 'Test Customer',
       accessCode: 'TEST1',
       smsOptIn: 'yes',

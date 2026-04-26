@@ -3,11 +3,13 @@ import { db } from '@/lib/db';
 import { isDueForReminder } from '@/lib/reminders';
 import { BulkReminderPanel } from '@/components/BulkReminderPanel';
 import { UnresolvedFeedback } from './UnresolvedFeedback';
+import { Lock, ShieldAlert } from 'lucide-react';
 
 export default async function RemindersPage() {
   const session = await getRequiredSession();
 
-  const [all, tickets, barbers] = await Promise.all([
+  const [shop, all, tickets, barbers] = await Promise.all([
+    db.shop.findUnique({ where: { id: session.shopId }, select: { allowBarberReminders: true } }),
     db.customer.findMany({
       where: { shopId: session.shopId, smsOptIn: 'yes' },
       select: { id: true, phone: true, name: true, smsOptIn: true, lastVisitAt: true },
@@ -36,6 +38,8 @@ export default async function RemindersPage() {
       orderBy: { name: 'asc' },
     }),
   ]);
+
+  const isRestricted = session.role === 'barber' && !shop?.allowBarberReminders;
 
   const due = all.filter(c => isDueForReminder(c.lastVisitAt, 'yes'));
   const serialized = due.map(c => ({ ...c, lastVisitAt: c.lastVisitAt?.toISOString() ?? null }));
@@ -69,7 +73,18 @@ export default async function RemindersPage() {
         <h2 className="font-barlow font-bold text-xs uppercase tracking-widest text-white/35 mb-4">
           SMS due — {due.length} customer{due.length !== 1 ? 's' : ''}
         </h2>
-        {due.length === 0 ? (
+        </h2>
+        {isRestricted ? (
+          <div className="bg-[#111] border border-white/5 rounded-2xl p-10 text-center flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/20">
+              <Lock size={20} />
+            </div>
+            <div>
+              <p className="text-white font-bold uppercase tracking-tight text-sm">Access Restricted</p>
+              <p className="text-white/30 text-xs mt-1">SMS Reminders are restricted by the owner.</p>
+            </div>
+          </div>
+        ) : due.length === 0 ? (
           <div className="bg-[#111] border border-white/5 rounded-2xl p-10 text-center">
             <p className="text-white/25 text-sm">No customers due for a reminder right now.</p>
           </div>

@@ -23,12 +23,16 @@ During a demo, emphasize that YourBarber is an ecosystem, not just an app:
 The Kiosk flow is designed to feel like a premium members club.
 
 ### Variation A: The Returning Regular (0% Friction)
-- **Phone Number**: `07700900001`
+- **Phone Number**: `07700900000`
 - **Experience**: 
   - System recognizes the name instantly.
   - Greeting: *"Welcome back, Test Customer!"*
   - Action: One-tap **"Quick Check-in"** skips all steps.
   - **The Close**: "Show the shop keeper how their regulars don't even have to type their name."
+
+### Operational Control (The "Cost" Argument)
+During the demo, mention that owners have full control over SMS costs:
+- **Barber Reminders Toggle**: In Settings, the owner can disable staff's ability to send manual reminders. This prevents spamming and unexpected bills.
 
 ### Variation B: The New Customer (Warm Welcome)
 - **Phone Number**: Any new number (e.g., `07700111222`)
