@@ -88,6 +88,8 @@ model Customer {
   preferredReminderWeeks Int?
   primaryBarberId        String?
   primaryBarber          Barber?       @relation("PrimaryBarber", fields: [primaryBarberId], references: [id], onDelete: SetNull)
+  otpCode                String?
+  otpExpiry              DateTime?
   createdAt              DateTime      @default(now())
   visits                 Visit[]
   smsLogs                SmsLog[]

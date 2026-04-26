@@ -80,7 +80,7 @@ export default function BookingClient({ shop, services, barbers, initialCustomer
           You need to be logged in to book an appointment and track your cut history.
         </p>
         <Link
-          href={`/customer/login?redirect=/shop/${shop.slug}/book`}
+          href={`/customer/login?shop=${shop.slug}&redirect=/shop/${shop.slug}/book`}
           className="inline-flex items-center gap-2 bg-[#C8F135] text-[#0A0A0A] px-8 py-4 rounded-xl font-barlow font-bold uppercase tracking-wider no-underline hover:bg-[#b5da2d] transition-transform active:scale-95"
         >
           Login with Phone <ChevronRight size={18} />

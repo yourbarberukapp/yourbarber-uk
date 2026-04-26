@@ -48,7 +48,22 @@ After checking in, the customer is guided through:
 
 ---
 
-## 4. Live Demo Credentials
+## 4. The Premium Booking Experience (SMS OTP)
+When a customer wants to **Book Now** from the shop's microsite:
+1. **Frictionless Entry**: They enter their mobile number. No password to remember.
+2. **Instant Verification**: They receive a 5-digit code via SMS.
+3. **The Benefit**: This prevents "Ghost Bookings" (fake numbers) and ensures the shop owner has a verified lead.
+4. **New User Path**: If they've never booked before, after verifying their phone, the system asks for their name and stores it for all future visits.
+
+**Demo Flow**:
+- Go to `/shop/benj-barbers/book`
+- Click "Login with Phone"
+- Enter your mobile (get the code)
+- Verify and proceed to book.
+
+---
+
+## 5. Live Demo Credentials
 Use these to show the different app modes. These are pre-seeded in the database.
 
 | Role | Email / Slug | Password |
@@ -62,7 +77,7 @@ Use these to show the different app modes. These are pre-seeded in the database.
 
 ---
 
-## 5. Technical Setup (For Work PC)
+## 6. Technical Setup (For Work PC)
 When you download the repo on your work PC:
 
 1. **Install Dependencies**: `npm install`
@@ -73,4 +88,7 @@ When you download the repo on your work PC:
 
 ---
 
-*Documented by CreativeKorner — 2025*
+## 7. Version History & Credits
+- **Author**: CreativeKorner
+- **Last Update**: April 2025 (SMS OTP & Kiosk V2)
+- **Domain**: `yourbarber.uk`

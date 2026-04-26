@@ -73,7 +73,7 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
         
         <div className="flex items-center gap-4">
           <Link 
-            href="/customer/login"
+            href={`/customer/login?shop=${shop.slug}`}
             className="text-white/70 hover:text-[#C8F135] font-barlow font-bold text-sm uppercase tracking-widest transition-colors"
           >
             Client Login
