@@ -31,6 +31,7 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Clean up URL object previews on unmount
   useEffect(() => {
@@ -43,20 +44,24 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
     };
   }, [photos]);
 
+  // Assign stream to video once modal is rendered
+  useEffect(() => {
+    if (cameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [cameraActive]);
+
   const startCamera = async (angle: Angle) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' },
+        video: { facingMode: { ideal: 'environment' } },
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setCameraActive(true);
-        setActiveAngle(angle);
-      }
+      streamRef.current = stream;
+      setActiveAngle(angle);
+      setCameraActive(true);
     } catch (error) {
       console.error('Camera access denied:', error);
       setUploadError('Camera access denied. Use file upload instead.');
-      // Fallback to file input
       setTimeout(() => setUploadError(''), 3000);
     }
   };
@@ -87,9 +92,9 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
   };
 
   const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach((track) => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
     setCameraActive(false);
     setActiveAngle(null);
