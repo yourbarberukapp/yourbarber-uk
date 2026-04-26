@@ -43,8 +43,8 @@ function OptInBadge({ status }: { status: string }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
       background: c.bg, color: c.color, border: `1px solid ${c.border}`,
-      fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase',
-      letterSpacing: '0.08em', padding: '0.2rem 0.6rem', borderRadius: 2,
+      fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase',
+      letterSpacing: '0.06em', padding: '0.25rem 0.7rem', borderRadius: 2,
       fontFamily: 'var(--font-barlow, sans-serif)',
     }}>
       <c.Icon size={10} /> {c.label}
@@ -57,7 +57,7 @@ function Chip({ label, accent }: { label: string; accent?: boolean }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center',
       padding: '0.25rem 0.625rem', borderRadius: 20,
-      fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+      fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
       fontFamily: 'var(--font-barlow, sans-serif)',
       background: accent ? 'rgba(200,241,53,0.12)' : 'rgba(255,255,255,0.07)',
       color: accent ? '#C8F135' : 'rgba(255,255,255,0.65)',
@@ -78,7 +78,7 @@ function CutDetailsPanel({ details }: { details: CutDetails }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       {hasStyle && (
         <div>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', marginBottom: '0.375rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.45)', marginBottom: '0.375rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
             Style
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
@@ -89,7 +89,7 @@ function CutDetailsPanel({ details }: { details: CutDetails }) {
 
       {hasGrade && (
         <div>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', marginBottom: '0.375rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.45)', marginBottom: '0.375rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
             Grade
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
@@ -101,7 +101,7 @@ function CutDetailsPanel({ details }: { details: CutDetails }) {
 
       {hasBeard && (
         <div>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', marginBottom: '0.375rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.45)', marginBottom: '0.375rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
             Beard
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
