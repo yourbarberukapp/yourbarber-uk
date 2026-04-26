@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { SettingsForm } from './SettingsForm';
 import { StylesManager } from './StylesManager';
+import { QRSection } from './QRSection';
 
 export default async function SettingsPage() {
   const session = await getRequiredSession();
@@ -31,6 +32,16 @@ export default async function SettingsPage() {
         <div className="max-w-md">
           {shop && <SettingsForm shop={shop} />}
         </div>
+      </section>
+
+      <section>
+        <h2 className="font-barlow font-bold text-lg uppercase tracking-widest text-white/50 mb-1">
+          Check-in QR
+        </h2>
+        <p className="text-white/30 text-sm mb-8">
+          The physical gateway to your shop. Print these and place them where clients can easily scan them.
+        </p>
+        {shop && <QRSection slug={shop.slug} shopName={shop.name} />}
       </section>
 
       <section>
