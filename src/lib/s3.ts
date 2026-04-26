@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 function getS3Client() {
@@ -22,4 +22,12 @@ export async function generateUploadUrl(key: string, contentType: string): Promi
 export function getPublicUrl(key: string): string {
   const region = process.env.AWS_REGION ?? 'us-east-1';
   return `https://${BUCKET}.s3.${region}.amazonaws.com/${key}`;
+}
+
+export async function generateReadUrl(publicUrl: string): Promise<string> {
+  const s3 = getS3Client();
+  const url = new URL(publicUrl);
+  const key = url.pathname.slice(1);
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  return getSignedUrl(s3, command, { expiresIn: 3600 });
 }

@@ -1,5 +1,6 @@
 import { getRequiredSession } from '@/lib/session';
 import { db } from '@/lib/db';
+import { generateReadUrl } from '@/lib/s3';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -130,11 +131,21 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
   });
   if (!customer) notFound();
 
+  // Sign all photo URLs (bucket is private, public URLs return 403)
+  const visits = await Promise.all(
+    customer.visits.map(async visit => ({
+      ...visit,
+      photos: await Promise.all(
+        visit.photos.map(async p => ({ ...p, url: await generateReadUrl(p.url) }))
+      ),
+    }))
+  );
+
   const initials = customer.name
     ? customer.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
     : '#';
 
-  const lastVisit = customer.visits[0];
+  const lastVisit = visits[0];
 
   return (
     <div style={{ maxWidth: 720 }}>
@@ -205,11 +216,11 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
         fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em',
         color: 'rgba(255,255,255,0.35)', marginBottom: '0.875rem',
       }}>
-        Visit history ({customer.visits.length})
+        Visit history ({visits.length})
       </h2>
 
       {/* Empty state */}
-      {customer.visits.length === 0 && (
+      {visits.length === 0 && (
         <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '3rem', textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: '0.875rem' }}>
           No visits recorded yet. Tap &ldquo;Record cut&rdquo; to start.
         </div>
@@ -217,7 +228,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
 
       {/* Visit cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {customer.visits.map(visit => {
+        {visits.map(visit => {
           const details = visit.cutDetails as CutDetails | null;
           const photos = sortPhotos(visit.photos);
           const hasContent = details || visit.notes || visit.recommendation;
