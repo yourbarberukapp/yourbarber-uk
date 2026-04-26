@@ -31,6 +31,7 @@ model Shop {
   feedbacks            Feedback[]
   styles               ShopStyle[]
   appointments         Appointment[]
+  walkIns              WalkIn[]
 }
 
 model ShopStyle {
@@ -92,6 +93,7 @@ model Customer {
   feedbacks              Feedback[]
   checkIns               CheckIn[]
   appointments           Appointment[]
+  walkIns                WalkIn[]
 
   @@unique([phone, shopId])
   @@index([shopId, phone])
@@ -243,6 +245,23 @@ model Appointment {
   @@index([shopId, scheduledAt])
   @@index([customerId, scheduledAt])
   @@index([barberId, scheduledAt])
+}
+
+model WalkIn {
+  id         String    @id @default(cuid())
+  shopId     String
+  shop       Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  note       String?
+  status     String    @default("waiting") // "waiting"|"in_progress"|"done"|"no_show"
+  arrivedAt  DateTime  @default(now())
+  startedAt  DateTime?
+  doneAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([shopId, arrivedAt])
+  @@index([shopId, status])
 }
 
 model DemoLead {
