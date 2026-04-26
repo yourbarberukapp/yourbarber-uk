@@ -1,0 +1,69 @@
+# YourBarber — Sales & Demo Guide 🚀
+
+This document outlines the current high-conversion sales funnel and how to perform a "WOW" demonstration for shop keepers.
+
+## 1. The Sales Funnel Overview
+We have built a dedicated sales path to convert barbershops by highlighting our **0% Commission** model and **Data Ownership**.
+
+- **Pricing Page**: `/pricing` — Features a direct comparison against Booksy and Fresha. Use this to show the "Tax" barbers are currently paying.
+- **Demo Hub**: `/demo-hub` — The central "Salesperson's Toolbox." Explains the 3-screen ecosystem and provides direct launch buttons.
+
+---
+
+## 2. The 3-Screen System
+During a demo, emphasize that YourBarber is an ecosystem, not just an app:
+
+1. **Customer Kiosk (The Wall)**: Scanned via QR. Zero friction arrival.
+2. **Barber Mode (The Pocket)**: Mobile-first queue management for staff.
+3. **Owner Dashboard (The Desk)**: Full administrative control and analytics.
+
+---
+
+## 3. The "WOW" Arrival Demo
+The Kiosk flow is designed to feel like a premium members club.
+
+### Variation A: The Returning Regular (0% Friction)
+- **Phone Number**: `07700900001`
+- **Experience**: 
+  - System recognizes the name instantly.
+  - Greeting: *"Welcome back, Test Customer!"*
+  - Action: One-tap **"Quick Check-in"** skips all steps.
+  - **The Close**: "Show the shop keeper how their regulars don't even have to type their name."
+
+### Variation B: The New Customer (Warm Welcome)
+- **Phone Number**: Any new number (e.g., `07700111222`)
+- **Experience**:
+  - Friendly welcome: *"First time here? We just need your name."*
+  - Engagement: Frames the wait as a service: *"Take a seat, grab a drink... while you wait, tell us what you're after."*
+
+### The "Next Steps" Screen
+After checking in, the customer is guided through:
+1. Grabbing a complimentary drink.
+2. Taking a seat.
+3. Browsing the **Trend Gallery** via the "Browse Hair Ideas" button.
+
+---
+
+## 4. Live Demo Credentials
+Use these to show the different app modes. These are pre-seeded in the database.
+
+| Role | Email / Slug | Password |
+| :--- | :--- | :--- |
+| **Owner** | `owner@benjbarbers.com` | `owner123` |
+| **Barber** | `jake@benjbarbers.com` | `barber123` |
+| **Kiosk** | `/arrive/benj-barbers` | (Public) |
+
+---
+
+## 5. Technical Setup (For Work PC)
+When you download the repo on your work PC:
+
+1. **Install Dependencies**: `npm install`
+2. **Env Setup**: Ensure `.env.local` has your `DATABASE_URL`.
+3. **Sync DB**: `npx prisma db push`
+4. **Seed Data**: `npx prisma db seed` (I have configured this to populate the demo shop automatically).
+5. **Run Dev**: `npm run dev`
+
+---
+
+*Documented by CreativeKorner — 2025*

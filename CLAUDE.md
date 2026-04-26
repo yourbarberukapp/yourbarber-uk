@@ -171,6 +171,11 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - **Base font:** 17px — text must be readable on phone in a barbershop environment
 - **Button class:** `.btn-lime` — lime background, dark text, glow on hover
 - **Badge class:** `.badge-lime` — lime outlined badge for status
+
+## Documentation
+- **Sales & Demo Guide**: [docs/SALES_DEMO_GUIDE.md](docs/SALES_DEMO_GUIDE.md) — How to pitch and demo the 3-screen system.
+- **Competitor Analysis**: [docs/YOUR_BARBER_COMPETITIVE_ANALYSIS.md](docs/YOUR_BARBER_COMPETITIVE_ANALYSIS.md)
+- **Brand Identity**: [docs/BRAND_VOICE.md](docs/BRAND_VOICE.md)
 - CSS variables in `src/app/globals.css`
 
 ---
