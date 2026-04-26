@@ -15,7 +15,9 @@ interface Props { customers: Customer[]; }
 export function BulkReminderPanel({ customers: initial }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set(initial.map(c => c.id)));
   const [sending, setSending] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
+  const [preview, setPreview] = useState<{ message: string; wouldSendToPhone: string; previewUrl: string | null } | null>(null);
 
   function toggle(id: string) {
     setSelected(prev => {
@@ -35,6 +37,21 @@ export function BulkReminderPanel({ customers: initial }: Props) {
     });
     setResult(await res.json());
     setSending(false);
+  }
+
+  async function handlePreview() {
+    const firstSelectedId = Array.from(selected)[0];
+    if (!firstSelectedId) return;
+    setPreviewing(true);
+    const res = await fetch('/api/reminders/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customerId: firstSelectedId, reminderType: 'overdue' }),
+    });
+    if (res.ok) {
+      setPreview(await res.json());
+    }
+    setPreviewing(false);
   }
 
   if (result) {
@@ -66,7 +83,7 @@ export function BulkReminderPanel({ customers: initial }: Props) {
         <p className="text-white/40 text-sm">
           <span className="text-white font-semibold">{selected.size}</span> of {initial.length} selected
         </p>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 flex-wrap">
           <button
             onClick={() => setSelected(new Set(initial.map(c => c.id)))}
             className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 rounded-lg bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all font-barlow"
@@ -79,8 +96,43 @@ export function BulkReminderPanel({ customers: initial }: Props) {
           >
             None
           </button>
+          <button
+            onClick={handlePreview}
+            disabled={previewing || !selected.size}
+            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 rounded-lg bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all font-barlow disabled:opacity-50"
+          >
+            {previewing ? 'Previewing...' : 'Preview SMS'}
+          </button>
         </div>
       </div>
+
+      {preview && (
+        <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="font-barlow font-bold text-xs uppercase tracking-widest text-white/35">
+              SMS preview
+            </p>
+            <button
+              onClick={() => setPreview(null)}
+              className="text-white/30 hover:text-white text-xs uppercase tracking-widest font-barlow"
+            >
+              Close
+            </button>
+          </div>
+          <p className="text-white text-sm leading-6">{preview.message}</p>
+          <p className="text-white/35 text-xs mt-3 font-mono">{preview.wouldSendToPhone}</p>
+          {preview.previewUrl && (
+            <a
+              href={preview.previewUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block mt-3 text-primary text-xs font-bold uppercase tracking-widest"
+            >
+              Open customer link
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Customer list */}
       <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/[0.03]">

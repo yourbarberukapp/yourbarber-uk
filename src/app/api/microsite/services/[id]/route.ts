@@ -23,7 +23,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const parsed = updateSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const updated = await db.shopService.update({ where: { id: params.id }, data: parsed.data });
+  let parsedPrice: string | undefined = undefined;
+  if (parsed.data.price !== undefined) {
+    if (parsed.data.price === null || parsed.data.price === '') {
+      parsedPrice = undefined; // Need to set it to null later if we explicitly want to remove it, but for now just pass undefined
+    } else {
+      const numericMatch = parsed.data.price.replace(/[^0-9.]/g, '');
+      if (numericMatch) parsedPrice = numericMatch;
+    }
+  }
+
+  const dataToUpdate: any = { ...parsed.data };
+  if (parsedPrice !== undefined) {
+    dataToUpdate.price = parsedPrice;
+  }
+
+  const updated = await db.shopService.update({ where: { id: params.id }, data: dataToUpdate });
   return NextResponse.json(updated);
 }
 

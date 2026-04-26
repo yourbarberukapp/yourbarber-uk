@@ -31,6 +31,21 @@ export async function POST(req: NextRequest) {
   const parsed = createSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const service = await db.shopService.create({ data: { shopId, ...parsed.data } });
+  let parsedPrice: string | undefined = undefined;
+  if (parsed.data.price) {
+    const numericMatch = parsed.data.price.replace(/[^0-9.]/g, '');
+    if (numericMatch) parsedPrice = numericMatch;
+  }
+
+  const service = await db.shopService.create({ 
+    data: { 
+      shopId, 
+      name: parsed.data.name,
+      price: parsedPrice,
+      duration: parsed.data.duration,
+      description: parsed.data.description,
+      sortOrder: parsed.data.sortOrder,
+    } 
+  });
   return NextResponse.json(service, { status: 201 });
 }

@@ -1,8 +1,10 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
+import { STYLE_DEFAULTS } from '../src/lib/styleDefaults';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -15,6 +17,7 @@ async function main() {
   await prisma.visit.deleteMany({});
   await prisma.customer.deleteMany({});
   await prisma.barber.deleteMany({});
+  await prisma.shopStyle.deleteMany({});
   await prisma.shop.deleteMany({});
 
   const shop = await prisma.shop.create({
@@ -22,6 +25,7 @@ async function main() {
       name: 'Ben J Barbers',
       slug: 'benj-barbers',
       address: '78A High Street, Poole, BH15 1DB',
+      shopType: 'uk_general',
     },
   });
 
@@ -80,12 +84,12 @@ async function main() {
 
   await prisma.shopService.createMany({
     data: [
-      { shopId: shop.id, name: 'Skin Fade', price: '£15', duration: 30, sortOrder: 0 },
-      { shopId: shop.id, name: 'Taper Fade', price: '£15', duration: 30, sortOrder: 1 },
-      { shopId: shop.id, name: 'Scissor Cut', price: '£12', duration: 25, sortOrder: 2 },
-      { shopId: shop.id, name: 'Beard Trim', price: '£8', duration: 15, sortOrder: 3 },
-      { shopId: shop.id, name: 'Hot Towel Shave', price: '£18', duration: 40, sortOrder: 4 },
-      { shopId: shop.id, name: 'Cut & Beard', price: '£20', duration: 45, sortOrder: 5 },
+      { shopId: shop.id, name: 'Skin Fade', price: '15.00', duration: 30, sortOrder: 0 },
+      { shopId: shop.id, name: 'Taper Fade', price: '15.00', duration: 30, sortOrder: 1 },
+      { shopId: shop.id, name: 'Scissor Cut', price: '12.00', duration: 25, sortOrder: 2 },
+      { shopId: shop.id, name: 'Beard Trim', price: '8.00', duration: 15, sortOrder: 3 },
+      { shopId: shop.id, name: 'Hot Towel Shave', price: '18.00', duration: 40, sortOrder: 4 },
+      { shopId: shop.id, name: 'Cut & Beard', price: '20.00', duration: 45, sortOrder: 5 },
     ],
   });
 
@@ -99,7 +103,13 @@ async function main() {
     data: { bio: 'Specialist in textured cuts, undercuts, and beard sculpting.' },
   });
 
-  console.log(`Seeded: shop=${shop.slug}, owner=${owner.email}, barber=${barber.email}, customer=${customer.phone}`);
+  // Seed UK General styles
+  const ukStyles = STYLE_DEFAULTS['uk_general'];
+  await prisma.shopStyle.createMany({
+    data: ukStyles.map(s => ({ shopId: shop.id, ...s, active: true })),
+  });
+
+  console.log(`Seeded: shop=${shop.slug}, owner=${owner.email}, barber=${barber.email}, customer=${customer.phone}, styles=${ukStyles.length}`);
 }
 
 main()

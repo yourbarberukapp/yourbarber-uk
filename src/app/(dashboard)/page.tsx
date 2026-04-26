@@ -5,7 +5,7 @@
  * Premium overview with business stats and recent activity.
  */
 import { motion } from 'framer-motion';
-import { Users, Bell, TrendingUp, Clock, ArrowRight, Check, X, Minus } from 'lucide-react';
+import { Users, Bell, TrendingUp, Clock, ArrowRight, Check, X, Minus, Scissors } from 'lucide-react';
 import Link from 'next/link';
 
 const fadeUp = {
@@ -59,11 +59,19 @@ function OptInBadge({ status }: { status: string }) {
 export default function DashboardRoot() {
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-barlow font-black text-white uppercase tracking-tight mb-2">
-          Dashboard
-        </h1>
-        <p className="text-white/40 text-sm">Welcome back. Here is your shop performance overview.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-barlow font-black text-white uppercase tracking-tight mb-2">
+            Dashboard
+          </h1>
+          <p className="text-white/40 text-sm">Welcome back. Here is your shop performance overview.</p>
+        </div>
+        <Link 
+          href="/scan"
+          className="btn-lime px-6 py-4 rounded-sm text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(200,241,53,0.15)] hover:shadow-[0_0_30px_rgba(200,241,53,0.25)] transition-all"
+        >
+          <Scissors size={18} /> Scan Customer QR
+        </Link>
       </div>
 
       {/* Stats Grid */}

@@ -21,3 +21,16 @@ export async function getRequiredSession(): Promise<AppSession> {
     shopName: user.shopName ?? '',
   };
 }
+
+export async function getSession(): Promise<AppSession | null> {
+  const session = await auth();
+  if (!session?.user) return null;
+  const user = session.user as any;
+  return {
+    barberId: user.id,
+    shopId: user.shopId,
+    role: user.role,
+    name: user.name ?? '',
+    shopName: user.shopName ?? '',
+  };
+}

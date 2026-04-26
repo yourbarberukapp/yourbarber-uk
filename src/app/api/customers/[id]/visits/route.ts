@@ -51,6 +51,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       where: { id: params.id },
       data: { lastVisitAt: visitedAt, smsOptIn: parsed.data.smsOptIn },
     }),
+    db.appointment.updateMany({
+      where: {
+        customerId: params.id,
+        shopId,
+        status: { in: ['booked', 'in_progress'] },
+        scheduledAt: {
+          lte: new Date(visitedAt.getTime() + 24 * 60 * 60 * 1000) // Within 24 hours of visit
+        }
+      },
+      data: { status: 'completed' }
+    }),
   ]);
 
   return NextResponse.json(visit, { status: 201 });

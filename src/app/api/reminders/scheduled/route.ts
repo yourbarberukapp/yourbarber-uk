@@ -19,7 +19,14 @@ export async function GET(req: NextRequest) {
   for (const shop of shops) {
     const customers = await db.customer.findMany({
       where: { shopId: shop.id, smsOptIn: 'yes', lastVisitAt: { not: null } },
-      select: { id: true, phone: true, name: true, lastVisitAt: true },
+      select: {
+        id: true, phone: true, name: true, lastVisitAt: true, accessCode: true,
+        visits: {
+          orderBy: { visitedAt: 'desc' },
+          take: 1,
+          select: { barber: { select: { name: true } } },
+        },
+      },
     });
 
     for (const customer of customers.filter(c => isDueForReminder(c.lastVisitAt, 'yes'))) {
@@ -33,7 +40,8 @@ export async function GET(req: NextRequest) {
       if (recentLog) continue;
 
       try {
-        const message = buildSmsMessage({ name: customer.name, shopName: shop.name, barberName: shop.name });
+        const barberName = customer.visits[0]?.barber?.name ?? shop.name;
+        const message = buildSmsMessage({ name: customer.name, shopName: shop.name, barberName, accessCode: customer.accessCode });
         const { sid, status } = await sendSms(customer.phone, message);
         await db.smsLog.create({ data: { shopId: shop.id, customerId: customer.id, message, twilioSid: sid, status } });
         totalSent++;

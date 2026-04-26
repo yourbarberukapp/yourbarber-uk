@@ -92,6 +92,25 @@
     border-radius: 2px;
   }
 
+  /* Dark select — override browser defaults app-wide */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.35)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem !important;
+    cursor: pointer;
+  }
+  option {
+    background: #111;
+    color: white;
+  }
+  option:checked {
+    background: rgba(200, 241, 53, 0.15);
+    color: #C8F135;
+  }
+
   /* Section divider */
   .section-divider {
     width: 100%;

@@ -50,10 +50,10 @@ function LoginForm() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#C8F135]/10 mb-5">
             <Scissors size={24} className="text-[#C8F135]" />
           </div>
-          <h1 className="font-['Barlow_Condensed'] font-black text-3xl uppercase tracking-tight text-white">
+          <h1 className="font-barlow font-black text-3xl uppercase tracking-tight text-white">
             Your<span className="text-[#C8F135]">Barber</span>
           </h1>
-          <p className="text-white/40 text-sm font-['Inter'] mt-2">
+          <p className="text-white/40 text-sm font-inter mt-2">
             Enter your personal code from the SMS
           </p>
         </div>
@@ -70,13 +70,13 @@ function LoginForm() {
               }}
               placeholder="A B C 1 2"
               maxLength={5}
-              className="w-full bg-[#141414] border border-white/10 rounded-sm px-4 py-4 text-white text-center text-3xl font-['Barlow_Condensed'] font-bold tracking-[0.5em] placeholder-white/15 focus:outline-none focus:border-[#C8F135]/40 focus:ring-1 focus:ring-[#C8F135]/20 transition-colors uppercase"
+              className="w-full bg-[#141414] border border-white/10 rounded-sm px-4 py-4 text-white text-center text-3xl font-barlow font-bold tracking-[0.5em] placeholder-white/15 focus:outline-none focus:border-[#C8F135]/40 focus:ring-1 focus:ring-[#C8F135]/20 transition-colors uppercase"
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
             />
             {error && (
-              <p className="text-red-400 text-xs font-['Inter'] mt-2 text-center">{error}</p>
+              <p className="text-red-400 text-xs font-inter mt-2 text-center">{error}</p>
             )}
           </div>
 
@@ -89,7 +89,7 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="text-white/25 text-xs font-['Inter'] text-center mt-8">
+        <p className="text-white/25 text-xs font-inter text-center mt-8">
           Your code is in every reminder SMS from your barber.
         </p>
       </div>

@@ -18,36 +18,36 @@ export const EMPTY_CUT_DETAILS: CutDetails = {
   techniques: [],
 };
 
-const STYLES = [
+export const STYLES = [
   'Skin Fade', 'Low Fade', 'Mid Fade', 'High Fade', 'Taper Fade', 'Drop Fade',
   'Scissor Cut', 'Crop', 'Textured Crop', 'Slick Back', 'Pompadour', 'Quiff',
   'Buzz Cut', 'Crew Cut', 'Classic Cut', 'Undercut',
   'Shape Up', 'Waves', 'Curls', 'Afro', 'Head Shave',
 ];
 
-const SIDES_GRADES = ['0 (Bald)', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4', 'Scissors', 'Razor'];
+export const SIDES_GRADES =['0 (Bald)', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4', 'Scissors', 'Razor'];
 
-const TOP_LENGTHS = ['Scissors', '3', '4', '5', '6', '7', '8', 'Left long', 'Very short'];
+export const TOP_LENGTHS =['Scissors', '3', '4', '5', '6', '7', '8', 'Left long', 'Very short'];
 
-const BEARD_OPTIONS = ['Not done', 'Shape up', 'Fade into beard', 'Trim', 'Full shave', 'Hot towel shave'];
+export const BEARD_OPTIONS =['Not done', 'Shape up', 'Fade into beard', 'Trim', 'Full shave', 'Hot towel shave'];
 
-const PRODUCTS = ['None', 'Pomade', 'Clay', 'Wax', 'Sea Salt Spray', 'Mousse', 'Fibre', 'Gel', 'Oil', 'Conditioner'];
+export const PRODUCTS =['None', 'Pomade', 'Clay', 'Wax', 'Sea Salt Spray', 'Mousse', 'Fibre', 'Gel', 'Oil', 'Conditioner'];
 
-const TECHNIQUES = ['Line up', 'Hot towel', 'Razor fade', 'Blending', 'Texturising', 'Thinning shears', 'Skin fade', 'Scissor over comb'];
+export const TECHNIQUES =['Line up', 'Hot towel', 'Razor fade', 'Blending', 'Texturising', 'Thinning shears', 'Skin fade', 'Scissor over comb'];
 
 interface Props {
   value: CutDetails;
   onChange: (next: CutDetails) => void;
 }
 
-const label: React.CSSProperties = {
+export const label: React.CSSProperties = {
   display: 'block', fontSize: '0.7rem', fontWeight: 700,
   textTransform: 'uppercase', letterSpacing: '0.1em',
   color: 'rgba(255,255,255,0.4)', marginBottom: '0.5rem',
   fontFamily: 'var(--font-barlow, sans-serif)',
 };
 
-function ChipGroup({
+export function ChipGroup({
   title, options, selected, multi, onToggle,
 }: {
   title: string;

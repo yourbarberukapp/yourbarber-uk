@@ -14,7 +14,7 @@ export async function GET() {
       phone: true,
       accessCode: true,
       lastVisitAt: true,
-      shop: { select: { name: true, address: true } },
+      shop: { select: { name: true, address: true, slug: true } },
       visits: {
         orderBy: { visitedAt: 'desc' },
         take: 10,
@@ -26,6 +26,21 @@ export async function GET() {
           recommendation: true,
           barber: { select: { name: true } },
           photos: { select: { id: true, url: true, angle: true } },
+        },
+      },
+      appointments: {
+        where: {
+          scheduledAt: { gte: new Date() },
+          status: 'booked',
+        },
+        orderBy: { scheduledAt: 'asc' },
+        take: 1,
+        select: {
+          id: true,
+          scheduledAt: true,
+          shop: { select: { name: true, slug: true } },
+          barber: { select: { name: true } },
+          service: { select: { name: true } },
         },
       },
     },

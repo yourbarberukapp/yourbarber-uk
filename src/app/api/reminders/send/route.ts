@@ -23,12 +23,28 @@ export async function POST(req: NextRequest) {
 
   const customers = await db.customer.findMany({
     where: { id: { in: parsed.data.customerIds }, shopId, smsOptIn: 'yes' },
-    select: { id: true, phone: true, name: true },
+    select: {
+      id: true,
+      phone: true,
+      name: true,
+      accessCode: true,
+      visits: {
+        orderBy: { visitedAt: 'desc' },
+        take: 1,
+        select: { barber: { select: { name: true } } },
+      },
+    },
   });
 
   const results = await Promise.allSettled(
     customers.map(async customer => {
-      const message = buildSmsMessage({ name: customer.name, shopName: shop.name, barberName });
+      const recentBarberName = customer.visits[0]?.barber?.name ?? barberName;
+      const message = buildSmsMessage({
+        name: customer.name,
+        shopName: shop.name,
+        barberName: recentBarberName,
+        accessCode: customer.accessCode,
+      });
       const { sid, status } = await sendSms(customer.phone, message);
       await db.smsLog.create({
         data: { shopId, customerId: customer.id, message, twilioSid: sid, status },
