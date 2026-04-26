@@ -11,10 +11,13 @@ export async function DELETE(
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const shopId = (session.user as any).shopId as string;
 
+  if (!shopId) return NextResponse.json({ error: 'Shop context missing' }, { status: 400 });
+
   const photo = await db.visitPhoto.findFirst({
     where: {
       id: params.photoId,
-      visit: { id: params.id, shopId },
+      visitId: params.id,
+      visit: { shopId },
     },
     select: { id: true, url: true },
   });

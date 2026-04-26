@@ -17,9 +17,9 @@ export default function Footer() {
             <div className="font-barlow font-bold text-xs uppercase tracking-widest text-white/40 mb-4">Product</div>
             <ul className="space-y-2">
               {[
-                { href: "/features", label: "Features" },
+                { href: "/#features", label: "Features" },
                 { href: "/pricing", label: "Pricing" },
-                { href: "/login", label: "Sign in" },
+                { href: "/demo-hub", label: "Live Demo" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link href={link.href}>
@@ -36,7 +36,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {[
                 { href: "/login", label: "Sign in" },
-                { href: "/pricing", label: "Get access" },
+                { href: "/demo", label: "Get Early Access" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link href={link.href}>
@@ -51,8 +51,8 @@ export default function Footer() {
         </div>
         <div className="section-divider mb-6" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/30 text-xs font-inter">
-          <span>© 2025 YourBarber.co.uk — Built by Antigravity</span>
-          <span>yourbarber.co.uk</span>
+          <span>© 2025 YourBarber.uk — Built by CreativeKorner</span>
+          <span>yourbarber.uk</span>
         </div>
       </div>
     </footer>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 
 interface Props {
@@ -9,20 +10,25 @@ interface Props {
 }
 
 export function DeletePhotoButton({ visitId, photoId }: Props) {
-  const [deleted, setDeleted] = useState(false);
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
-
-  if (deleted) return null;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!confirm('Delete this photo? This cannot be undone.')) return;
     setBusy(true);
-    const res = await fetch(`/api/visits/${visitId}/photos/${photoId}`, { method: 'DELETE' });
-    if (res.ok) {
-      setDeleted(true);
-    } else {
+    try {
+      const res = await fetch(`/api/visits/${visitId}/photos/${photoId}`, { method: 'DELETE' });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(`Error: ${data.error || 'Failed to delete photo'}`);
+        setBusy(false);
+      }
+    } catch (err) {
+      alert('Network error while deleting photo');
       setBusy(false);
     }
   };

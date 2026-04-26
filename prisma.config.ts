@@ -13,4 +13,5 @@ export default defineConfig({
       return new PrismaPg({ connectionString: env.DIRECT_URL ?? env.DATABASE_URL });
     },
   },
+  seed: 'node node_modules/ts-node/dist/bin.js --compiler-options "{\\"module\\":\\"CommonJS\\"}" prisma/seed.ts',
 });

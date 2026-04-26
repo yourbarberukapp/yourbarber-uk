@@ -103,14 +103,14 @@ export default function Home() {
               variants={fadeUp}
               className="flex flex-wrap gap-4"
             >
-              <Link href="/demo">
+              <Link href="/demo-hub">
                 <button className="btn-lime px-8 py-4 text-lg flex items-center gap-2">
-                  Get early access <ArrowRight size={18} />
+                  Launch Live Demo <ArrowRight size={18} />
                 </button>
               </Link>
-              <Link href="/login">
+              <Link href="/pricing">
                 <button className="px-8 py-4 text-lg border border-white/20 text-white hover:border-white/40 transition-colors font-barlow font-bold uppercase tracking-wide rounded-sm">
-                  See the app
+                  View Pricing
                 </button>
               </Link>
             </motion.div>
@@ -404,6 +404,74 @@ export default function Home() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* The 3-Screen System Section */}
+      <section className="py-24 lg:py-32 bg-[#0A0A0A]">
+        <div className="container mx-auto px-6 lg:px-12 text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={fadeUp}
+            className="mb-16"
+          >
+            <span className="badge-lime mb-4 inline-block">The Product</span>
+            <h2 className="font-barlow font-black text-[clamp(2.5rem,5vw,4rem)] uppercase leading-tight">
+              One platform.<br />
+              <span className="text-[#C8F135]">Three focused screens.</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-left">
+            <div className="space-y-6">
+              <div className="aspect-video relative rounded-lg overflow-hidden border border-white/10">
+                <Image src="/demo-kiosk.png" alt="Kiosk Mode" fill className="object-cover opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+                  <div className="font-barlow font-bold text-xs uppercase tracking-widest text-[#C8F135] mb-1">CUSTOMER</div>
+                  <div className="font-barlow font-black text-xl uppercase">Arrival Kiosk</div>
+                </div>
+              </div>
+              <p className="text-white/50 text-sm font-inter">Scanned on the wall. No app to download. Clients check themselves in so you don't have to stop cutting.</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="aspect-video relative rounded-lg overflow-hidden border border-white/10">
+                <Image src="/demo-barber.png" alt="Barber Mode" fill className="object-cover opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+                  <div className="font-barlow font-bold text-xs uppercase tracking-widest text-[#C8F135] mb-1">BARBER</div>
+                  <div className="font-barlow font-black text-xl uppercase">The Queue App</div>
+                </div>
+              </div>
+              <p className="text-white/50 text-sm font-inter">Personal pocket queue. Claim walk-ins, record cut photos in 30 seconds, and see visit history instantly.</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="aspect-video relative rounded-lg overflow-hidden border border-white/10">
+                <Image src="/demo-dashboard.png" alt="Owner Dashboard" fill className="object-cover opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+                  <div className="font-barlow font-bold text-xs uppercase tracking-widest text-[#C8F135] mb-1">OWNER</div>
+                  <div className="font-barlow font-black text-xl uppercase">Management Console</div>
+                </div>
+              </div>
+              <p className="text-white/50 text-sm font-inter">Full business visibility. Manage team permissions, bulk SMS marketing, and deep financial analytics.</p>
+            </div>
+          </div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            className="mt-20"
+          >
+            <Link href="/demo-hub">
+              <button className="btn-lime px-10 py-4 text-lg">
+                Try the Live Demo
+              </button>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
