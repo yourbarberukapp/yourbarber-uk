@@ -16,8 +16,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'yourbarber',
+  title: 'YourBarber',
   description: 'Barbershop client management',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'YourBarber',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
