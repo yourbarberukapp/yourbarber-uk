@@ -386,7 +386,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
 
               <button 
                 style={{ ...btnStyle, background: 'white', color: '#0A0A0A' }}
-                onClick={() => window.open('https://yourbarber.uk/trends', '_blank')}
+                onClick={() => window.open('/trends', '_blank')}
               >
                 Browse Hair Ideas
               </button>
