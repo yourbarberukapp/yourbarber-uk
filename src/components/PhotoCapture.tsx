@@ -2,13 +2,15 @@
 
 /**
  * PhotoCapture Component
- * Handles file upload and camera access for 4-angle haircut photos
- * Refined for premium dark aesthetic with Electric Lime accents.
+ * Handles file upload and camera access for 4-angle haircut photos.
+ * Updated for smooth automated sequence with head shape overlay and camera switching.
  */
 import { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, X, Check, Loader2 } from 'lucide-react';
+import { Camera, Upload, X, Check, Loader2, RefreshCw, Smartphone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const ANGLES = ['front', 'back', 'left', 'right'] as const;
+const ANGLES = ['back', 'left', 'right', 'front'] as const;
+type Angle = typeof ANGLES[number];
 
 function applyWatermark(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, shopName?: string) {
   const { width, height } = canvas;
@@ -67,7 +69,45 @@ async function watermarkFile(file: File, shopName?: string): Promise<File> {
     img.src = blobUrl;
   });
 }
-type Angle = typeof ANGLES[number];
+
+function HeadOverlay({ angle }: { angle: Angle }) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <svg
+        viewBox="0 0 200 200"
+        className="w-[70%] h-[70%] text-white/20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* Head Shape */}
+        <path d="M100 30 C 65 30, 45 60, 45 100 C 45 140, 65 170, 100 170 C 135 170, 155 140, 155 100 C 155 60, 135 30, 100 30 Z" />
+        
+        {/* Ears (Contextual) */}
+        <path d="M45 90 Q 35 90, 40 110" />
+        <path d="M155 90 Q 165 90, 160 110" />
+        
+        {/* Shoulders */}
+        <path d="M20 190 Q 50 160, 100 160 Q 150 160, 180 190" />
+
+        {/* Directional Indicator */}
+        <g className="text-[#C8F135]/40" strokeWidth="2">
+          {angle === 'front' && (
+             <path d="M85 85 L100 70 L115 85 M100 70 L100 130 M85 115 L100 130 L115 115" opacity="0.3" />
+          )}
+          {angle === 'back' && (
+             <path d="M100 80 L100 120 M80 100 L120 100" opacity="0.2" />
+          )}
+        </g>
+      </svg>
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/40 font-barlow font-black uppercase tracking-[0.3em] text-[10px]">
+        Align Head Here
+      </div>
+    </div>
+  );
+}
 
 export interface CapturedPhoto {
   angle: Angle;
@@ -85,6 +125,7 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
   const [photos, setPhotos] = useState<Partial<Record<Angle, CapturedPhoto>>>({});
   const [activeAngle, setActiveAngle] = useState<Angle | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   
@@ -92,7 +133,6 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Clean up URL object previews on unmount
   useEffect(() => {
     return () => {
       Object.values(photos).forEach(p => {
@@ -103,7 +143,6 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
     };
   }, [photos]);
 
-  // Assign stream to video once modal is rendered
   useEffect(() => {
     if (cameraActive && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
@@ -111,18 +150,28 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
   }, [cameraActive]);
 
   const startCamera = async (angle: Angle) => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: { facingMode: { ideal: facingMode } },
       });
       streamRef.current = stream;
       setActiveAngle(angle);
       setCameraActive(true);
+      if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (error) {
       console.error('Camera access denied:', error);
       setUploadError('Camera access denied. Use file upload instead.');
       setTimeout(() => setUploadError(''), 3000);
     }
+  };
+
+  const toggleFacingMode = () => {
+    const next = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(next);
+    if (activeAngle) startCamera(activeAngle);
   };
 
   const capturePhoto = () => {
@@ -147,7 +196,13 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
         [activeAngle]: { angle: activeAngle, file, preview }
       }));
 
-      stopCamera();
+      // Auto-sequence to next angle
+      const currentIndex = ANGLES.indexOf(activeAngle);
+      if (currentIndex < ANGLES.length - 1) {
+        setActiveAngle(ANGLES[currentIndex + 1]);
+      } else {
+        stopCamera();
+      }
     }, 'image/jpeg');
   };
 
@@ -228,17 +283,29 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
   return (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-semibold mb-4 text-white/40 uppercase tracking-wider font-barlow">
-          Haircut Photos (4 angles)
-        </label>
+        <div className="flex items-center justify-between mb-4">
+          <label className="block text-xs font-black text-white/40 uppercase tracking-[0.2em] font-barlow">
+            Haircut Records
+          </label>
+          <button 
+            onClick={() => startCamera(ANGLES[0])}
+            className="text-[10px] font-black uppercase tracking-widest text-[#C8F135] flex items-center gap-2 hover:bg-[#C8F135]/10 px-3 py-1.5 rounded-full transition-colors"
+          >
+            <Smartphone size={14} /> Start Sequence
+          </button>
+        </div>
+        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {ANGLES.map((angle) => {
             const photo = photos[angle];
             return (
               <div key={angle} className="relative group">
                 {photo?.preview ? (
-                  <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-[#C8F135] shadow-[0_0_15px_rgba(200,241,53,0.2)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative aspect-square rounded-2xl overflow-hidden border-2 border-[#C8F135] shadow-[0_0_20px_rgba(200,241,53,0.15)]"
+                  >
                     <img
                       src={photo.preview}
                       alt={angle}
@@ -246,51 +313,30 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
                     />
                     <button
                       onClick={() => removePhoto(angle)}
-                      className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-500 text-white p-1.5 rounded-full transition-colors z-10"
+                      className="absolute top-2 right-2 bg-black/60 hover:bg-red-500 text-white p-2 rounded-full transition-colors z-10"
                     >
                       <X size={14} />
                     </button>
-                    <div className="absolute bottom-1.5 right-1.5 bg-[#C8F135] text-[#0A0A0A] p-1 rounded-full">
-                      <Check size={12} strokeWidth={3} />
+                    <div className="absolute bottom-2 left-2 bg-[#C8F135] text-[#0A0A0A] px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter">
+                      {angle}
                     </div>
-                  </div>
+                  </motion.div>
                 ) : (
-                  <div className="aspect-square bg-[#111] border-2 border-white/5 rounded-lg flex flex-col items-center justify-center hover:border-[#C8F135]/30 transition-all duration-300 relative overflow-hidden">
-                    <div className="text-center space-y-1.5 z-0">
-                      <Camera size={20} className="mx-auto text-white/20 group-hover:text-white/40 transition-colors" />
-                      <p className="text-[10px] text-white/20 capitalize font-bold tracking-widest group-hover:text-white/40 transition-colors font-barlow">{angle}</p>
-                    </div>
-
-                    {/* Hidden file input */}
+                  <div className="aspect-square bg-[#111] border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center hover:border-[#C8F135]/30 transition-all duration-300 relative group cursor-pointer"
+                    onClick={() => startCamera(angle)}
+                  >
+                    <Camera size={24} className="text-white/10 group-hover:text-[#C8F135]/40 transition-colors" />
+                    <p className="text-[10px] text-white/10 capitalize font-black tracking-widest mt-2 group-hover:text-white/40 transition-colors font-barlow">{angle}</p>
+                    
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          handleFileUpload(angle, e.target.files[0]);
-                        }
+                        if (e.target.files?.[0]) handleFileUpload(angle, e.target.files[0]);
                       }}
                       className="hidden"
                       id={`file-${angle}`}
                     />
-
-                    {/* Buttons overlay on hover */}
-                    <div className="absolute inset-0 bg-[#0A0A0A]/80 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-lg flex flex-col items-center justify-center gap-2 p-2">
-                      <button
-                        onClick={() => startCamera(angle)}
-                        className="w-full bg-[#C8F135] text-[#0A0A0A] py-1.5 rounded text-[10px] font-bold uppercase flex items-center justify-center gap-1.5 hover:bg-[#d4ff3f] transition-colors"
-                      >
-                        <Camera size={12} />
-                        Camera
-                      </button>
-                      <button
-                        onClick={() => document.getElementById(`file-${angle}`)?.click()}
-                        className="w-full bg-white/10 text-white py-1.5 rounded text-[10px] font-bold uppercase flex items-center justify-center gap-1.5 hover:bg-white/20 transition-colors border border-white/10"
-                      >
-                        <Upload size={12} />
-                        Upload
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>
@@ -300,90 +346,127 @@ export function PhotoCapture({ visitId, onDone, shopName }: PhotoCaptureProps) {
       </div>
 
       {uploadError && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-xs font-medium">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold font-inter text-center">
           {uploadError}
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-4 pt-4">
         <button
           onClick={onDone}
           disabled={uploading}
-          className="flex-1 px-4 py-3 border border-white/10 rounded-sm text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-50 font-barlow"
+          className="flex-1 px-6 py-4 bg-white/5 border border-white/5 rounded-2xl text-white/40 text-xs font-black uppercase tracking-[0.2em] hover:bg-white/10 transition-colors disabled:opacity-50 font-barlow"
         >
-          Skip photos
+          Skip
         </button>
         <button
           onClick={handleUpload}
           disabled={uploading}
-          className="flex-1 btn-lime px-4 py-3 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
+          className="flex-1 bg-[#C8F135] text-black px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 disabled:opacity-50 shadow-[0_10px_30px_rgba(200,241,53,0.15)]"
         >
           {uploading ? (
             <>
-              <Loader2 size={14} className="animate-spin" />
-              Saving...
+              <Loader2 size={16} className="animate-spin" />
+              Uploading...
             </>
           ) : (
             <>
-              {capturedCount > 0 ? `Save ${capturedCount} photo${capturedCount > 1 ? 's' : ''}` : 'Done'}
-              <Check size={14} />
+              {capturedCount > 0 ? `Save ${capturedCount} Photos` : 'Finish Visit'}
+              <Check size={16} strokeWidth={3} />
             </>
           )}
         </button>
       </div>
 
-      {/* Camera Modal */}
-      {cameraActive && activeAngle && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4">
-          <div className="bg-[#111] rounded-lg overflow-hidden max-w-xl w-full border border-white/10 shadow-2xl">
-            <div className="relative bg-black aspect-video sm:aspect-[4/3]">
+      {/* Modern Fullscreen Camera Modal */}
+      <AnimatePresence>
+        {cameraActive && activeAngle && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black z-[100] flex flex-col"
+          >
+            {/* Header */}
+            <div className="p-6 flex items-center justify-between z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#C8F135]">
+                   <Camera size={20} />
+                </div>
+                <div>
+                  <h3 className="text-white font-barlow font-black text-xl uppercase tracking-tight leading-none">
+                    {activeAngle} <span className="text-[#C8F135]">View</span>
+                  </h3>
+                  <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mt-1">
+                    Step {ANGLES.indexOf(activeAngle) + 1} of 4
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={stopCamera}
+                className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Viewport */}
+            <div className="flex-1 relative bg-[#050505] overflow-hidden">
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 className="w-full h-full object-cover"
+                style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
               />
               <canvas ref={canvasRef} className="hidden" />
               
-              {/* Guides */}
-              <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none flex items-center justify-center">
-                 <div className="w-full h-full border border-white/20 rounded-lg" />
-              </div>
+              {/* Head Silhouette Overlay */}
+              <HeadOverlay angle={activeAngle} />
 
-              <button 
-                onClick={stopCamera}
-                className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black/80 transition-colors"
-              >
-                <X size={20} />
-              </button>
+              {/* Angle Progress Bar */}
+              <div className="absolute top-0 left-0 right-0 h-1 flex gap-1 px-1">
+                {ANGLES.map((a, i) => (
+                  <div 
+                    key={a}
+                    className={`h-full flex-1 rounded-full transition-all duration-500 ${
+                      ANGLES.indexOf(activeAngle) > i ? 'bg-[#C8F135]' : 
+                      activeAngle === a ? 'bg-[#C8F135] animate-pulse' : 'bg-white/10'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="text-center">
-                <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-1 font-barlow">Positioning</p>
-                <h3 className="text-xl font-barlow font-bold text-white capitalize tracking-wide">{activeAngle} View</h3>
-              </div>
+            {/* Controls */}
+            <div className="p-8 pb-12 bg-black flex flex-col items-center gap-8">
+              <div className="flex items-center justify-center gap-12 w-full max-w-xs">
+                <button 
+                  onClick={toggleFacingMode}
+                  className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                >
+                  <RefreshCw size={24} />
+                </button>
 
-              <div className="flex gap-4">
                 <button
                   onClick={capturePhoto}
-                  className="flex-[2] bg-[#C8F135] text-[#0A0A0A] px-6 py-4 rounded-sm font-black uppercase tracking-widest hover:bg-[#d4ff3f] transition-all flex items-center justify-center gap-2 text-sm shadow-[0_0_20px_rgba(200,241,53,0.3)]"
+                  className="w-24 h-24 rounded-full border-4 border-[#C8F135] p-1 group active:scale-95 transition-transform"
                 >
-                  <Camera size={20} />
-                  Capture Photo
+                  <div className="w-full h-full rounded-full bg-[#C8F135] flex items-center justify-center group-hover:scale-95 transition-transform">
+                    <div className="w-4 h-4 rounded-full bg-black/20" />
+                  </div>
                 </button>
-                <button
-                  onClick={stopCamera}
-                  className="flex-1 bg-white/5 text-white/60 px-4 py-4 rounded-sm font-bold uppercase tracking-widest hover:bg-white/10 transition-colors border border-white/10 text-xs font-barlow"
-                >
-                  Cancel
-                </button>
+
+                <div className="w-14 h-14" /> {/* Spacer */}
               </div>
+
+              <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.3em] font-barlow">
+                Watermark applied automatically
+              </p>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-
