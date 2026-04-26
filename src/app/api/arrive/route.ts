@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   // Lookup call (first step) — just identify the customer, don't create WalkIn yet
   if (!isFinal) {
     if (!customer) return NextResponse.json({ needsName: true });
-    return NextResponse.json({ proceedToStyle: true });
+    return NextResponse.json({ proceedToStyle: true, customerName: customer.name });
   }
 
   // Don't double-add if already on the active list today

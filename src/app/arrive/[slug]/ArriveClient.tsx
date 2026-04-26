@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Scissors, ChevronRight, Check, Loader2 } from 'lucide-react';
 
-type Step = 'phone' | 'name' | 'style' | 'done';
+type Step = 'phone' | 'name' | 'welcome_back' | 'style' | 'done';
 
 interface ShopStyle {
   name: string;
@@ -34,6 +34,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ customerName: string | null; position: number; alreadyWaiting?: boolean } | null>(null);
+  const [returningUser, setReturningUser] = useState<{ name: string } | null>(null);
 
   // Styles sorted by category order
   const sortedStyles = [...shopStyles].sort((a, b) => {
@@ -60,11 +61,13 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
       const data = await res.json();
       if (data.needsName) {
         setStep('name');
-      } else if (data.customerName !== undefined) {
+      } else if (data.customerName && data.alreadyWaiting) {
         setResult(data);
         setStep('done');
       } else if (data.proceedToStyle) {
-        setStep('style');
+        // Find customer name if possible (the API should return it)
+        setReturningUser({ name: data.customerName || 'Friend' });
+        setStep('welcome_back');
       } else {
         setError('Something went wrong. Please try again.');
       }
@@ -73,6 +76,10 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
     } finally {
       setLoading(false);
     }
+  }
+
+  function skipToStyle() {
+    setStep('style');
   }
 
   function submitName() {
@@ -187,12 +194,41 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
             </div>
           )}
 
+          {/* Step: welcome_back (returning customer) */}
+          {step === 'welcome_back' && returningUser && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center' }}>
+              <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
+                Welcome back, <span className="text-[#C8F135]">{returningUser.name}</span>!
+              </p>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.875rem', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-inter, sans-serif)' }}>
+                Good to see you again. Tap below to check in instantly, or tell us if you want something new today.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button style={btnStyle} onClick={submitFinal} disabled={loading}>
+                  {loading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <><Check size={16} /> Quick Check-in</>}
+                </button>
+                <button 
+                  style={{ ...btnStyle, background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }} 
+                  onClick={skipToStyle}
+                >
+                  I want a new style
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Step: name (new customer) */}
           {step === 'name' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-inter, sans-serif)' }}>
-                First time here — what&apos;s your name?
-              </p>
+              <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
+                  Welcome!
+                </p>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.875rem', margin: '0.25rem 0 0', fontFamily: 'var(--font-inter, sans-serif)' }}>
+                  First time here? We just need your name to start.
+                </p>
+              </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', marginBottom: '0.625rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
                   Your name
@@ -224,10 +260,13 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
 
               {sortedStyles.length > 0 ? (
                 <>
-                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-inter, sans-serif)' }}>
-                    Tap to select — pick as many as you like.
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Take a seat & grab a drink.
                   </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', margin: '0.25rem 0 0', lineHeight: 1.4, fontFamily: 'var(--font-inter, sans-serif)' }}>
+                    While you wait, want to let us know what you&apos;re after today?
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
                     {sortedStyles.map(style => {
                       const active = selectedStyles.includes(style.name);
                       return (
@@ -294,59 +333,63 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
 
           {/* Step: done */}
           {step === 'done' && result && (
-            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
               <div style={{
-                width: 56, height: 56, borderRadius: '50%',
+                width: 64, height: 64, borderRadius: '50%',
                 background: 'rgba(200,241,53,0.12)', border: '2px solid rgba(200,241,53,0.3)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 20px rgba(200,241,53,0.1)',
               }}>
-                <Check size={24} color="#C8F135" />
+                <Check size={28} color="#C8F135" />
               </div>
               <div>
                 <h2 style={{
-                  fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900, fontSize: '1.5rem',
-                  textTransform: 'uppercase', color: 'white', margin: 0,
+                  fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900, fontSize: '1.75rem',
+                  textTransform: 'uppercase', color: 'white', margin: 0, lineHeight: 1.1
                 }}>
-                  {result.alreadyWaiting ? 'Already checked in' : "You're on the list"}
+                  {result.alreadyWaiting ? 'Still waiting?' : "You're all set."}
                 </h2>
-                {result.customerName && (
-                  <p style={{ color: '#C8F135', fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 700, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.375rem' }}>
-                    {result.customerName}
-                  </p>
-                )}
-                {selectedStyles.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.375rem', marginTop: '0.625rem' }}>
-                    {selectedStyles.map(s => (
-                      <span key={s} style={{
-                        fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase',
-                        background: 'rgba(200,241,53,0.08)', color: 'rgba(200,241,53,0.7)',
-                        border: '1px solid rgba(200,241,53,0.2)', borderRadius: 4,
-                        padding: '0.15rem 0.5rem',
-                        fontFamily: 'var(--font-barlow, sans-serif)',
-                      }}>
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: '0.5rem' }}>
+                  {result.customerName || 'Friend'}, you are
+                </p>
               </div>
+
               <div style={{
                 background: 'rgba(200,241,53,0.06)', border: '1px solid rgba(200,241,53,0.15)',
-                borderRadius: 10, padding: '1rem 1.5rem', width: '100%',
+                borderRadius: 16, padding: '1.5rem', width: '100%',
               }}>
-                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'var(--font-barlow, sans-serif)', margin: '0 0 0.25rem' }}>
-                  Position
-                </p>
-                <p style={{ color: '#C8F135', fontSize: '2.5rem', fontWeight: 900, fontFamily: 'var(--font-barlow, sans-serif)', margin: 0, lineHeight: 1 }}>
+                <p style={{ color: '#C8F135', fontSize: '3.5rem', fontWeight: 900, fontFamily: 'var(--font-barlow, sans-serif)', margin: 0, lineHeight: 1 }}>
                   {ordinal(result.position)}
                 </p>
-                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)', margin: '0.25rem 0 0' }}>
-                  in the queue
+                <p style={{ color: 'white', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'var(--font-barlow, sans-serif)', marginTop: '0.5rem' }}>
+                  In the queue
                 </p>
               </div>
-              <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)', lineHeight: 1.5 }}>
-                Take a seat — the barber will call you when it&apos;s your turn.
-              </p>
+
+              <div className="bg-white/5 border border-white/10 rounded-xl p-5 w-full text-left">
+                <p className="text-white font-barlow font-black text-sm uppercase tracking-tight mb-2">Next steps:</p>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3 text-xs text-white/50 font-inter">
+                    <div className="w-4 h-4 rounded-full bg-[#C8F135] text-[#0A0A0A] flex-shrink-0 flex items-center justify-center font-bold text-[10px]">1</div>
+                    <span>Grab a complimentary drink from the bar.</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-xs text-white/50 font-inter">
+                    <div className="w-4 h-4 rounded-full bg-[#C8F135] text-[#0A0A0A] flex-shrink-0 flex items-center justify-center font-bold text-[10px]">2</div>
+                    <span>Take a seat — we&apos;ll call you when it&apos;s time.</span>
+                  </li>
+                  <li className="flex items-start gap-3 text-xs text-white/50 font-inter">
+                    <div className="w-4 h-4 rounded-full bg-[#C8F135] text-[#0A0A0A] flex-shrink-0 flex items-center justify-center font-bold text-[10px]">3</div>
+                    <span className="text-[#C8F135]/80 font-bold">Browse hair ideas & trend reports while you wait.</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button 
+                style={{ ...btnStyle, background: 'white', color: '#0A0A0A' }}
+                onClick={() => window.open('https://yourbarber.uk/trends', '_blank')}
+              >
+                Browse Hair Ideas
+              </button>
             </div>
           )}
         </div>
