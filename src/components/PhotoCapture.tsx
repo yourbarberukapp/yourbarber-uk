@@ -9,6 +9,48 @@ import { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, X, Check, Loader2 } from 'lucide-react';
 
 const ANGLES = ['front', 'back', 'left', 'right'] as const;
+
+function applyWatermark(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+  const { width, height } = canvas;
+  const fontSize = Math.max(16, Math.round(width * 0.038));
+  const padding = Math.round(fontSize * 0.5);
+  const text = 'YOURBARBER';
+
+  ctx.font = `900 ${fontSize}px 'Arial Black', 'Impact', sans-serif`;
+  ctx.textBaseline = 'bottom';
+  const textWidth = ctx.measureText(text).width;
+
+  const x = width - textWidth - padding * 2;
+  const y = height - padding;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(x - padding, y - fontSize - padding, textWidth + padding * 2, fontSize + padding * 1.5);
+
+  ctx.fillStyle = 'rgba(200,241,53,0.9)';
+  ctx.fillText(text, x, y);
+}
+
+async function watermarkFile(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const blobUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      applyWatermark(canvas, ctx);
+      URL.revokeObjectURL(blobUrl);
+      canvas.toBlob(
+        (blob) => resolve(new File([blob!], file.name, { type: 'image/jpeg' })),
+        'image/jpeg',
+        0.92
+      );
+    };
+    img.src = blobUrl;
+  });
+}
 type Angle = typeof ANGLES[number];
 
 export interface CapturedPhoto {
@@ -75,6 +117,7 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
     canvasRef.current.width = videoRef.current.videoWidth;
     canvasRef.current.height = videoRef.current.videoHeight;
     context.drawImage(videoRef.current, 0, 0);
+    applyWatermark(canvasRef.current, context);
 
     canvasRef.current.toBlob((blob) => {
       if (!blob || !activeAngle) return;
@@ -100,11 +143,12 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
     setActiveAngle(null);
   };
 
-  const handleFileUpload = (angle: Angle, file: File) => {
-    const preview = URL.createObjectURL(file);
+  const handleFileUpload = async (angle: Angle, file: File) => {
+    const marked = await watermarkFile(file);
+    const preview = URL.createObjectURL(marked);
     setPhotos(prev => ({
       ...prev,
-      [angle]: { angle, file, preview }
+      [angle]: { angle, file: marked, preview }
     }));
   };
 

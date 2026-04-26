@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Check, X, Minus, ArrowLeft, Scissors, Calendar } from 'lucide-react';
+import { DeletePhotoButton } from './DeletePhotoButton';
 
 type CutDetails = {
   style?: string[];
@@ -257,6 +258,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                   {photos.slice(0, 4).map((photo, _i) => (
                     <div key={photo.id} style={{ position: 'relative', aspectRatio: photos.length <= 2 ? '4/3' : '1', background: '#1a1a1a' }}>
                       <Image src={photo.url} alt={photo.angle} fill style={{ objectFit: 'cover' }} unoptimized />
+                      <DeletePhotoButton visitId={visit.id} photoId={photo.id} />
                       <span style={{
                         position: 'absolute', bottom: 4, left: 4,
                         fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
