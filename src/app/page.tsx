@@ -103,7 +103,7 @@ export default function Home() {
               variants={fadeUp}
               className="flex flex-wrap gap-4"
             >
-              <Link href="/pricing">
+              <Link href="/demo">
                 <button className="btn-lime px-8 py-4 text-lg flex items-center gap-2">
                   Get early access <ArrowRight size={18} />
                 </button>
@@ -122,7 +122,7 @@ export default function Home() {
               variants={fadeUp}
               className="mt-12 flex flex-wrap items-center gap-6 text-sm text-white/50"
             >
-              {["No booking system needed", "Works on iPad & iPhone", "SMS via Twilio"].map((item) => (
+              {["No booking system needed", "Works on iPad & iPhone", "Automatic SMS reminders"].map((item) => (
                 <span key={item} className="flex items-center gap-2">
                   <Check size={14} className="text-[#C8F135]" />
                   {item}
@@ -296,7 +296,7 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-24 lg:py-32 bg-[#0f0f0f]">
+      <section id="features" className="py-24 lg:py-32 bg-[#0f0f0f]">
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial="hidden"
@@ -472,12 +472,12 @@ export default function Home() {
               Join the early access programme. We're onboarding UK barbershops now.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/pricing">
+              <Link href="/demo">
                 <button className="bg-[#0A0A0A] text-white px-10 py-4 text-lg rounded-sm font-barlow font-bold uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors flex items-center gap-2">
                   Get started <ArrowRight size={18} />
                 </button>
               </Link>
-              <Link href="/features">
+              <Link href="/#features">
                 <button className="border-2 border-[#0A0A0A]/30 text-[#0A0A0A] px-10 py-4 text-lg rounded-sm font-barlow font-bold uppercase tracking-wide hover:border-[#0A0A0A]/60 transition-colors">
                   See all features
                 </button>

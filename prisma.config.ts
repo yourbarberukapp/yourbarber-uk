@@ -10,7 +10,7 @@ export default defineConfig({
   },
   migrate: {
     async adapter(env) {
-      return new PrismaPg({ connectionString: env.DATABASE_URL });
+      return new PrismaPg({ connectionString: env.DIRECT_URL ?? env.DATABASE_URL });
     },
   },
 });

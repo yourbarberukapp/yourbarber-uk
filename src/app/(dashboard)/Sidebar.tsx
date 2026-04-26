@@ -11,6 +11,7 @@ interface Props {
 }
 
 const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: Globe },
   { href: '/appointments', label: 'Appointments', icon: Calendar },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/reminders', label: 'Reminders', icon: Bell },

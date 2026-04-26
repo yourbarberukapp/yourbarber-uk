@@ -17,8 +17,8 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { href: "/features", label: "Features" },
-    { href: "/pricing", label: "Pricing" },
+    { href: "/#features", label: "Features" },
+    { href: "/demo", label: "Book a demo" },
   ];
 
   return (
@@ -59,9 +59,9 @@ export default function Navbar() {
               Sign in
             </span>
           </Link>
-          <Link href="/pricing">
+          <Link href="/demo">
             <button className="btn-lime px-5 py-2 text-sm">
-              Get access
+              Book a demo
             </button>
           </Link>
         </div>
@@ -94,9 +94,9 @@ export default function Navbar() {
                 Sign in
               </span>
             </Link>
-            <Link href="/pricing">
+            <Link href="/demo">
               <button className="btn-lime px-5 py-3 text-sm w-full" onClick={() => setMobileOpen(false)}>
-                Get access
+                Book a demo
               </button>
             </Link>
           </div>

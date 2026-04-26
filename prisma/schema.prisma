@@ -244,3 +244,12 @@ model Appointment {
   @@index([customerId, scheduledAt])
   @@index([barberId, scheduledAt])
 }
+
+model DemoLead {
+  id        String   @id @default(cuid())
+  name      String
+  shopName  String
+  phone     String
+  email     String
+  createdAt DateTime @default(now())
+}

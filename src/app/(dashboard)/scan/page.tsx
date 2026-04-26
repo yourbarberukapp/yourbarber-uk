@@ -14,7 +14,7 @@ export default async function ScanPage() {
     <div className="min-h-screen bg-[#0A0A0A] p-8">
       <div className="max-w-md mx-auto">
         <Link 
-          href="/" 
+          href="/dashboard" 
           className="inline-flex items-center gap-2 text-white/30 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft size={16} />

@@ -30,7 +30,9 @@ export const authConfig = {
                                nextUrl.pathname.startsWith('/shop');
       if (isCustomerPortal) return true;
 
-      const isOnDashboard = nextUrl.pathname.startsWith('/customers') ||
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard') ||
+                            nextUrl.pathname.startsWith('/appointments') ||
+                            nextUrl.pathname.startsWith('/customers') ||
                             nextUrl.pathname.startsWith('/reminders') ||
                             nextUrl.pathname.startsWith('/settings') ||
                             nextUrl.pathname.startsWith('/team');
@@ -41,7 +43,7 @@ export const authConfig = {
         return false; // Redirect unauthenticated users to login page
       } else if (isOnLoginPage) {
         if (isLoggedIn) {
-          return Response.redirect(new URL('/customers', nextUrl));
+          return Response.redirect(new URL('/dashboard', nextUrl));
         }
         return true;
       }
