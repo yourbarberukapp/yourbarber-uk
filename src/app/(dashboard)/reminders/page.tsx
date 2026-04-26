@@ -73,7 +73,6 @@ export default async function RemindersPage() {
         <h2 className="font-barlow font-bold text-xs uppercase tracking-widest text-white/35 mb-4">
           SMS due — {due.length} customer{due.length !== 1 ? 's' : ''}
         </h2>
-        </h2>
         {isRestricted ? (
           <div className="bg-[#111] border border-white/5 rounded-2xl p-10 text-center flex flex-col items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/20">
