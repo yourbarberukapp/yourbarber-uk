@@ -21,7 +21,20 @@ export function TeamClient({ barbers: initial, currentBarberId }: Props) {
       body: JSON.stringify({ name, email, password, role: 'barber' }),
     });
     const data = await res.json();
-    if (!res.ok) { setError(data.error ?? 'Error'); setSaving(false); return; }
+    if (!res.ok) { 
+      let errorMsg = 'Error';
+      if (typeof data.error === 'string') {
+        errorMsg = data.error;
+      } else if (data.error && typeof data.error === 'object') {
+        // Handle Zod flattened error object
+        const fieldErrors = Object.values(data.error.fieldErrors || {}).flat();
+        const formErrors = data.error.formErrors || [];
+        errorMsg = [...formErrors, ...fieldErrors].join(', ') || 'Validation error';
+      }
+      setError(errorMsg); 
+      setSaving(false); 
+      return; 
+    }
     setBarbers(prev => [...prev, { id: data.id, name, email, role: 'barber' }]);
     setName(''); setEmail(''); setPassword(''); setShowForm(false); setSaving(false);
   }

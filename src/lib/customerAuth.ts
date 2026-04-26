@@ -2,7 +2,8 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = 'yb-customer-session';
-const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET ?? 'fallback-dev-secret');
+if (!process.env.NEXTAUTH_SECRET) throw new Error('NEXTAUTH_SECRET is not set');
+const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 export async function signCustomerToken(customerId: string): Promise<string> {
   return new SignJWT({ customerId })

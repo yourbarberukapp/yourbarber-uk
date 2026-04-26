@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
+import { sendSms } from '@/lib/vonage';
 import { buildSmsMessage } from '@/lib/reminders';
 
 const sendSchema = z.object({
@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
         barberName: recentBarberName,
         accessCode: customer.accessCode,
       });
-      const { sid, status } = await sendSms(customer.phone, message);
+      const { messageId, status } = await sendSms(customer.phone, message);
       await db.smsLog.create({
-        data: { shopId, customerId: customer.id, message, twilioSid: sid, status },
+        data: { shopId, customerId: customer.id, message, twilioSid: messageId, status },
       });
       return { customerId: customer.id };
     })

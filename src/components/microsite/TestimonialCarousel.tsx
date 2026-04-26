@@ -2,17 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Star, Quote } from 'lucide-react';
-
-type Testimonial = {
-  id: string;
-  rating: string;
-  comment: string | null;
-  customer: {
-    name: string | null;
-  };
-  createdAt: Date;
-};
+import { Star } from 'lucide-react';
 
 export default function TestimonialCarousel({ testimonials }: { testimonials: any[] }) {
   const [index, setIndex] = useState(0);

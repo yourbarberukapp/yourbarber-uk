@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, User, Calendar as CalendarIcon, MoreVertical, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Calendar as CalendarIcon, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface Props {
@@ -34,7 +34,7 @@ function formatDate(date: Date, format: 'MMM d' | 'MMM d, yyyy' | 'EEE' | 'd' | 
   return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function AppointmentGrid({ initialAppointments, barbers, weekStart, session }: Props) {
+export default function AppointmentGrid({ initialAppointments, barbers, weekStart }: Props) {
   const router = useRouter();
   const startDate = new Date(weekStart);
   const days = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));

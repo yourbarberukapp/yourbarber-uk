@@ -33,13 +33,13 @@ export default function QRScanner() {
         } else {
           setError('Invalid QR Code. Please scan a YourBarber customer QR.');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to process QR code.');
       }
     }
 
-    function onScanFailure(error: any) {
-      // This is called many times per second while scanning, so we don't log it
+    function onScanFailure(_error: unknown) {
+      // Called many times per second while scanning — intentionally ignored
     }
 
     return () => {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
+import { sendSms } from '@/lib/vonage';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   // Normally we would secure this with an API key if called from cron,
@@ -48,13 +48,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   let smsSent = false;
   if (appointment.customer.phone) {
     try {
-      const { sid, status } = await sendSms(appointment.customer.phone, message);
+      const { messageId, status } = await sendSms(appointment.customer.phone, message);
       await db.smsLog.create({
         data: {
           shopId: appointment.shopId,
           customerId: appointment.customerId,
           message,
-          twilioSid: sid,
+          twilioSid: messageId,
           status,
         },
       });

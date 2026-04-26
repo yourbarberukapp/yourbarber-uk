@@ -5,7 +5,7 @@ import { ChevronRight, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-export default function StickyBookingBar({ shopSlug, shopName }: { shopSlug: string; shopName: string }) {
+export default function StickyBookingBar({ shopSlug }: { shopSlug: string; shopName?: string }) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {

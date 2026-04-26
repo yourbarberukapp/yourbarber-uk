@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
+import { sendSms } from '@/lib/vonage';
 
 const RESOLUTIONS = ['same_barber_fix', 'different_barber', 'book_return', 'owner_contact', 'log_only'] as const;
 
@@ -108,13 +108,13 @@ export async function PATCH(
   });
   if (customerSms && feedback.customer.phone) {
     try {
-      const { sid, status: smsStatus } = await sendSms(feedback.customer.phone, customerSms);
+      const { messageId, status: smsStatus } = await sendSms(feedback.customer.phone, customerSms);
       await db.smsLog.create({
         data: {
           shopId,
           customerId: feedback.customer.id,
           message: customerSms,
-          twilioSid: sid,
+          twilioSid: messageId,
           status: smsStatus,
         },
       });

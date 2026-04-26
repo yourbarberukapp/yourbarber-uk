@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (role !== 'owner') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const parsed = inviteSchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues.map(i => i.message).join(', ') }, { status: 400 });
 
   const existing = await db.barber.findFirst({ where: { email: parsed.data.email, shopId } });
   if (existing) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isDueForReminder, buildSmsMessage } from '@/lib/reminders';
-import { sendSms } from '@/lib/twilio';
+import { sendSms } from '@/lib/vonage';
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
       try {
         const barberName = customer.visits[0]?.barber?.name ?? shop.name;
         const message = buildSmsMessage({ name: customer.name, shopName: shop.name, barberName, accessCode: customer.accessCode });
-        const { sid, status } = await sendSms(customer.phone, message);
-        await db.smsLog.create({ data: { shopId: shop.id, customerId: customer.id, message, twilioSid: sid, status } });
+        const { messageId, status } = await sendSms(customer.phone, message);
+        await db.smsLog.create({ data: { shopId: shop.id, customerId: customer.id, message, twilioSid: messageId, status } });
         totalSent++;
       } catch { totalFailed++; }
     }

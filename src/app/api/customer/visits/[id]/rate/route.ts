@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getCustomerSession } from '@/lib/customerAuth';
-import { sendSms } from '@/lib/twilio';
+import { sendSms } from '@/lib/vonage';
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const session = await getCustomerSession();

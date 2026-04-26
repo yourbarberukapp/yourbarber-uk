@@ -53,30 +53,20 @@ export default function BookingClient({ shop, services, barbers, initialCustomer
 
   // Fetch slots when date, barber or service changes
   useEffect(() => {
-    if (step === 3 && selectedService) {
-      fetchSlots();
-    }
-  }, [selectedDate, selectedBarber, selectedService, step]);
-
-  async function fetchSlots() {
+    if (step !== 3 || !selectedService) return;
     setLoadingSlots(true);
-    try {
-      const params = new URLSearchParams({
-        shopId: shop.id,
-        date: formatDate(selectedDate, 'yyyy-MM-dd'),
-        serviceId: selectedService.id,
-      });
-      if (selectedBarber) params.append('barberId', selectedBarber.id);
-
-      const res = await fetch(`/api/appointments/available?${params.toString()}`);
-      const data = await res.json();
-      setAvailableSlots(data.slots || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingSlots(false);
-    }
-  }
+    const params = new URLSearchParams({
+      shopId: shop.id,
+      date: formatDate(selectedDate, 'yyyy-MM-dd'),
+      serviceId: selectedService.id,
+    });
+    if (selectedBarber) params.append('barberId', selectedBarber.id);
+    fetch(`/api/appointments/available?${params.toString()}`)
+      .then(r => r.json())
+      .then(data => setAvailableSlots(data.slots || []))
+      .catch(() => {})
+      .finally(() => setLoadingSlots(false));
+  }, [selectedDate, selectedBarber, selectedService, step, shop.id]);
 
   // If not logged in, show login CTA
   if (!initialCustomer) {
@@ -120,7 +110,7 @@ export default function BookingClient({ shop, services, barbers, initialCustomer
         const data = await res.json();
         alert(data.error || 'Failed to book');
       }
-    } catch (err) {
+    } catch {
       alert('An error occurred');
     } finally {
       setIsSubmitting(false);
@@ -263,7 +253,7 @@ export default function BookingClient({ shop, services, barbers, initialCustomer
                   }`}
                 >
                   {barber.photoUrl ? (
-                    <img src={barber.photoUrl} className="w-12 h-12 rounded-full object-cover" />
+                    <img src={barber.photoUrl} alt={barber.name} className="w-12 h-12 rounded-full object-cover" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-[#C8F135]/10 flex items-center justify-center text-[#C8F135] font-barlow font-black">
                       {barber.name[0]}

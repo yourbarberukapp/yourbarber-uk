@@ -27,6 +27,7 @@ export function CustomerSearch({ onResults, onLoading }: Props) {
       fetch(url).then(r => r.json()).then(data => { onResults(data); onLoading(false); });
     }, query.length < 2 ? 0 : 250);
     return () => clearTimeout(debounceRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   return (

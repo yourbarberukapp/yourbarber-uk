@@ -31,7 +31,6 @@ export function PhotoCapture({ visitId, onDone }: PhotoCaptureProps) {
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clean up URL object previews on unmount
   useEffect(() => {

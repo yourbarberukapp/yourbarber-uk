@@ -1,6 +1,4 @@
 import { db } from '@/lib/db';
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import StartCutButton from './StartCutButton';
 
 export default async function CheckInPage({ params }: { params: { qrToken: string } }) {

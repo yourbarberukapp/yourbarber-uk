@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scissors, Clock, MapPin, ChevronDown, ChevronUp, Star, X, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Scissors, ChevronDown, ChevronUp, Star, X, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },

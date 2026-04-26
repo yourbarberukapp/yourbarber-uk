@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Scissors, Clock, MapPin, ChevronDown, ChevronUp, Star, X, Calendar, Settings, Plus } from 'lucide-react';
+import { Scissors, Clock, MapPin, X, Calendar, Settings, Plus } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 const fadeUp = {
@@ -12,15 +12,6 @@ const fadeUp = {
     opacity: 1, y: 0,
     transition: { duration: 0.4, delay: i * 0.08, ease: 'easeOut' as const },
   }),
-};
-
-type CutDetails = {
-  style: string[];
-  sidesGrade: string;
-  topLength: string;
-  beard: string;
-  products: string[];
-  techniques: string[];
 };
 
 type Visit = {
@@ -104,7 +95,7 @@ export default function CustomerPortal() {
       } else {
         alert('Failed to generate Check-In QR');
       }
-    } catch (e) {
+    } catch {
       alert('Error generating QR');
     } finally {
       setGeneratingQr(false);

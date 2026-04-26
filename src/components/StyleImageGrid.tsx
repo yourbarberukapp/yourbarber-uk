@@ -18,7 +18,7 @@ function isSelected(selected: string | string[], name: string) {
   return Array.isArray(selected) ? selected.includes(name) : selected === name;
 }
 
-export function StyleImageGrid({ options, selected, multi = false, onToggle }: Props) {
+export function StyleImageGrid({ options, selected, onToggle }: Props) {
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
 
   function markError(name: string) {

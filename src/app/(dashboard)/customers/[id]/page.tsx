@@ -243,7 +243,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                   gap: 2,
                   borderBottom: hasContent ? '1px solid rgba(255,255,255,0.06)' : 'none',
                 }}>
-                  {photos.slice(0, 4).map((photo, i) => (
+                  {photos.slice(0, 4).map((photo, _i) => (
                     <div key={photo.id} style={{ position: 'relative', aspectRatio: photos.length <= 2 ? '4/3' : '1', background: '#1a1a1a' }}>
                       <Image src={photo.url} alt={photo.angle} fill style={{ objectFit: 'cover' }} unoptimized />
                       <span style={{

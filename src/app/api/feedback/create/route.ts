@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCustomerSession } from '@/lib/customerAuth';
-import { sendSms } from '@/lib/twilio';
+import { sendSms } from '@/lib/vonage';
 
 const createSchema = z.object({
   customerId: z.string(),

@@ -24,6 +24,7 @@ export async function GET() {
           notes: true,
           cutDetails: true,
           recommendation: true,
+          cutRating: true,
           barber: { select: { name: true } },
           photos: { select: { id: true, url: true, angle: true } },
         },

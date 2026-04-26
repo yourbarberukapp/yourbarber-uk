@@ -47,7 +47,7 @@ export default function PreferencesPage() {
       if (res.ok) {
         alert('Preferences saved successfully!');
       }
-    } catch (e) {
+    } catch {
       alert('Error saving preferences');
     } finally {
       setSaving(false);
