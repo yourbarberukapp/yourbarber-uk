@@ -36,8 +36,11 @@ scratch/
 manus/
 *.webp
 *.png
-!public/*.png
-!public/*.webp
+!public/**/*.png
+!public/**/*.webp
+!public/**/*.jpg
+!public/**/*.jpeg
+!public/**/*.svg
 
 # vercel
 .vercel
