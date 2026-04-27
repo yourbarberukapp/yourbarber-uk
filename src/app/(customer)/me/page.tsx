@@ -3,8 +3,9 @@ import { db } from '@/lib/db';
 import { generateReadUrl } from '@/lib/s3';
 import { getCustomerSession } from '@/lib/customerAuth';
 import Image from 'next/image';
-import { Scissors, LogOut } from 'lucide-react';
+import { Scissors, LogOut, Users, Plus, Trash2 } from 'lucide-react';
 import { RateVisit } from './RateVisit';
+import { FamilyManager } from './FamilyManager';
 
 const lime = '#C8F135';
 const ANGLE_ORDER = ['front', 'back', 'left', 'right', 'top'];
@@ -65,14 +66,49 @@ export default async function MyPassportPage() {
           cutDetails: true,
           recommendation: true,
           barber: { select: { name: true } },
+          familyMember: { select: { name: true } },
           photos: { orderBy: { createdAt: 'asc' } },
           feedbacks: { select: { id: true, rating: true }, take: 1 },
         },
       },
+      familyMembers: {
+        select: { id: true, name: true }
+      },
+      familySharings: {
+        select: { id: true, sharedWithPhone: true }
+      },
+      shopId: true,
     },
   });
 
   if (!customer) redirect('/me/login');
+
+  // Fetch family members shared WITH this customer
+  const sharedSharings = await db.familySharing.findMany({
+    where: { 
+      sharedWithPhone: customer.phone,
+      owner: { shopId: customer.shopId }
+    },
+    include: {
+      owner: {
+        select: {
+          name: true,
+          phone: true,
+          familyMembers: { select: { id: true, name: true } }
+        }
+      }
+    }
+  });
+
+  const sharedMembers = sharedSharings.flatMap(s => 
+    s.owner.familyMembers.map(m => ({
+      ...m,
+      isShared: true,
+      sharedBy: s.owner.name || s.owner.phone
+    }))
+  );
+
+  const allFamilyMembers = [...customer.familyMembers, ...sharedMembers];
 
   // Sign all photo URLs
   const visits = await Promise.all(
@@ -166,12 +202,15 @@ export default async function MyPassportPage() {
             }}>
               {visits.length} {visits.length === 1 ? 'cut' : 'cuts'}
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', fontFamily: "'Barlow Condensed',sans-serif" }}>
-              {customer.shop.name}
-            </span>
           </div>
         </div>
       </div>
+
+      {/* Family Section */}
+      <FamilyManager 
+        initialMembers={allFamilyMembers} 
+        initialSharings={customer.familySharings} 
+      />
 
       {/* Empty state */}
       {visits.length === 0 && (
@@ -215,6 +254,11 @@ export default async function MyPassportPage() {
                   </span>
                   <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>
                     {visit.barber.name}
+                    {visit.familyMember && (
+                      <span style={{ color: lime, marginLeft: '0.5rem', fontWeight: 700 }}>
+                        • {visit.familyMember.name}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <RateVisit visitId={visit.id} alreadyRated={visit.feedbacks.length > 0} />

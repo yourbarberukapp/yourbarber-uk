@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Scissors, ChevronRight, Check, Loader2 } from 'lucide-react';
 
-type Step = 'phone' | 'name' | 'welcome_back' | 'style' | 'done';
+type Step = 'phone' | 'name' | 'welcome_back' | 'who' | 'style' | 'done';
 
 interface ShopStyle {
   name: string;
@@ -33,8 +33,9 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<{ customerName: string | null; position: number; waitMinutes?: number; alreadyWaiting?: boolean } | null>(null);
-  const [returningUser, setReturningUser] = useState<{ name: string } | null>(null);
+  const [result, setResult] = useState<{ customerName: string | null; position: number; waitMinutes?: number; alreadyWaiting?: boolean; groupSize?: number } | null>(null);
+  const [returningUser, setReturningUser] = useState<{ name: string; familyMembers: FamilyMember[] } | null>(null);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]); // empty means "Me"
 
   // Styles sorted by category order
   const sortedStyles = [...shopStyles].sort((a, b) => {
@@ -65,9 +66,16 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
         setResult(data);
         setStep('done');
       } else if (data.proceedToStyle) {
-        // Find customer name if possible (the API should return it)
-        setReturningUser({ name: data.customerName || 'Friend' });
-        setStep('welcome_back');
+        setReturningUser({ 
+          name: data.customerName || 'Friend',
+          familyMembers: data.familyMembers || []
+        });
+        if (data.familyMembers?.length > 0) {
+          setSelectedMemberIds(['ME']); // Default to self
+          setStep('who');
+        } else {
+          setStep('welcome_back');
+        }
       } else {
         setError('Something went wrong. Please try again.');
       }
@@ -99,6 +107,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
           name: name || undefined,
           note: note || undefined,
           preferredStyle: selectedStyles.length > 0 ? JSON.stringify(selectedStyles) : undefined,
+          familyMemberIds: selectedMemberIds,
           final: true,
         }),
       });
@@ -215,6 +224,79 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
                   I want a new style
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Step: who (family selection) */}
+          {step === 'who' && returningUser && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
+                  Who&apos;s getting cut?
+                </p>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.875rem', margin: '0.25rem 0 0', fontFamily: 'var(--font-inter, sans-serif)' }}>
+                  Select everyone having a hair cut today.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Option for "Me" */}
+                <button
+                  onClick={() => {
+                    if (selectedMemberIds.includes('ME')) {
+                      setSelectedMemberIds(selectedMemberIds.filter(id => id !== 'ME'));
+                    } else {
+                      setSelectedMemberIds([...selectedMemberIds, 'ME']);
+                    }
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '1rem', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
+                    background: selectedMemberIds.includes('ME') ? 'rgba(200,241,53,0.1)' : 'rgba(255,255,255,0.03)',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    borderColor: selectedMemberIds.includes('ME') ? '#C8F135' : 'rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <span style={{ color: 'white', fontWeight: 700, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
+                    {returningUser.name} (Me)
+                  </span>
+                  {selectedMemberIds.includes('ME') && <Check size={18} color="#C8F135" />}
+                </button>
+
+                {/* Options for Family Members */}
+                {returningUser.familyMembers.map(member => (
+                  <button
+                    key={member.id}
+                    onClick={() => {
+                      if (selectedMemberIds.includes(member.id)) {
+                        setSelectedMemberIds(selectedMemberIds.filter(id => id !== member.id));
+                      } else {
+                        setSelectedMemberIds([...selectedMemberIds, member.id]);
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '1rem', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
+                      background: selectedMemberIds.includes(member.id) ? 'rgba(200,241,53,0.1)' : 'rgba(255,255,255,0.03)',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      borderColor: selectedMemberIds.includes(member.id) ? '#C8F135' : 'rgba(255,255,255,0.1)'
+                    }}
+                  >
+                    <span style={{ color: 'white', fontWeight: 700, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
+                      {member.name}
+                    </span>
+                    {selectedMemberIds.includes(member.id) && <Check size={18} color="#C8F135" />}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                style={{ ...btnStyle, opacity: selectedMemberIds.length === 0 ? 0.5 : 1, marginTop: '0.5rem' }}
+                disabled={selectedMemberIds.length === 0}
+                onClick={() => setStep('welcome_back')}
+              >
+                Next <ChevronRight size={16} />
+              </button>
             </div>
           )}
 
@@ -350,7 +432,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
                   {result.alreadyWaiting ? 'Still waiting?' : "You're all set."}
                 </h2>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: '0.5rem' }}>
-                  {result.customerName || 'Friend'}, you are
+                  {result.customerName || 'Friend'}, {result.groupSize && result.groupSize > 1 ? `your group is` : `you are`}
                 </p>
               </div>
 

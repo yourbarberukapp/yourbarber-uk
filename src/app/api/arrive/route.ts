@@ -11,6 +11,7 @@ const schema = z.object({
   note: z.string().max(300).optional(),
   preferredStyle: z.string().max(500).optional(),
   final: z.boolean().optional(), // true on the submit call, absent on the lookup call
+  familyMemberIds: z.array(z.string()).optional(), // List of family members to check in
 });
 
 export async function POST(req: NextRequest) {
@@ -21,16 +22,16 @@ export async function POST(req: NextRequest) {
   const { shopSlug, phone: rawPhone, name, note, preferredStyle, final: isFinal } = parsed.data;
   const phone = normalizePhone(rawPhone);
 
-  const shop = await db.shop.findUnique({
-    where: { slug: shopSlug },
     include: {
       barbers: { where: { isActive: true }, select: { id: true } },
+      familyMembers: { select: { id: true, name: true } }, // Actually, family belongs to customer
     },
   });
   if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
 
   let customer = await db.customer.findUnique({
     where: { phone_shopId: { phone, shopId: shop.id } },
+    include: { familyMembers: { select: { id: true, name: true } } },
   });
 
   if (!customer) {
@@ -44,8 +45,33 @@ export async function POST(req: NextRequest) {
   // Lookup call (first step) — just identify the customer, don't create WalkIn yet
   if (!isFinal) {
     if (!customer) return NextResponse.json({ needsName: true });
-    return NextResponse.json({ proceedToStyle: true, customerName: customer.name });
+
+    // Also fetch shared family members
+    const sharings = await db.familySharing.findMany({
+      where: { 
+        sharedWithPhone: phone,
+        owner: { shopId: shop.id }
+      },
+      include: {
+        owner: {
+          include: {
+            familyMembers: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    const sharedMembers = sharings.flatMap(s => s.owner.familyMembers);
+    const allMembers = [...(customer.familyMembers || []), ...sharedMembers];
+
+    return NextResponse.json({ 
+      proceedToStyle: true, 
+      customerName: customer.name,
+      familyMembers: allMembers 
+    });
   }
+
+  const { familyMemberIds } = parsed.data;
 
   // Don't double-add if already on the active list today
   const today = new Date();
@@ -78,22 +104,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ customerName: customer.name, position, waitMinutes: calcWait(position), alreadyWaiting: true });
   }
 
-  const walkIn = await db.walkIn.create({
-    data: {
-      shopId: shop.id,
-      customerId: customer.id,
-      note: note || null,
-      preferredStyle: preferredStyle || null,
-    },
-  });
+  // If no familyMemberIds provided, just check in the customer
+  const targetIds = (familyMemberIds && familyMemberIds.length > 0) ? familyMemberIds : [null];
+
+  // Create WalkIn for each person
+  const walkIns = await Promise.all(targetIds.map(fmId => 
+    db.walkIn.create({
+      data: {
+        shopId: shop.id,
+        customerId: customer!.id,
+        familyMemberId: fmId,
+        note: note || null,
+        preferredStyle: preferredStyle || null,
+      },
+    })
+  ));
+
+  const firstWalkIn = walkIns[0];
 
   const position = await db.walkIn.count({
     where: {
       shopId: shop.id,
       status: { in: ['waiting', 'in_progress'] },
-      arrivedAt: { lte: walkIn.arrivedAt },
+      arrivedAt: { lte: firstWalkIn.arrivedAt },
     },
   });
 
-  return NextResponse.json({ customerName: customer.name, position, waitMinutes: calcWait(position) });
+  return NextResponse.json({ 
+    customerName: customer.name, 
+    position, 
+    waitMinutes: calcWait(position + walkIns.length - 1),
+    groupSize: walkIns.length 
+  });
 }
