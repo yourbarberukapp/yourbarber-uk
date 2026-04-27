@@ -2,6 +2,8 @@
 
 This file is the source of truth for any AI assistant (Claude, Gemini, OpenAI, etc.) working on this codebase. Read this before making any decisions. Update it when the design evolves.
 
+> **AI assistants: also read [`docs/MASTER_BUILD_LOG.md`](docs/MASTER_BUILD_LOG.md) before writing any code.** It has the complete list of what is built, what is not built, and a "Do Not Re-implement" table to prevent duplicate work.
+
 ---
 
 ## What This Product Is
