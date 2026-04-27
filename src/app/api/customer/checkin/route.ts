@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { referenceVisitId, styleId, familyMemberId } = body;
+    const { referenceVisitId, styleId, familyMemberIds, includeCustomer = true } = body;
 
     // Optional: look up the customer's shop to link it
     const customer = await db.customer.findUnique({
@@ -27,7 +27,8 @@ export async function POST(req: Request) {
         shopId: customer.shopId,
         referenceVisitId,
         styleId,
-        familyMemberId,
+        groupMemberIds: familyMemberIds ? familyMemberIds.join(',') : null,
+        includeCustomer,
         expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours
       },
     });

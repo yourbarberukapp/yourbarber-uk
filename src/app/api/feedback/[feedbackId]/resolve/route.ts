@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/vonage';
+import { sendSms } from '@/lib/twilio';
 
 const RESOLUTIONS = ['same_barber_fix', 'different_barber', 'book_return', 'owner_contact', 'log_only'] as const;
 

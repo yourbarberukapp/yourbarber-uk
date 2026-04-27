@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered } from 'lucide-react';
+import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered, BarChart2, Scissors } from 'lucide-react';
 import { AppSession } from '@/lib/session';
 
 interface Props {
@@ -10,26 +10,29 @@ interface Props {
   signOutAction: () => Promise<void>;
 }
 
-const navItems = [
+const ownerNav = [
   { href: '/dashboard', label: 'Dashboard', icon: Globe },
   { href: '/waitlist', label: 'Walk-ins', icon: ListOrdered },
   { href: '/appointments', label: 'Appointments', icon: Calendar },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/reminders', label: 'Reminders', icon: Bell },
-];
-
-const ownerItems = [
+  { href: '/analytics', label: 'Analytics', icon: BarChart2, comingSoon: true },
   { href: '/team', label: 'Team', icon: UserPlus },
   { href: '/feedback', label: 'Feedback', icon: MessageSquare },
-  { href: '/settings/microsite', label: 'Microsite', icon: Globe },
   { href: '/settings', label: 'Settings', icon: Settings },
+];
+
+const barberNav = [
+  { href: '/barber', label: 'My View', icon: Scissors },
+  { href: '/waitlist', label: 'Walk-ins', icon: ListOrdered },
+  { href: '/customers', label: 'Clients', icon: Users },
 ];
 
 export function Sidebar({ session, signOutAction }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  const isActive = (href: string) => pathname.startsWith(href);
+  const isActive = (href: string) => pathname === href || (href !== '/barber' && pathname.startsWith(href));
 
   const initials = session.name
     .split(' ')
@@ -38,7 +41,7 @@ export function Sidebar({ session, signOutAction }: Props) {
     .slice(0, 2)
     .toUpperCase();
 
-  const allNav = [...navItems, ...(session.role === 'owner' ? ownerItems : [])];
+  const allNav = session.role === 'owner' ? ownerNav : barberNav;
 
   function Content() {
     return (
@@ -61,6 +64,19 @@ export function Sidebar({ session, signOutAction }: Props) {
           </div>
           {allNav.map(item => {
             const active = isActive(item.href);
+            const soon = 'comingSoon' in item && item.comingSoon;
+            if (soon) {
+              return (
+                <div
+                  key={item.href}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-sm opacity-40 cursor-default"
+                >
+                  <item.icon size={18} className="text-muted-foreground" />
+                  <span className="text-sm tracking-tight text-muted-foreground">{item.label}</span>
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-widest text-muted-foreground border border-white/10 rounded px-1">Soon</span>
+                </div>
+              );
+            }
             return (
               <Link
                 key={item.href}
@@ -68,8 +84,8 @@ export function Sidebar({ session, signOutAction }: Props) {
                 onClick={() => setOpen(false)}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 group
-                  ${active 
-                    ? 'bg-primary/10 text-primary font-semibold' 
+                  ${active
+                    ? 'bg-primary/10 text-primary font-semibold'
                     : 'text-muted-foreground hover:bg-white/[0.03] hover:text-white'}
                 `}
               >

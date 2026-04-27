@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/vonage';
+import { sendSms } from '@/lib/twilio';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   // Normally we would secure this with an API key if called from cron,

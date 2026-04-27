@@ -10,6 +10,11 @@ interface ShopStyle {
   category: string;
 }
 
+interface FamilyMember {
+  id: string;
+  name: string;
+}
+
 interface Props {
   shopSlug: string;
   shopName: string;

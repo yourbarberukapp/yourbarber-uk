@@ -41,23 +41,54 @@ export default async function CheckInPage({ params }: { params: { qrToken: strin
   const referenceVisit = customer.visits.find((v: any) => v.id === checkIn.referenceVisitId);
   const lastVisit = customer.visits[0];
 
+  // Group handling
+  const groupMemberIds = checkIn.groupMemberIds ? checkIn.groupMemberIds.split(',') : [];
+  const groupMembers = groupMemberIds.length > 0 
+    ? await db.familyMember.findMany({ where: { id: { in: groupMemberIds } } })
+    : [];
+  
+  const people = [];
+  if (checkIn.includeCustomer) {
+    people.push({ id: 'me', name: customer.name, type: 'customer' });
+  }
+  groupMembers.forEach(m => {
+    people.push({ id: m.id, name: m.name, type: 'family' });
+  });
+
+  // If checkIn.familyMemberId was set (legacy/single), and not in group, add it
+  if (checkIn.familyMemberId && !groupMemberIds.includes(checkIn.familyMemberId)) {
+    const fm = await db.familyMember.findUnique({ where: { id: checkIn.familyMemberId } });
+    if (fm) people.push({ id: fm.id, name: fm.name, type: 'family' });
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col pb-24">
       {/* Top Bar */}
       <div className="pt-12 px-8 pb-6 border-b border-white/10 bg-[#111]">
         <h1 className="font-barlow font-black text-6xl uppercase tracking-tighter leading-none mb-2">
-          {checkIn.familyMember?.name || customer.name || 'Customer'}
+          {people.length > 1 ? 'Group Check-in' : (people[0]?.name || 'Customer')}
         </h1>
-        <div className="flex items-center gap-4 text-white/50 font-inter text-lg">
-          {checkIn.familyMember && (
-            <>
-              <span className="text-[#C8F135]/80 font-bold">Account: {customer.name}</span>
-              <span>&bull;</span>
-            </>
+        <div className="flex flex-col gap-1 text-white/50 font-inter text-lg">
+          {people.length > 1 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {people.map(p => (
+                <span key={p.id} className="px-3 py-1 bg-[#C8F135]/10 text-[#C8F135] rounded-full text-sm font-bold border border-[#C8F135]/20">
+                  {p.name}
+                </span>
+              ))}
+            </div>
           )}
-          <span>{customer.shop.name}</span>
-          <span>&bull;</span>
-          <span>Last cut: {lastVisit ? new Date(lastVisit.visitedAt).toLocaleDateString() : 'Never'}</span>
+          <div className="flex items-center gap-4">
+            {people.length === 1 && people[0].type === 'family' && (
+              <>
+                <span className="text-[#C8F135]/80 font-bold">Account: {customer.name}</span>
+                <span>&bull;</span>
+              </>
+            )}
+            <span>{customer.shop.name}</span>
+            <span>&bull;</span>
+            <span>Last cut: {lastVisit ? new Date(lastVisit.visitedAt).toLocaleDateString() : 'Never'}</span>
+          </div>
         </div>
       </div>
 
@@ -145,7 +176,11 @@ export default async function CheckInPage({ params }: { params: { qrToken: strin
 
       {/* Fixed Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 p-6">
-        <StartCutButton customerId={customer.id} />
+        <StartCutButton 
+          customerId={customer.id} 
+          familyMemberIds={groupMemberIds}
+          includeCustomer={checkIn.includeCustomer}
+        />
       </div>
     </div>
   );

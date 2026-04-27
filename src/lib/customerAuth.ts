@@ -2,19 +2,25 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = 'yb-customer-session';
-if (!process.env.NEXTAUTH_SECRET) throw new Error('NEXTAUTH_SECRET is not set');
-const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+
+function getCustomerAuthSecret() {
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error('NEXTAUTH_SECRET or AUTH_SECRET is required for customer sessions');
+  }
+  return new TextEncoder().encode(secret);
+}
 
 export async function signCustomerToken(customerId: string): Promise<string> {
   return new SignJWT({ customerId })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('30d')
-    .sign(secret);
+    .sign(getCustomerAuthSecret());
 }
 
 export async function verifyCustomerToken(token: string): Promise<{ customerId: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getCustomerAuthSecret());
     return { customerId: payload.customerId as string };
   } catch {
     return null;

@@ -19,7 +19,56 @@ interface WalkIn {
   preferredStyle: string | null;
   status: WalkInStatus;
   arrivedAt: string;
+  groupId: string | null;
+  familyMemberId: string | null;
+  familyMember: { name: string } | null;
   customer: WalkInCustomer;
+}
+
+interface WalkInGroup {
+  ids: string[];
+  primaryId: string;
+  customerId: string;
+  status: WalkInStatus;
+  arrivedAt: string;
+  displayName: string;
+  memberCount: number;
+  phone: string;
+  lastVisitAt: string | null;
+  note: string | null;
+  preferredStyle: string | null;
+}
+
+function groupWalkIns(walkIns: WalkIn[]): WalkInGroup[] {
+  const map = new Map<string, WalkIn[]>();
+  for (const w of walkIns) {
+    const key = w.groupId ?? w.id;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(w);
+  }
+  return [...map.values()].map(members => {
+    const primary = members.find(m => !m.familyMemberId) ?? members[0];
+    const names = [
+      primary.customer.name ?? 'Unknown',
+      ...members.filter(m => m.familyMemberId).map(m => m.familyMember?.name ?? '?'),
+    ];
+    const shown = names.slice(0, 3);
+    const extra = names.length - shown.length;
+    const displayName = shown.join(' + ') + (extra > 0 ? ` +${extra}` : '');
+    return {
+      ids: members.map(m => m.id),
+      primaryId: primary.id,
+      customerId: primary.customer.id,
+      status: primary.status,
+      arrivedAt: primary.arrivedAt,
+      displayName,
+      memberCount: members.length,
+      phone: primary.customer.phone,
+      lastVisitAt: primary.customer.lastVisitAt,
+      note: primary.note,
+      preferredStyle: primary.preferredStyle,
+    };
+  });
 }
 
 function timeAgo(dateStr: string) {
@@ -31,8 +80,7 @@ function timeAgo(dateStr: string) {
   return hrs === 1 ? '1 hour ago' : `${hrs} hours ago`;
 }
 
-function initials(name: string | null) {
-  if (!name) return '?';
+function initials(name: string) {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
@@ -63,24 +111,26 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
     if (barbersRes.ok) setBarbers(await barbersRes.json());
   }, []);
 
-  // Poll every 20 seconds
   useEffect(() => {
     const id = setInterval(refresh, 20000);
     return () => clearInterval(id);
   }, [refresh]);
 
-  async function updateStatus(id: string, status: WalkInStatus) {
-    setUpdating(id);
-    await fetch(`/api/waitlist/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
+  async function updateGroup(ids: string[], status: WalkInStatus) {
+    setUpdating(ids[0]);
+    await Promise.all(ids.map(id =>
+      fetch(`/api/waitlist/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+    ));
     await refresh();
     setUpdating(null);
   }
 
   const active = walkIns.filter(w => w.status === 'waiting' || w.status === 'in_progress');
+  const groups = groupWalkIns(active);
 
   return (
     <div>
@@ -127,7 +177,7 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
         </div>
       )}
 
-      {active.length === 0 ? (
+      {groups.length === 0 ? (
         <div style={{
           background: '#111', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12,
           padding: '3rem', textAlign: 'center',
@@ -142,13 +192,13 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {active.map((w, i) => {
-            const cfg = STATUS_CONFIG[w.status];
-            const isUpdating = updating === w.id;
+          {groups.map((g, i) => {
+            const cfg = STATUS_CONFIG[g.status];
+            const isUpdating = updating === g.primaryId || g.ids.includes(updating ?? '');
             const barberCount = Math.max(barbers.length, 1);
-            const waitMins = w.status === 'in_progress' ? 0 : Math.ceil((i / barberCount) * defaultCutTime);
+            const waitMins = g.status === 'in_progress' ? 0 : Math.ceil((i / barberCount) * defaultCutTime);
             return (
-              <div key={w.id} style={{
+              <div key={g.primaryId} style={{
                 background: '#111', border: `1px solid ${cfg.border}`,
                 borderRadius: 12, padding: '1rem 1.25rem',
                 display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
@@ -165,15 +215,27 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                     width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
                     background: cfg.bg, border: `1.5px solid ${cfg.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    position: 'relative',
                   }}>
                     <span style={{ color: cfg.color, fontWeight: 900, fontSize: '0.875rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
-                      {initials(w.customer.name)}
+                      {initials(g.displayName)}
                     </span>
+                    {g.memberCount > 1 && (
+                      <span style={{
+                        position: 'absolute', bottom: -4, right: -4,
+                        background: '#C8F135', color: '#0a0a0a',
+                        fontSize: '0.55rem', fontWeight: 900, fontFamily: 'var(--font-barlow, sans-serif)',
+                        borderRadius: 8, padding: '0 4px', lineHeight: '14px',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        ×{g.memberCount}
+                      </span>
+                    )}
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span style={{ fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800, fontSize: '1rem', color: 'white', textTransform: 'uppercase' }}>
-                        {w.customer.name ?? 'Unknown'}
+                        {g.displayName}
                       </span>
                       <span style={{
                         fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -185,11 +247,11 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                       </span>
                     </div>
                     <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: 2 }}>
-                      {w.customer.phone}
+                      {g.phone}
                     </div>
-                    {w.preferredStyle && (() => {
+                    {g.preferredStyle && (() => {
                       try {
-                        const styles: string[] = JSON.parse(w.preferredStyle);
+                        const styles: string[] = JSON.parse(g.preferredStyle);
                         return styles.length > 0 ? (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: 5 }}>
                             {styles.map(s => (
@@ -207,17 +269,17 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                         ) : null;
                       } catch { return null; }
                     })()}
-                    {w.note && (
+                    {g.note && (
                       <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: 4, fontStyle: 'italic' }}>
-                        &ldquo;{w.note}&rdquo;
+                        &ldquo;{g.note}&rdquo;
                       </div>
                     )}
                     <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.7rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: 4 }}>
-                      Arrived {timeAgo(w.arrivedAt)}
-                      {w.customer.lastVisitAt && (
-                        <span> · Last cut {timeAgo(w.customer.lastVisitAt)}</span>
+                      Arrived {timeAgo(g.arrivedAt)}
+                      {g.lastVisitAt && (
+                        <span> · Last cut {timeAgo(g.lastVisitAt)}</span>
                       )}
-                      {w.status === 'waiting' && (
+                      {g.status === 'waiting' && (
                         <span style={{ color: waitMins === 0 ? '#C8F135' : 'rgba(255,255,255,0.3)' }}>
                           {' · '}
                           {waitMins === 0 ? 'Up next' : `~${waitMins} min wait`}
@@ -233,9 +295,9 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                     <Loader2 size={18} color="rgba(255,255,255,0.3)" style={{ animation: 'spin 1s linear infinite' }} />
                   ) : (
                     <>
-                      {w.status === 'waiting' && (
+                      {g.status === 'waiting' && (
                         <button
-                          onClick={() => updateStatus(w.id, 'in_progress')}
+                          onClick={() => updateGroup(g.ids, 'in_progress')}
                           title="Start cut"
                           style={{
                             background: 'rgba(200,241,53,0.1)', border: '1px solid rgba(200,241,53,0.25)',
@@ -248,9 +310,9 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                           <UserCheck size={13} /> In chair
                         </button>
                       )}
-                      {w.status === 'in_progress' && (
+                      {g.status === 'in_progress' && (
                         <button
-                          onClick={() => updateStatus(w.id, 'done')}
+                          onClick={() => updateGroup(g.ids, 'done')}
                           title="Done"
                           style={{
                             background: 'rgba(200,241,53,0.1)', border: '1px solid rgba(200,241,53,0.25)',
@@ -264,7 +326,7 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                         </button>
                       )}
                       <button
-                        onClick={() => updateStatus(w.id, 'no_show')}
+                        onClick={() => updateGroup(g.ids, 'no_show')}
                         title="No show"
                         style={{
                           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
@@ -275,7 +337,7 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                         <X size={13} />
                       </button>
                       <Link
-                        href={`/customers/${w.customer.id}`}
+                        href={`/customers/${g.customerId}`}
                         title="View profile"
                         style={{
                           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',

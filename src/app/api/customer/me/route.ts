@@ -14,7 +14,7 @@ export async function GET() {
       phone: true,
       accessCode: true,
       lastVisitAt: true,
-      shop: { select: { name: true, address: true, slug: true } },
+      shop: { select: { id: true, name: true, address: true, slug: true } },
       visits: {
         orderBy: { visitedAt: 'desc' },
         take: 10,
@@ -44,9 +44,48 @@ export async function GET() {
           service: { select: { name: true } },
         },
       },
+      familyMembers: true,
     },
   });
 
   if (!customer) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(customer);
+
+  let familyMembers = customer.familyMembers;
+
+  try {
+    // Add shared members
+    const shopId = (customer.shop as any)?.id;
+    if (shopId) {
+      const sharings = await db.familySharing.findMany({
+        where: { 
+          sharedWithPhone: customer.phone,
+          owner: { shopId } 
+        },
+        include: {
+          owner: {
+            include: {
+              familyMembers: true,
+            },
+          },
+        },
+      });
+
+      const sharedMembers = sharings.flatMap(s => 
+        s.owner.familyMembers.map(m => ({
+          ...m,
+          isShared: true,
+          sharedBy: s.owner.name || s.owner.phone
+        }))
+      );
+      
+      familyMembers = [...familyMembers, ...sharedMembers];
+    }
+  } catch (err) {
+    console.error('Error fetching shared family members:', err);
+  }
+
+  return NextResponse.json({
+    ...customer,
+    familyMembers
+  });
 }

@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-const select = { name: true, address: true, logoUrl: true, slug: true, shopType: true, allowBarberReminders: true, defaultCutTime: true, googleReviewUrl: true };
+const select = {
+  name: true, address: true, logoUrl: true, slug: true,
+  shopType: true, allowBarberReminders: true, defaultCutTime: true, googleReviewUrl: true,
+};
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -32,6 +35,7 @@ export async function PATCH(req: NextRequest) {
   const parsed = updateSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const shop = await db.shop.update({ where: { id: shopId }, data: parsed.data, select });
+  const data = { ...parsed.data, googleReviewUrl: parsed.data.googleReviewUrl || null };
+  const shop = await db.shop.update({ where: { id: shopId }, data, select });
   return NextResponse.json(shop);
 }

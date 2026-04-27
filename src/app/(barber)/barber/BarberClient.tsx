@@ -13,6 +13,7 @@ interface WalkIn {
   status: WalkInStatus;
   arrivedAt: string;
   customer: { id: string; name: string | null; phone: string; lastVisitAt: string | null };
+  familyMember: { name: string | null } | null;
 }
 
 interface CustomerResult {
@@ -242,8 +243,13 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
                             fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
                             fontSize: '1.1rem', color: 'white', textTransform: 'uppercase',
                           }}>
-                            {w.customer.name ?? 'Unknown'}
+                            {w.familyMember?.name || w.customer.name || 'Unknown'}
                           </span>
+                          {w.familyMember && (
+                            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>
+                              (Account: {w.customer.name})
+                            </span>
+                          )}
                           {inChair && (
                             <span style={{
                               fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',

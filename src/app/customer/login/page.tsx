@@ -10,6 +10,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const shopSlug = searchParams.get('shop');
+  const codeParam = searchParams.get('code');
   const redirect = searchParams.get('redirect') || '/customer';
 
   const [step, setStep] = useState<'phone' | 'otp' | 'name'>('phone');
@@ -28,6 +29,46 @@ function LoginForm() {
     if (step === 'otp') otpInputRef.current?.focus();
     if (step === 'name') nameInputRef.current?.focus();
   }, [step]);
+
+  useEffect(() => {
+    if (!codeParam) return;
+    const legacyCode = codeParam.toUpperCase().slice(0, 5);
+    if (legacyCode.length !== 5) return;
+
+    let cancelled = false;
+    async function verifyAccessCode() {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch('/api/customer/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: legacyCode }),
+        });
+        if (cancelled) return;
+        if (res.ok) {
+          router.push(redirect);
+        } else {
+          setCode(legacyCode);
+          setError('Invalid code');
+          setStep('otp');
+        }
+      } catch {
+        if (!cancelled) {
+          setCode(legacyCode);
+          setError('Something went wrong. Please try again.');
+          setStep('otp');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    verifyAccessCode();
+    return () => {
+      cancelled = true;
+    };
+  }, [codeParam, redirect, router]);
 
   async function handleRequestOtp(e?: React.FormEvent) {
     e?.preventDefault();

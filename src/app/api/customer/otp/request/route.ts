@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/vonage';
+import { sendSms } from '@/lib/twilio';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,8 +31,11 @@ export async function POST(req: NextRequest) {
     // Clean phone number (keep only digits)
     const cleanPhone = phone.replace(/\D/g, '');
     
-    // Generate 5-digit code
-    const otpCode = Math.floor(10000 + Math.random() * 90000).toString();
+    // Use a stable local code when SMS is bypassed so manual verification is practical.
+    const otpCode =
+      process.env.NODE_ENV !== 'production' && !process.env.VONAGE_API_KEY
+        ? '12345'
+        : Math.floor(10000 + Math.random() * 90000).toString();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Find or create customer

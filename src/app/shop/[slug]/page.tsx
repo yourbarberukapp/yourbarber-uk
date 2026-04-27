@@ -7,6 +7,7 @@ import {
 import StickyBookingBar from '@/components/microsite/StickyBookingBar';
 import TestimonialCarousel from '@/components/microsite/TestimonialCarousel';
 import AnimateIn from '@/components/microsite/AnimateIn';
+import QueueStatus from '@/components/microsite/QueueStatus';
 
 type OpeningHours = {
   mon: { open: string; close: string; closed: boolean };
@@ -118,6 +119,11 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
               >
                 Get Faded <ChevronRight size={24} />
               </Link>
+              
+              <div className="flex-1 max-w-xs">
+                <QueueStatus shopSlug={shop.slug} />
+              </div>
+
               <div className="flex items-center gap-6 px-4">
                 <div className="flex -space-x-3">
                   {[1, 2, 3, 4].map((i) => (

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isDueForReminder, buildSmsMessage } from '@/lib/reminders';
-import { sendSms } from '@/lib/vonage';
+import { sendSms } from '@/lib/twilio';
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');

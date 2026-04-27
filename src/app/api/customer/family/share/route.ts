@@ -10,47 +10,57 @@ const schema = z.object({
 });
 
 export async function GET() {
-  const session = await getCustomerSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await getCustomerSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const sharings = await db.familySharing.findMany({
-    where: { ownerId: session.customerId },
-    orderBy: { createdAt: 'desc' },
-  });
+    const sharings = await db.familySharing.findMany({
+      where: { ownerId: session.customerId },
+      orderBy: { createdAt: 'desc' },
+    });
 
-  return NextResponse.json(sharings);
+    return NextResponse.json(sharings);
+  } catch (error) {
+    console.error('Customer family sharing GET error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getCustomerSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await getCustomerSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json();
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    const body = await req.json();
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
 
-  const { phone: rawPhone, action } = parsed.data;
-  const phone = normalizePhone(rawPhone);
+    const { phone: rawPhone, action } = parsed.data;
+    const phone = normalizePhone(rawPhone);
 
-  const customerId = session.customerId;
+    const customerId = session.customerId;
 
-  if (action === 'add') {
-    // Don't share with self
-    const owner = await db.customer.findUnique({ where: { id: customerId } });
-    if (owner?.phone === phone) {
-      return NextResponse.json({ error: 'Cannot share with yourself' }, { status: 400 });
+    if (action === 'add') {
+      // Don't share with self
+      const owner = await db.customer.findUnique({ where: { id: customerId } });
+      if (owner?.phone === phone) {
+        return NextResponse.json({ error: 'Cannot share with yourself' }, { status: 400 });
+      }
+
+      const sharing = await db.familySharing.upsert({
+        where: { ownerId_sharedWithPhone: { ownerId: customerId, sharedWithPhone: phone } },
+        create: { ownerId: customerId, sharedWithPhone: phone },
+        update: {},
+      });
+      return NextResponse.json(sharing);
+    } else {
+      await db.familySharing.deleteMany({
+        where: { ownerId: customerId, sharedWithPhone: phone },
+      });
+      return NextResponse.json({ success: true });
     }
-
-    const sharing = await db.familySharing.upsert({
-      where: { ownerId_sharedWithPhone: { ownerId: customerId, sharedWithPhone: phone } },
-      create: { ownerId: customerId, sharedWithPhone: phone },
-      update: {},
-    });
-    return NextResponse.json(sharing);
-  } else {
-    await db.familySharing.deleteMany({
-      where: { ownerId: customerId, sharedWithPhone: phone },
-    });
-    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Customer family sharing POST error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -21,15 +21,15 @@ export async function POST(req: NextRequest) {
 
   const { shopSlug, phone: rawPhone, name, note, preferredStyle, final: isFinal } = parsed.data;
   const phone = normalizePhone(rawPhone);
-
+  const shop = await db.shop.findUnique({
+    where: { slug: shopSlug },
     include: {
       barbers: { where: { isActive: true }, select: { id: true } },
-      familyMembers: { select: { id: true, name: true } }, // Actually, family belongs to customer
     },
   });
   if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
 
-  let customer = await db.customer.findUnique({
+  let customer: any = await db.customer.findUnique({
     where: { phone_shopId: { phone, shopId: shop.id } },
     include: { familyMembers: { select: { id: true, name: true } } },
   });
@@ -37,9 +37,10 @@ export async function POST(req: NextRequest) {
   if (!customer) {
     if (!name) return NextResponse.json({ needsName: true });
     const accessCode = await generateUniqueAccessCode();
-    customer = await db.customer.create({
+    const createdCustomer = await db.customer.create({
       data: { shopId: shop.id, phone, name, accessCode },
     });
+    customer = { ...createdCustomer, familyMembers: [] };
   }
 
   // Lookup call (first step) — just identify the customer, don't create WalkIn yet
@@ -105,15 +106,21 @@ export async function POST(req: NextRequest) {
   }
 
   // If no familyMemberIds provided, just check in the customer
-  const targetIds = (familyMemberIds && familyMemberIds.length > 0) ? familyMemberIds : [null];
+  const targetIds = familyMemberIds && familyMemberIds.length > 0
+    ? familyMemberIds.map((id) => (id === 'ME' ? null : id))
+    : [null];
+
+  // Shared groupId when multiple people check in together
+  const groupId = targetIds.length > 1 ? crypto.randomUUID() : null;
 
   // Create WalkIn for each person
-  const walkIns = await Promise.all(targetIds.map(fmId => 
+  const walkIns = await Promise.all(targetIds.map(fmId =>
     db.walkIn.create({
       data: {
         shopId: shop.id,
         customerId: customer!.id,
         familyMemberId: fmId,
+        groupId,
         note: note || null,
         preferredStyle: preferredStyle || null,
       },

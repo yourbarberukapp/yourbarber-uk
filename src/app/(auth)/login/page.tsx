@@ -1,19 +1,21 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Scissors } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const isResetSuccess = searchParams?.get('reset') === 'success';
+  const isResetSuccess = searchParams.get('reset') === 'success';
+  const callbackUrl = searchParams.get('callbackUrl') || null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,7 +26,14 @@ export default function LoginPage() {
       setError('Invalid email or password');
       setLoading(false);
     } else {
-      router.push('/customers');
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      } else {
+        // Route by role: barbers → their personal view, owners → full dashboard
+        const session = await fetch('/api/auth/session').then(r => r.json());
+        const role = session?.user?.role;
+        router.push(role === 'barber' ? '/barber' : '/dashboard');
+      }
     }
   }
 

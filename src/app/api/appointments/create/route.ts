@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getCustomerSession } from '@/lib/customerAuth';
-import { sendSms } from '@/lib/vonage';
+import { sendSms } from '@/lib/twilio';
 
 const createSchema = z.object({
   shopId: z.string(),

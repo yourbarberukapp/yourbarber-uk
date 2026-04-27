@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     },
     include: {
       customer: { select: { id: true, name: true, phone: true, lastVisitAt: true } },
+      familyMember: { select: { name: true } },
     },
     orderBy: { arrivedAt: 'asc' },
   });

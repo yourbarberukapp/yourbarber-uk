@@ -24,6 +24,7 @@ model Shop {
   shopType             String?       @default("uk_general")
   allowBarberReminders Boolean       @default(false)
   defaultCutTime       Int           @default(20)
+  googleReviewUrl      String?
   appointments         Appointment[]
   barbers              Barber[]
   customers            Customer[]
@@ -252,6 +253,8 @@ model CheckIn {
   qrToken          String    @unique @default(uuid())
   expiresAt        DateTime
   familyMemberId   String?
+  groupMemberIds   String?
+  includeCustomer  Boolean   @default(true)
   scannedAt        DateTime?
   createdAt        DateTime  @default(now())
   customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -292,6 +295,7 @@ model WalkIn {
   createdAt      DateTime  @default(now())
   preferredStyle String?
   familyMemberId String?
+  groupId        String?
   customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   familyMember   FamilyMember? @relation(fields: [familyMemberId], references: [id])
   shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)

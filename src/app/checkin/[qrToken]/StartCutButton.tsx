@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 
 interface Props {
   customerId: string;
+  familyMemberIds: string[];
+  includeCustomer: boolean;
 }
 
-export default function StartCutButton({ customerId }: Props) {
+export default function StartCutButton({ customerId, familyMemberIds, includeCustomer }: Props) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
@@ -17,10 +19,10 @@ export default function StartCutButton({ customerId }: Props) {
       await fetch('/api/qr/checkin/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId }),
+        body: JSON.stringify({ customerId, familyMemberIds, includeCustomer }),
       });
     } finally {
-      router.push(`/customers/${customerId}/visit/new`);
+      router.push('/barber'); // Go back to queue
     }
   }
 

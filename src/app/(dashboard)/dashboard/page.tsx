@@ -1,6 +1,7 @@
 import { getRequiredSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Users, Bell, Clock, ArrowRight, Scissors, UserCheck, QrCode } from 'lucide-react';
 
 function timeAgo(date: Date) {
@@ -19,6 +20,7 @@ function initials(name: string | null) {
 
 export default async function DashboardRoot() {
   const session = await getRequiredSession();
+  if (session.role === 'barber') redirect('/barber');
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
