@@ -46,7 +46,7 @@ function groupWalkIns(walkIns: WalkIn[]): WalkInGroup[] {
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(w);
   }
-  return [...map.values()].map(members => {
+  return Array.from(map.values()).map(members => {
     const primary = members.find(m => !m.familyMemberId) ?? members[0];
     const names = [
       primary.customer.name ?? 'Unknown',
