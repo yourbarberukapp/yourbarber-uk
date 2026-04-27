@@ -8,11 +8,16 @@ interface Customer {
   name: string | null;
   smsOptIn: string;
   lastVisitAt: string | null;
+  avi?: number;
+  daysSinceVisit?: number | null;
 }
 
-interface Props { customers: Customer[]; }
+interface Props {
+  customers: Customer[];
+  reminderType?: string;
+}
 
-export function BulkReminderPanel({ customers: initial }: Props) {
+export function BulkReminderPanel({ customers: initial, reminderType }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set(initial.map(c => c.id)));
   const [sending, setSending] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -46,7 +51,7 @@ export function BulkReminderPanel({ customers: initial }: Props) {
     const res = await fetch('/api/reminders/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerId: firstSelectedId, reminderType: 'overdue' }),
+      body: JSON.stringify({ customerId: firstSelectedId, reminderType: reminderType ?? 'overdue' }),
     });
     if (res.ok) {
       setPreview(await res.json());
@@ -159,6 +164,12 @@ export function BulkReminderPanel({ customers: initial }: Props) {
                 <p className="text-white text-[15px] font-medium leading-tight">{c.name ?? 'No name'}</p>
                 <p className="text-white/30 text-xs mt-1 font-mono tracking-tight">
                   {c.phone} &middot; {c.lastVisitAt ? new Date(c.lastVisitAt).toLocaleDateString('en-GB') : 'Never'}
+                  {c.avi != null && (
+                    <span className="text-white/20"> &middot; every ~{c.avi}d</span>
+                  )}
+                  {c.daysSinceVisit != null && (
+                    <span className="text-white/20"> &middot; {c.daysSinceVisit}d ago</span>
+                  )}
                 </p>
               </div>
             </button>
