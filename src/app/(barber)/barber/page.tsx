@@ -8,17 +8,28 @@ export default async function BarberPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const walkIns = await db.walkIn.findMany({
-    where: {
-      shopId: session.shopId,
-      arrivedAt: { gte: today },
-      status: { in: ['waiting', 'in_progress'] },
-    },
-    include: {
-      customer: { select: { id: true, name: true, phone: true, lastVisitAt: true } },
-    },
-    orderBy: { arrivedAt: 'asc' },
-  });
+  const [walkIns, barber] = await Promise.all([
+    db.walkIn.findMany({
+      where: {
+        shopId: session.shopId,
+        arrivedAt: { gte: today },
+        status: { in: ['waiting', 'in_progress'] },
+      },
+      include: {
+        customer: { select: { id: true, name: true, phone: true, lastVisitAt: true } },
+      },
+      orderBy: { arrivedAt: 'asc' },
+    }),
+    db.barber.findUnique({
+      where: { id: session.barberId },
+      select: { id: true, name: true, isBusy: true },
+    }),
+  ]);
 
-  return <BarberClient initialWalkIns={JSON.parse(JSON.stringify(walkIns))} />;
+  return (
+    <BarberClient
+      initialWalkIns={JSON.parse(JSON.stringify(walkIns))}
+      initialIsBusy={barber?.isBusy ?? false}
+    />
+  );
 }

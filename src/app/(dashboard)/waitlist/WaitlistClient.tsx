@@ -43,13 +43,24 @@ const STATUS_CONFIG = {
   no_show:     { label: 'No show',     color: 'rgba(255,100,100,0.6)',  bg: 'rgba(255,100,100,0.04)', border: 'rgba(255,100,100,0.12)' },
 };
 
-export default function WaitlistClient({ initialWalkIns }: { initialWalkIns: WalkIn[] }) {
+interface Barber {
+  id: string;
+  name: string;
+  isBusy: boolean;
+}
+
+export default function WaitlistClient({ initialWalkIns, initialBarbers }: { initialWalkIns: WalkIn[]; initialBarbers: Barber[] }) {
   const [walkIns, setWalkIns] = useState<WalkIn[]>(initialWalkIns);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [barbers, setBarbers] = useState<Barber[]>(initialBarbers);
 
   const refresh = useCallback(async () => {
-    const res = await fetch('/api/waitlist', { cache: 'no-store' });
-    if (res.ok) setWalkIns(await res.json());
+    const [waitlistRes, barbersRes] = await Promise.all([
+      fetch('/api/waitlist', { cache: 'no-store' }),
+      fetch('/api/barbers', { cache: 'no-store' }),
+    ]);
+    if (waitlistRes.ok) setWalkIns(await waitlistRes.json());
+    if (barbersRes.ok) setBarbers(await barbersRes.json());
   }, []);
 
   // Poll every 20 seconds
@@ -73,6 +84,49 @@ export default function WaitlistClient({ initialWalkIns }: { initialWalkIns: Wal
 
   return (
     <div>
+      {/* Barber availability panel */}
+      {barbers.length > 0 && (
+        <div style={{
+          background: '#111', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12, padding: '0.875rem 1.125rem',
+          marginBottom: '1.25rem',
+          display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
+        }}>
+          <span style={{
+            fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+            color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow, sans-serif)', flexShrink: 0,
+          }}>
+            Barbers
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
+            {barbers.map(b => (
+              <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                  background: b.isBusy ? 'rgba(255,255,255,0.2)' : '#C8F135',
+                  boxShadow: b.isBusy ? 'none' : '0 0 6px rgba(200,241,53,0.5)',
+                }} />
+                <span style={{
+                  fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em',
+                  color: b.isBusy ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.75)',
+                  fontFamily: 'var(--font-barlow, sans-serif)',
+                }}>
+                  {b.name.split(' ')[0]}
+                </span>
+                {b.isBusy && (
+                  <span style={{
+                    fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-barlow, sans-serif)',
+                  }}>
+                    busy
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {active.length === 0 ? (
         <div style={{
           background: '#111', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12,

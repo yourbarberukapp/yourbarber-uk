@@ -64,6 +64,7 @@ model Barber {
   photoUrl         String?
   workingHours     Json?
   acceptsBookings  Boolean          @default(true)
+  isBusy           Boolean          @default(false)
   resetToken       String?          @unique
   resetTokenExpiry DateTime?
   createdAt        DateTime         @default(now())

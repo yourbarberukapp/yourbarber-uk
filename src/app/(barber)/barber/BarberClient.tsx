@@ -39,10 +39,12 @@ function initials(name: string | null) {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export default function BarberClient({ initialWalkIns }: { initialWalkIns: WalkIn[] }) {
+export default function BarberClient({ initialWalkIns, initialIsBusy }: { initialWalkIns: WalkIn[]; initialIsBusy: boolean }) {
   const [tab, setTab] = useState<Tab>('queue');
   const [walkIns, setWalkIns] = useState<WalkIn[]>(initialWalkIns);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [isBusy, setIsBusy] = useState(initialIsBusy);
+  const [togglingStatus, setTogglingStatus] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<CustomerResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -74,6 +76,21 @@ export default function BarberClient({ initialWalkIns }: { initialWalkIns: WalkI
     }, 300);
   }, [query]);
 
+  async function setBarberBusy(busy: boolean) {
+    setIsBusy(busy);
+    await fetch('/api/barber/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isBusy: busy }),
+    });
+  }
+
+  async function toggleBarberStatus() {
+    setTogglingStatus(true);
+    await setBarberBusy(!isBusy);
+    setTogglingStatus(false);
+  }
+
   async function updateStatus(id: string, status: WalkInStatus) {
     setUpdating(id);
     await fetch(`/api/waitlist/${id}`, {
@@ -81,6 +98,9 @@ export default function BarberClient({ initialWalkIns }: { initialWalkIns: WalkI
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
+    // Auto-sync barber availability with chair state
+    if (status === 'in_progress') await setBarberBusy(true);
+    if (status === 'done' || status === 'no_show') await setBarberBusy(false);
     await refresh();
     setUpdating(null);
   }
@@ -114,6 +134,43 @@ export default function BarberClient({ initialWalkIns }: { initialWalkIns: WalkI
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto' }}>
+
+      {/* Status toggle */}
+      <button
+        onClick={toggleBarberStatus}
+        disabled={togglingStatus}
+        style={{
+          width: '100%', marginBottom: '1rem',
+          padding: '1rem 1.25rem',
+          background: isBusy ? 'rgba(255,255,255,0.04)' : 'rgba(200,241,53,0.08)',
+          border: isBusy ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(200,241,53,0.25)',
+          borderRadius: 12, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          transition: 'all 0.2s',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: 10, height: 10, borderRadius: '50%',
+            background: isBusy ? 'rgba(255,255,255,0.2)' : '#C8F135',
+            boxShadow: isBusy ? 'none' : '0 0 8px rgba(200,241,53,0.6)',
+            flexShrink: 0,
+          }} />
+          <span style={{
+            fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900,
+            fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+            color: isBusy ? 'rgba(255,255,255,0.35)' : '#C8F135',
+          }}>
+            {isBusy ? 'Busy — in chair' : 'Available'}
+          </span>
+        </div>
+        <span style={{
+          fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+          color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-barlow, sans-serif)',
+        }}>
+          {togglingStatus ? '…' : 'Tap to change'}
+        </span>
+      </button>
 
       {/* Tabs */}
       <div style={{

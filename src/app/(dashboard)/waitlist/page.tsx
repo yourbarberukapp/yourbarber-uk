@@ -9,7 +9,7 @@ export default async function WaitlistPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [walkIns, shop] = await Promise.all([
+  const [walkIns, shop, barbers] = await Promise.all([
     db.walkIn.findMany({
       where: {
         shopId: session.shopId,
@@ -22,6 +22,11 @@ export default async function WaitlistPage() {
       orderBy: { arrivedAt: 'asc' },
     }),
     db.shop.findUnique({ where: { id: session.shopId }, select: { slug: true } }),
+    db.barber.findMany({
+      where: { shopId: session.shopId, isActive: true },
+      select: { id: true, name: true, isBusy: true },
+      orderBy: { name: 'asc' },
+    }),
   ]);
 
   const arriveUrl = shop ? `yourbarber.uk/arrive/${shop.slug}` : null;
@@ -58,7 +63,7 @@ export default async function WaitlistPage() {
         )}
       </div>
 
-      <WaitlistClient initialWalkIns={JSON.parse(JSON.stringify(walkIns))} />
+      <WaitlistClient initialWalkIns={JSON.parse(JSON.stringify(walkIns))} initialBarbers={JSON.parse(JSON.stringify(barbers))} />
     </div>
   );
 }
