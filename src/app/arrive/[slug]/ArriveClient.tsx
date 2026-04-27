@@ -33,7 +33,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<{ customerName: string | null; position: number; alreadyWaiting?: boolean } | null>(null);
+  const [result, setResult] = useState<{ customerName: string | null; position: number; waitMinutes?: number; alreadyWaiting?: boolean } | null>(null);
   const [returningUser, setReturningUser] = useState<{ name: string } | null>(null);
 
   // Styles sorted by category order
@@ -357,13 +357,29 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
               <div style={{
                 background: 'rgba(200,241,53,0.06)', border: '1px solid rgba(200,241,53,0.15)',
                 borderRadius: 16, padding: '1.5rem', width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: '1rem',
               }}>
-                <p style={{ color: '#C8F135', fontSize: '3.5rem', fontWeight: 900, fontFamily: 'var(--font-barlow, sans-serif)', margin: 0, lineHeight: 1 }}>
-                  {ordinal(result.position)}
-                </p>
-                <p style={{ color: 'white', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'var(--font-barlow, sans-serif)', marginTop: '0.5rem' }}>
-                  In the queue
-                </p>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ color: '#C8F135', fontSize: '3.5rem', fontWeight: 900, fontFamily: 'var(--font-barlow, sans-serif)', margin: 0, lineHeight: 1 }}>
+                    {ordinal(result.position)}
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'var(--font-barlow, sans-serif)', marginTop: '0.4rem' }}>
+                    In the queue
+                  </p>
+                </div>
+                {result.waitMinutes !== undefined && (
+                  <>
+                    <div style={{ width: 1, height: 48, background: 'rgba(200,241,53,0.15)' }} />
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ color: '#C8F135', fontSize: '3.5rem', fontWeight: 900, fontFamily: 'var(--font-barlow, sans-serif)', margin: 0, lineHeight: 1 }}>
+                        {result.waitMinutes === 0 ? "Now" : `~${result.waitMinutes}`}
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'var(--font-barlow, sans-serif)', marginTop: '0.4rem' }}>
+                        {result.waitMinutes === 0 ? "You're up next" : 'Min wait'}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-xl p-5 w-full text-left">

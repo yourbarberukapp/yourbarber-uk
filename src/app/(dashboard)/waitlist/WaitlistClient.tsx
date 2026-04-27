@@ -49,7 +49,7 @@ interface Barber {
   isBusy: boolean;
 }
 
-export default function WaitlistClient({ initialWalkIns, initialBarbers }: { initialWalkIns: WalkIn[]; initialBarbers: Barber[] }) {
+export default function WaitlistClient({ initialWalkIns, initialBarbers, defaultCutTime }: { initialWalkIns: WalkIn[]; initialBarbers: Barber[]; defaultCutTime: number }) {
   const [walkIns, setWalkIns] = useState<WalkIn[]>(initialWalkIns);
   const [updating, setUpdating] = useState<string | null>(null);
   const [barbers, setBarbers] = useState<Barber[]>(initialBarbers);
@@ -145,6 +145,8 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers }: { ini
           {active.map((w, i) => {
             const cfg = STATUS_CONFIG[w.status];
             const isUpdating = updating === w.id;
+            const barberCount = Math.max(barbers.length, 1);
+            const waitMins = w.status === 'in_progress' ? 0 : Math.ceil((i / barberCount) * defaultCutTime);
             return (
               <div key={w.id} style={{
                 background: '#111', border: `1px solid ${cfg.border}`,
@@ -214,6 +216,12 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers }: { ini
                       Arrived {timeAgo(w.arrivedAt)}
                       {w.customer.lastVisitAt && (
                         <span> · Last cut {timeAgo(w.customer.lastVisitAt)}</span>
+                      )}
+                      {w.status === 'waiting' && (
+                        <span style={{ color: waitMins === 0 ? '#C8F135' : 'rgba(255,255,255,0.3)' }}>
+                          {' · '}
+                          {waitMins === 0 ? 'Up next' : `~${waitMins} min wait`}
+                        </span>
                       )}
                     </div>
                   </div>

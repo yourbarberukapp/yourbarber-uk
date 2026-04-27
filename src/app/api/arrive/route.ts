@@ -21,7 +21,12 @@ export async function POST(req: NextRequest) {
   const { shopSlug, phone: rawPhone, name, note, preferredStyle, final: isFinal } = parsed.data;
   const phone = normalizePhone(rawPhone);
 
-  const shop = await db.shop.findUnique({ where: { slug: shopSlug } });
+  const shop = await db.shop.findUnique({
+    where: { slug: shopSlug },
+    include: {
+      barbers: { where: { isActive: true }, select: { id: true } },
+    },
+  });
   if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
 
   let customer = await db.customer.findUnique({
@@ -54,6 +59,14 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  const barberCount = Math.max(shop.barbers.length, 1);
+  const cutTime = (shop as any).defaultCutTime ?? 20;
+
+  function calcWait(position: number) {
+    const ahead = Math.max(position - 1, 0);
+    return Math.ceil((ahead / barberCount) * cutTime);
+  }
+
   if (existing) {
     const position = await db.walkIn.count({
       where: {
@@ -62,7 +75,7 @@ export async function POST(req: NextRequest) {
         arrivedAt: { lte: existing.arrivedAt },
       },
     });
-    return NextResponse.json({ customerName: customer.name, position, alreadyWaiting: true });
+    return NextResponse.json({ customerName: customer.name, position, waitMinutes: calcWait(position), alreadyWaiting: true });
   }
 
   const walkIn = await db.walkIn.create({
@@ -82,5 +95,5 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ customerName: customer.name, position });
+  return NextResponse.json({ customerName: customer.name, position, waitMinutes: calcWait(position) });
 }

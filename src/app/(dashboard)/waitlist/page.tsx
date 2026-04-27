@@ -21,7 +21,7 @@ export default async function WaitlistPage() {
       },
       orderBy: { arrivedAt: 'asc' },
     }),
-    db.shop.findUnique({ where: { id: session.shopId }, select: { slug: true } }),
+    db.shop.findUnique({ where: { id: session.shopId }, select: { slug: true, defaultCutTime: true } }),
     db.barber.findMany({
       where: { shopId: session.shopId, isActive: true },
       select: { id: true, name: true, isBusy: true },
@@ -63,7 +63,11 @@ export default async function WaitlistPage() {
         )}
       </div>
 
-      <WaitlistClient initialWalkIns={JSON.parse(JSON.stringify(walkIns))} initialBarbers={JSON.parse(JSON.stringify(barbers))} />
+      <WaitlistClient
+        initialWalkIns={JSON.parse(JSON.stringify(walkIns))}
+        initialBarbers={JSON.parse(JSON.stringify(barbers))}
+        defaultCutTime={shop?.defaultCutTime ?? 20}
+      />
     </div>
   );
 }

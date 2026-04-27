@@ -1,14 +1,17 @@
 'use client';
 import { useState } from 'react';
-import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon, BellRing, ShieldAlert } from 'lucide-react';
+import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon, BellRing, ShieldAlert, Clock } from 'lucide-react';
 
-interface Props { shop: { name: string; address: string | null; logoUrl: string | null; slug: string; allowBarberReminders: boolean }; }
+interface Props { shop: { name: string; address: string | null; logoUrl: string | null; slug: string; allowBarberReminders: boolean; defaultCutTime: number }; }
+
+const CUT_TIME_OPTIONS = [10, 15, 20, 25, 30, 40, 45, 60];
 
 export function SettingsForm({ shop }: Props) {
   const [name, setName] = useState(shop.name);
   const [address, setAddress] = useState(shop.address ?? '');
   const [logoUrl, setLogoUrl] = useState(shop.logoUrl ?? '');
   const [allowBarberReminders, setAllowBarberReminders] = useState(shop.allowBarberReminders);
+  const [defaultCutTime, setDefaultCutTime] = useState(shop.defaultCutTime);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -16,7 +19,7 @@ export function SettingsForm({ shop }: Props) {
     e.preventDefault(); setSaving(true);
     await fetch('/api/settings', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, address, logoUrl, allowBarberReminders }),
+      body: JSON.stringify({ name, address, logoUrl, allowBarberReminders, defaultCutTime }),
     });
     setSaved(true); setSaving(false);
     setTimeout(() => setSaved(false), 2000);
@@ -64,6 +67,35 @@ export function SettingsForm({ shop }: Props) {
             />
           </div>
         ))}
+      </div>
+
+      {/* Cut time */}
+      <div className="pt-4 border-t border-white/5">
+        <div className="flex items-center gap-2 mb-3 ml-1">
+          <Clock size={12} className="text-white/30" />
+          <label className="text-[11px] font-bold uppercase tracking-widest text-white/40">Typical cut time</label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {CUT_TIME_OPTIONS.map(mins => (
+            <button
+              key={mins}
+              type="button"
+              onClick={() => setDefaultCutTime(mins)}
+              className="px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-tight transition-all"
+              style={{
+                background: defaultCutTime === mins ? 'rgba(200,241,53,0.12)' : 'rgba(255,255,255,0.04)',
+                border: defaultCutTime === mins ? '1px solid rgba(200,241,53,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                color: defaultCutTime === mins ? '#C8F135' : 'rgba(255,255,255,0.35)',
+                fontFamily: 'var(--font-barlow, sans-serif)',
+              }}
+            >
+              {mins} min
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-white/20 mt-2 ml-1" style={{ fontFamily: 'var(--font-inter, sans-serif)' }}>
+          Used to estimate queue wait times for clients
+        </p>
       </div>
 
       {/* Permissions Section */}

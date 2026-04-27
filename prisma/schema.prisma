@@ -20,6 +20,7 @@ model Shop {
   bookingUrl           String?
   openingHours         Json?
   defaultReminderWeeks Int           @default(6)
+  defaultCutTime       Int           @default(20)
   allowBarberReminders Boolean           @default(false)
   shopType             String?       @default("uk_general")
   createdAt            DateTime      @default(now())
