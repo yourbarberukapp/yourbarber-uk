@@ -24,7 +24,7 @@ const plans = [
       "1 Barber account",
       "Unlimited customers",
       "4-angle photo history",
-      "SMS reminders (Twilio)",
+      "SMS reminders",
       "Branded QR card generator",
       "PWA Home Screen App",
     ],
