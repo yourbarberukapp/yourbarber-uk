@@ -13,6 +13,7 @@ model Shop {
   logoUrl              String?
   address              String?
   subscriptionStatus   String        @default("active")
+  createdAt            DateTime      @default(now())
   phone                String?
   about                String?
   coverPhotoUrl        String?
@@ -20,32 +21,31 @@ model Shop {
   bookingUrl           String?
   openingHours         Json?
   defaultReminderWeeks Int           @default(6)
-  defaultCutTime       Int           @default(20)
-  allowBarberReminders Boolean           @default(false)
   shopType             String?       @default("uk_general")
-  createdAt            DateTime      @default(now())
+  allowBarberReminders Boolean       @default(false)
+  defaultCutTime       Int           @default(20)
+  appointments         Appointment[]
   barbers              Barber[]
   customers            Customer[]
-  visits               Visit[]
-  smsLogs              SmsLog[]
+  feedbacks            Feedback[]
   photos               ShopPhoto[]
   services             ShopService[]
-  feedbacks            Feedback[]
   styles               ShopStyle[]
-  appointments         Appointment[]
+  smsLogs              SmsLog[]
+  visits               Visit[]
   walkIns              WalkIn[]
 }
 
 model ShopStyle {
   id        String   @id @default(cuid())
   shopId    String
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   name      String
-  category  String // "fade"|"taper"|"classic"|"natural"|"beard"
+  category  String
   sortOrder Int      @default(0)
   active    Boolean  @default(true)
-  imageUrl  String?
   createdAt DateTime @default(now())
+  imageUrl  String?
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([shopId, name])
   @@index([shopId, category])
@@ -55,24 +55,24 @@ model ShopStyle {
 model Barber {
   id               String           @id @default(cuid())
   shopId           String
-  shop             Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
   name             String
   email            String
   passwordHash     String
   role             String           @default("barber")
   isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
   bio              String?
   photoUrl         String?
-  workingHours     Json?
-  acceptsBookings  Boolean          @default(true)
-  isBusy           Boolean          @default(false)
   resetToken       String?          @unique
   resetTokenExpiry DateTime?
-  createdAt        DateTime         @default(now())
-  visits           Visit[]
-  feedbackTickets  FeedbackTicket[]
-  primaryCustomers Customer[]       @relation("PrimaryBarber")
+  acceptsBookings  Boolean          @default(true)
+  workingHours     Json?
+  isBusy           Boolean          @default(false)
   appointments     Appointment[]
+  shop             Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  primaryCustomers Customer[]       @relation("PrimaryBarber")
+  feedbackTickets  FeedbackTicket[]
+  visits           Visit[]
 
   @@unique([email, shopId])
   @@index([shopId])
@@ -81,23 +81,23 @@ model Barber {
 model Customer {
   id                     String        @id @default(cuid())
   shopId                 String
-  shop                   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
   phone                  String
   name                   String?
-  accessCode             String?       @unique
   smsOptIn               String        @default("not_asked")
   lastVisitAt            DateTime?
+  createdAt              DateTime      @default(now())
+  accessCode             String?       @unique
   preferredReminderWeeks Int?
   primaryBarberId        String?
-  primaryBarber          Barber?       @relation("PrimaryBarber", fields: [primaryBarberId], references: [id], onDelete: SetNull)
   otpCode                String?
   otpExpiry              DateTime?
-  createdAt              DateTime      @default(now())
-  visits                 Visit[]
-  smsLogs                SmsLog[]
-  feedbacks              Feedback[]
-  checkIns               CheckIn[]
   appointments           Appointment[]
+  checkIns               CheckIn[]
+  primaryBarber          Barber?       @relation("PrimaryBarber", fields: [primaryBarberId], references: [id])
+  shop                   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  feedbacks              Feedback[]
+  smsLogs                SmsLog[]
+  visits                 Visit[]
   walkIns                WalkIn[]
 
   @@unique([phone, shopId])
@@ -108,21 +108,22 @@ model Customer {
 model Visit {
   id                  String       @id @default(cuid())
   shopId              String
-  shop                Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
   customerId          String
-  customer            Customer     @relation(fields: [customerId], references: [id])
   barberId            String
-  barber              Barber       @relation(fields: [barberId], references: [id])
   visitedAt           DateTime     @default(now())
   notes               String?
+  createdAt           DateTime     @default(now())
   cutDetails          Json?
   recommendation      String?
   cutRating           String?
+  stars               Int?
   reminderScheduledAt DateTime?
   reminderSentAt      DateTime?
-  photos              VisitPhoto[]
   feedbacks           Feedback[]
-  createdAt           DateTime     @default(now())
+  barber              Barber       @relation(fields: [barberId], references: [id])
+  customer            Customer     @relation(fields: [customerId], references: [id])
+  shop                Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  photos              VisitPhoto[]
 
   @@index([customerId])
   @@index([shopId, visitedAt])
@@ -131,32 +132,32 @@ model Visit {
 model VisitPhoto {
   id        String   @id @default(cuid())
   visitId   String
-  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
   url       String
   angle     String
   createdAt DateTime @default(now())
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
 }
 
 model SmsLog {
   id         String   @id @default(cuid())
   shopId     String
-  shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
   message    String
   twilioSid  String?
   status     String   @default("sent")
   sentAt     DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 }
 
 model ShopPhoto {
   id        String   @id @default(cuid())
   shopId    String
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   url       String
   caption   String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
 }
@@ -164,33 +165,33 @@ model ShopPhoto {
 model ShopService {
   id           String        @id @default(cuid())
   shopId       String
-  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
   name         String
-  price        Decimal?      @db.Decimal(10, 2)
   duration     Int?
   description  String?
   sortOrder    Int           @default(0)
   isActive     Boolean       @default(true)
   createdAt    DateTime      @default(now())
+  price        Decimal?      @db.Decimal(10, 2)
   appointments Appointment[]
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
 }
 
 model Feedback {
-  id         String   @id @default(cuid())
+  id         String          @id @default(cuid())
   shopId     String
   customerId String
   visitId    String
-  rating     String // "positive"|"neutral"|"negative"
+  rating     String
+  stars      Int?
   issue      String?
-  sourceType String // "in_shop"|"web"
-  createdAt  DateTime @default(now())
-
-  shop     Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  customer Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  visit    Visit           @relation(fields: [visitId], references: [id], onDelete: Cascade)
-  ticket   FeedbackTicket?
+  sourceType String
+  createdAt  DateTime        @default(now())
+  customer   Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  shop       Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  visit      Visit           @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  ticket     FeedbackTicket?
 
   @@index([shopId, createdAt])
   @@index([customerId, createdAt])
@@ -200,17 +201,16 @@ model Feedback {
 model FeedbackTicket {
   id               String    @id @default(cuid())
   feedbackId       String    @unique
-  status           String    @default("unresolved") // "unresolved"|"in_progress"|"resolved"
-  resolution       String? // "same_barber_fix"|"different_barber"|"book_return"|"owner_contact"|"log_only"
+  status           String    @default("unresolved")
+  resolution       String?
   assignedBarberId String?
   preferredDate    DateTime?
   notes            String?
   followUpDate     DateTime?
   resolvedAt       DateTime?
   createdAt        DateTime  @default(now())
-
-  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
-  barber   Barber?  @relation(fields: [assignedBarberId], references: [id], onDelete: SetNull)
+  barber           Barber?   @relation(fields: [assignedBarberId], references: [id])
+  feedback         Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
 }
@@ -225,27 +225,25 @@ model CheckIn {
   expiresAt        DateTime
   scannedAt        DateTime?
   createdAt        DateTime  @default(now())
-
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   shopId         String
   customerId     String
   barberId       String?
   serviceId      String?
   scheduledAt    DateTime
-  duration       Int // minutes
-  status         String // "booked"|"in_progress"|"completed"|"cancelled"
+  duration       Int
+  status         String
   notes          String?
   reminderSentAt DateTime?
-  createdAt      DateTime  @default(now())
-
-  shop     Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  customer Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  barber   Barber?      @relation(fields: [barberId], references: [id], onDelete: SetNull)
-  service  ShopService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  barber         Barber?      @relation(fields: [barberId], references: [id])
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  service        ShopService? @relation(fields: [serviceId], references: [id])
+  shop           Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId, scheduledAt])
   @@index([customerId, scheduledAt])
@@ -255,16 +253,16 @@ model Appointment {
 model WalkIn {
   id             String    @id @default(cuid())
   shopId         String
-  shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
   customerId     String
-  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   note           String?
-  preferredStyle String?   // client-selected styles from arrival screen, JSON array
-  status         String    @default("waiting") // "waiting"|"in_progress"|"done"|"no_show"
+  status         String    @default("waiting")
   arrivedAt      DateTime  @default(now())
   startedAt      DateTime?
   doneAt         DateTime?
   createdAt      DateTime  @default(now())
+  preferredStyle String?
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId, arrivedAt])
   @@index([shopId, status])

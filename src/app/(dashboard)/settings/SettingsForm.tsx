@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon, BellRing, ShieldAlert, Clock } from 'lucide-react';
+import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon, BellRing, ShieldAlert, Clock, Star } from 'lucide-react';
 
-interface Props { shop: { name: string; address: string | null; logoUrl: string | null; slug: string; allowBarberReminders: boolean; defaultCutTime: number }; }
+interface Props { shop: { name: string; address: string | null; logoUrl: string | null; slug: string; allowBarberReminders: boolean; defaultCutTime: number; googleReviewUrl: string | null }; }
 
 const CUT_TIME_OPTIONS = [10, 15, 20, 25, 30, 40, 45, 60];
 
@@ -10,6 +10,7 @@ export function SettingsForm({ shop }: Props) {
   const [name, setName] = useState(shop.name);
   const [address, setAddress] = useState(shop.address ?? '');
   const [logoUrl, setLogoUrl] = useState(shop.logoUrl ?? '');
+  const [googleReviewUrl, setGoogleReviewUrl] = useState(shop.googleReviewUrl ?? '');
   const [allowBarberReminders, setAllowBarberReminders] = useState(shop.allowBarberReminders);
   const [defaultCutTime, setDefaultCutTime] = useState(shop.defaultCutTime);
   const [saving, setSaving] = useState(false);
@@ -19,7 +20,7 @@ export function SettingsForm({ shop }: Props) {
     e.preventDefault(); setSaving(true);
     await fetch('/api/settings', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, address, logoUrl, allowBarberReminders, defaultCutTime }),
+      body: JSON.stringify({ name, address, logoUrl, allowBarberReminders, defaultCutTime, googleReviewUrl }),
     });
     setSaved(true); setSaving(false);
     setTimeout(() => setSaved(false), 2000);
@@ -67,6 +68,24 @@ export function SettingsForm({ shop }: Props) {
             />
           </div>
         ))}
+      </div>
+
+      {/* Google review URL */}
+      <div>
+        <div className="flex items-center gap-2 mb-1.5 ml-1">
+          <Star size={12} className="text-white/30" />
+          <label className="text-[11px] font-bold uppercase tracking-widest text-white/40">Google Review Link</label>
+        </div>
+        <input
+          type="url"
+          value={googleReviewUrl}
+          onChange={e => setGoogleReviewUrl(e.target.value)}
+          placeholder="https://g.page/r/..."
+          className="w-full h-12 px-4 bg-[#111] border border-white/5 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/[0.02] transition-all"
+        />
+        <p className="text-[11px] text-white/20 mt-1.5 ml-1" style={{ fontFamily: 'var(--font-inter, sans-serif)' }}>
+          Google Business Profile → Get more reviews → Copy link. Shown to clients after a positive rating.
+        </p>
       </div>
 
       {/* Cut time */}

@@ -7,10 +7,20 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const session = await getCustomerSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { rating, issue } = await req.json();
+  const { rating, stars, issue } = await req.json();
   const visitId = params.id;
 
-  if (!rating || !['positive', 'negative'].includes(rating)) {
+  // stars is the new source of truth if provided, otherwise fallback to legacy rating
+  let finalRating = rating;
+  let finalStars = stars;
+
+  if (finalStars !== undefined) {
+    if (finalStars >= 4) finalRating = 'positive';
+    else if (finalStars === 3) finalRating = 'neutral';
+    else finalRating = 'negative';
+  }
+
+  if (!finalRating || !['positive', 'negative', 'neutral'].includes(finalRating)) {
     return NextResponse.json({ error: 'Invalid rating' }, { status: 400 });
   }
 
@@ -33,21 +43,22 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   // Create feedback and update visit
-  const { feedback, shopPhone } = await db.$transaction(async (tx) => {
-    const shop = await tx.shop.findUnique({ where: { id: visit.shopId }, select: { phone: true } });
-    
+  const { feedback, shopPhone, googleReviewUrl } = await db.$transaction(async (tx) => {
+    const shop = await tx.shop.findUnique({ where: { id: visit.shopId }, select: { phone: true, googleReviewUrl: true } });
+
     const fb = await tx.feedback.create({
       data: {
         shopId: visit.shopId,
         customerId: session.customerId,
         visitId,
-        rating,
-        issue: rating === 'negative' ? issue : null,
+        rating: finalRating,
+        stars: finalStars,
+        issue: finalRating === 'negative' ? issue : null,
         sourceType: 'web',
       },
     });
 
-    if (rating === 'negative') {
+    if (finalRating === 'negative') {
       await tx.feedbackTicket.create({
         data: {
           feedbackId: fb.id,
@@ -58,19 +69,28 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     await tx.visit.update({
       where: { id: visitId },
-      data: { cutRating: rating },
+      data: { 
+        cutRating: finalRating,
+        stars: finalStars
+      },
     });
 
-    return { feedback: fb, shopPhone: shop?.phone };
+    return { feedback: fb, shopPhone: shop?.phone, googleReviewUrl: shop?.googleReviewUrl ?? null };
   });
 
-  if (rating === 'negative' && shopPhone) {
+  if (finalRating === 'negative' && shopPhone) {
     try {
-      await sendSms(shopPhone, `New Negative Feedback: A customer just thumb-downed their cut. Please check the feedback dashboard.`);
+      await sendSms(shopPhone, `New Negative Feedback: A customer just rated their cut ${finalStars ? finalStars + ' stars' : 'poorly'}. Please check the feedback dashboard.`);
     } catch (err) {
       console.error('Failed to notify owner', err);
     }
   }
 
-  return NextResponse.json({ success: true, feedback });
+  // Only trigger Google Review link for 5-star ratings
+  const triggerGoogle = finalStars === 5;
+
+  return NextResponse.json({ 
+    success: true, 
+    googleReviewUrl: triggerGoogle ? googleReviewUrl : null 
+  });
 }

@@ -4,6 +4,7 @@ import { generateReadUrl } from '@/lib/s3';
 import { getCustomerSession } from '@/lib/customerAuth';
 import Image from 'next/image';
 import { Scissors, LogOut } from 'lucide-react';
+import { RateVisit } from './RateVisit';
 
 const lime = '#C8F135';
 const ANGLE_ORDER = ['front', 'back', 'left', 'right', 'top'];
@@ -65,6 +66,7 @@ export default async function MyPassportPage() {
           recommendation: true,
           barber: { select: { name: true } },
           photos: { orderBy: { createdAt: 'asc' } },
+          feedbacks: { select: { id: true, rating: true }, take: 1 },
         },
       },
     },
@@ -202,18 +204,20 @@ export default async function MyPassportPage() {
                 padding: '0.875rem 1rem',
                 borderBottom: (visit.photos.length > 0 || hasDetails || visit.recommendation)
                   ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                <span style={{
-                  fontFamily: "'Barlow Condensed',sans-serif",
-                  fontWeight: 800, fontSize: '1rem', color: 'white',
-                  textTransform: 'uppercase', letterSpacing: '0.02em',
-                }}>
-                  {fmtDate(visit.visitedAt)}
-                </span>
-                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>
-                  {visit.barber.name}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{
+                    fontFamily: "'Barlow Condensed',sans-serif",
+                    fontWeight: 800, fontSize: '1rem', color: 'white',
+                    textTransform: 'uppercase', letterSpacing: '0.02em',
+                  }}>
+                    {fmtDate(visit.visitedAt)}
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>
+                    {visit.barber.name}
+                  </span>
+                </div>
+                <RateVisit visitId={visit.id} alreadyRated={visit.feedbacks.length > 0} />
               </div>
 
               {/* Photos */}

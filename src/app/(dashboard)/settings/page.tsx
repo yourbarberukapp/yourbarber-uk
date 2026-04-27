@@ -11,7 +11,7 @@ export default async function SettingsPage() {
 
   const shop = await db.shop.findUnique({
     where: { id: session.shopId },
-    select: { name: true, address: true, logoUrl: true, slug: true, shopType: true, allowBarberReminders: true, defaultCutTime: true },
+    select: { name: true, address: true, logoUrl: true, slug: true, shopType: true, allowBarberReminders: true, defaultCutTime: true, googleReviewUrl: true },
   });
 
   return (

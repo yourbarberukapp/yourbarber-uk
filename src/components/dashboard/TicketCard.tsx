@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Clock, AlertTriangle } from 'lucide-react';
+import { Clock, AlertTriangle, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function TicketCard({ ticket }: { ticket: any }) {
@@ -59,12 +59,27 @@ export default function TicketCard({ ticket }: { ticket: any }) {
       </div>
 
       <div className="bg-black/40 border border-white/5 rounded p-4 mb-6">
-        <div className="text-xs text-white/40 uppercase tracking-widest font-barlow font-bold mb-2 flex items-center gap-2">
-          {ticket.status === 'unresolved' && <AlertTriangle size={14} className="text-red-400" />}
-          Customer Issue
+        <div className="text-xs text-white/40 uppercase tracking-widest font-barlow font-bold mb-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {ticket.status === 'unresolved' && <AlertTriangle size={14} className="text-red-400" />}
+            Customer Issue
+          </div>
+          {ticket.feedback.stars && (
+            <div className="flex items-center gap-1 text-primary">
+              <span className="text-[10px] opacity-60 mr-1">RATING:</span>
+              {[...Array(5)].map((_, i) => (
+                <Star 
+                  key={i} 
+                  size={10} 
+                  fill={i < ticket.feedback.stars ? "currentColor" : "none"} 
+                  className={i < ticket.feedback.stars ? "text-primary" : "text-white/10"}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <p className="text-white/90 text-sm leading-relaxed font-inter">
-          {ticket.feedback.issue || "Customer thumbs-downed the cut without leaving a specific comment."}
+          {ticket.feedback.issue || "Customer rated the cut poorly without leaving a specific comment."}
         </p>
       </div>
 
