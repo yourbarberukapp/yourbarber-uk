@@ -2,6 +2,7 @@ import { getRequiredSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import WaitlistClient from './WaitlistClient';
 import { QrCode } from 'lucide-react';
+import ArrivalQrDemoButton from '@/components/ArrivalQrDemoButton';
 
 export default async function WaitlistPage() {
   const session = await getRequiredSession();
@@ -22,7 +23,7 @@ export default async function WaitlistPage() {
       },
       orderBy: { arrivedAt: 'asc' },
     }),
-    db.shop.findUnique({ where: { id: session.shopId }, select: { slug: true, defaultCutTime: true } }),
+    db.shop.findUnique({ where: { id: session.shopId }, select: { name: true, slug: true, defaultCutTime: true } }),
     db.barber.findMany({
       where: { shopId: session.shopId, isActive: true },
       select: { id: true, name: true, isBusy: true },
@@ -49,17 +50,22 @@ export default async function WaitlistPage() {
         {arriveUrl && (
           <div style={{
             background: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-            padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.625rem',
+            padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
           }}>
             <QrCode size={16} color="rgba(200,241,53,0.7)" />
-            <div>
+            <div style={{ minWidth: 0 }}>
               <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', margin: 0, fontFamily: 'var(--font-barlow, sans-serif)' }}>
                 Your wall QR
               </p>
-              <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', margin: '2px 0 0', fontFamily: 'monospace' }}>
+              <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', margin: '2px 0 0', fontFamily: 'monospace', overflowWrap: 'anywhere' }}>
                 {arriveUrl}
               </p>
             </div>
+            {shop && (
+              <div style={{ marginLeft: 'auto' }}>
+                <ArrivalQrDemoButton shopSlug={shop.slug} shopName={shop.name} />
+              </div>
+            )}
           </div>
         )}
       </div>

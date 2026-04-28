@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered, BarChart2, Scissors, Home } from 'lucide-react';
+import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered, BarChart2, Scissors, Home, QrCode } from 'lucide-react';
 import { AppSession } from '@/lib/session';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
 const ownerNav = [
   { href: '/dashboard', label: 'Dashboard', icon: Globe },
   { href: '/waitlist', label: 'Walk-ins', icon: ListOrdered },
+  { href: '/arrival-qr', label: 'Arrival QR', icon: QrCode },
   { href: '/appointments', label: 'Appointments', icon: Calendar },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/reminders', label: 'Reminders', icon: Bell },

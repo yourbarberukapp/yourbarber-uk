@@ -20,6 +20,7 @@ interface Props {
   shopSlug: string;
   shopName: string;
   shopStyles: ShopStyle[];
+  demoWalkIn?: boolean;
 }
 
 const CATEGORY_ORDER = ['fade', 'taper', 'classic', 'natural', 'beard'];
@@ -31,7 +32,18 @@ function ordinal(n: number) {
   return `${n}th`;
 }
 
-export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) {
+function saveArrivalStatus(
+  shopSlug: string,
+  status: { position: number; waitMinutes?: number; customerName: string | null; groupSize?: number }
+) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(`yourbarber-arrival-${shopSlug}`, JSON.stringify({
+    ...status,
+    savedAt: Date.now(),
+  }));
+}
+
+export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkIn = false }: Props) {
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
@@ -67,8 +79,14 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
       });
       const data = await res.json();
       if (data.needsName) {
-        setStep('name');
+        if (demoWalkIn) {
+          setName('Test Barber');
+          setStep('style');
+        } else {
+          setStep('name');
+        }
       } else if (data.customerName && data.alreadyWaiting) {
+        saveArrivalStatus(shopSlug, data);
         setResult(data);
         setStep('done');
       } else if (data.proceedToStyle) {
@@ -111,6 +129,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
           shopSlug,
           phone,
           name: name || undefined,
+          demoName: demoWalkIn ? 'Test Barber' : undefined,
           note: note || undefined,
           preferredStyle: selectedStyles.length > 0 ? JSON.stringify(selectedStyles) : undefined,
           familyMemberIds: selectedMemberIds,
@@ -119,6 +138,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
       });
       const data = await res.json();
       if (data.customerName !== undefined) {
+        saveArrivalStatus(shopSlug, data);
         setResult(data);
         setStep('done');
       } else {
@@ -464,8 +484,8 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
                 }}>
                   {result.alreadyWaiting ? 'Still waiting?' : "You're all set."}
                 </h2>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: '0.5rem' }}>
-                  {result.customerName || 'Friend'}, {result.groupSize && result.groupSize > 1 ? `your group is` : `you are`}
+                <p style={{ color: 'rgba(255,255,255,0.48)', fontSize: '0.85rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: '0.5rem', lineHeight: 1.5 }}>
+                  Your place in the queue is confirmed. {result.customerName || 'Friend'}, {result.groupSize && result.groupSize > 1 ? `your group is` : `you are`}
                 </p>
               </div>
 
@@ -517,7 +537,15 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
 
               <button 
                 style={{ ...btnStyle, background: 'white', color: '#0A0A0A' }}
-                onClick={() => window.open(`/trends?shop=${shopSlug}`, '_blank')}
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    shop: shopSlug,
+                    checkedIn: '1',
+                    position: String(result.position),
+                  });
+                  if (result.waitMinutes !== undefined) params.set('wait', String(result.waitMinutes));
+                  window.location.href = `/trends?${params.toString()}`;
+                }}
               >
                 Browse Hair Ideas
               </button>

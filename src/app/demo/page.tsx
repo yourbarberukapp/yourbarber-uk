@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ArrivalQrDemoButton from '@/components/ArrivalQrDemoButton';
 import { signOut } from 'next-auth/react';
 
 const fadeUp = {
@@ -35,7 +36,7 @@ const screens = [
     who: 'CUSTOMER',
     title: 'Join the Queue',
     desc: 'Walk in, scan the wall QR, add your phone number, and take your place in line. This is the fair-play queue your customers see.',
-    link: '/arrive/ben-j-barbers',
+    link: '/arrive/benj-barbers',
     creds: null,
     image: '/demo-kiosk-luke.png',
     imageAlt: 'Wall check-in screen in a barbershop with a barber cutting hair in the background',
@@ -198,6 +199,11 @@ export default function DemoPage() {
                   >
                     {s.cta} <ExternalLink size={14} />
                   </Link>
+                  {s.id === 'customer' && (
+                    <div className="mt-3">
+                      <ArrivalQrDemoButton shopSlug="benj-barbers" shopName="Ben J Barbers" className="w-full py-4" />
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}

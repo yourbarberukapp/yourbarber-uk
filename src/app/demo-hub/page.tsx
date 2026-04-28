@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ArrivalQrDemoButton from '@/components/ArrivalQrDemoButton';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -233,6 +234,9 @@ export default function DemoHubPage() {
                         Open Customer Scan
                         <ExternalLink size={16} />
                       </Link>
+                      <div className="mb-3">
+                        <ArrivalQrDemoButton shopSlug="benj-barbers" shopName="Ben J Barbers" className="w-full py-4" />
+                      </div>
                       <button
                         onClick={quickCustomerLogin}
                         disabled={loadingRole === 'customer'}

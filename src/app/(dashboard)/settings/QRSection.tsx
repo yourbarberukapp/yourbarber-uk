@@ -9,8 +9,8 @@ interface Props {
 
 export function QRSection({ slug, shopName }: Props) {
   const qrUrl = `/api/qr/arrive/${slug}`;
-  const downloadUrl = `${qrUrl}?size=1200&format=portrait`;
-  const stickerUrl = `${qrUrl}?size=1200&format=square`;
+  const downloadUrl = `${qrUrl}?format=portrait&type=pdf`;
+  const stickerUrl = `${qrUrl}?format=square&type=pdf`;
 
   return (
     <div className="space-y-6">
@@ -49,7 +49,7 @@ export function QRSection({ slug, shopName }: Props) {
           <div className="pt-4 flex flex-wrap gap-3">
             <a 
               href={downloadUrl} 
-              download={`YourBarber-CheckIn-${slug}.svg`}
+              download={`YourBarber-CheckIn-${slug}.pdf`}
               className="btn-lime flex items-center gap-2 px-6 py-3"
             >
               <Download size={18} />
@@ -58,7 +58,7 @@ export function QRSection({ slug, shopName }: Props) {
             
             <a 
               href={stickerUrl} 
-              download={`YourBarber-Sticker-${slug}.svg`}
+              download={`YourBarber-Sticker-${slug}.pdf`}
               className="bg-white/5 hover:bg-white/10 text-white transition-colors flex items-center gap-2 px-6 py-3 rounded-sm"
             >
               <Download size={18} />
@@ -72,7 +72,7 @@ export function QRSection({ slug, shopName }: Props) {
           <div className="relative aspect-[1/1.414] bg-[#0a0a0a] border border-white/5 overflow-hidden shadow-2xl">
             <img 
               src={`${qrUrl}?size=600&format=portrait`} 
-              alt="QR Code Preview" 
+              alt={`Check-in QR preview for ${shopName}`} 
               className="w-full h-full object-contain p-8"
             />
           </div>

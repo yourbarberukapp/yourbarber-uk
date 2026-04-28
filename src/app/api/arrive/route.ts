@@ -10,6 +10,7 @@ const schema = z.object({
   name: z.string().max(100).optional(),
   note: z.string().max(300).optional(),
   preferredStyle: z.string().max(500).optional(),
+  demoName: z.string().max(100).optional(),
   final: z.boolean().optional(), // true on the submit call, absent on the lookup call
   familyMemberIds: z.array(z.string()).optional(), // List of family members to check in
 });
@@ -19,8 +20,9 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
 
-  const { shopSlug, phone: rawPhone, name, note, preferredStyle, final: isFinal } = parsed.data;
+  const { shopSlug, phone: rawPhone, name, demoName, note, preferredStyle, final: isFinal } = parsed.data;
   const phone = normalizePhone(rawPhone);
+  const customerName = name || demoName;
   const shop = await db.shop.findUnique({
     where: { slug: shopSlug },
     include: {
@@ -35,12 +37,18 @@ export async function POST(req: NextRequest) {
   });
 
   if (!customer) {
-    if (!name) return NextResponse.json({ needsName: true });
+    if (!customerName) return NextResponse.json({ needsName: true });
     const accessCode = await generateUniqueAccessCode();
     const createdCustomer = await db.customer.create({
-      data: { shopId: shop.id, phone, name, accessCode },
+      data: { shopId: shop.id, phone, name: customerName, accessCode },
     });
     customer = { ...createdCustomer, familyMembers: [] };
+  } else if (demoName && customer.name !== demoName) {
+    customer = await db.customer.update({
+      where: { id: customer.id },
+      data: { name: demoName },
+      include: { familyMembers: { select: { id: true, name: true } } },
+    });
   }
 
   // Lookup call (first step) — just identify the customer, don't create WalkIn yet

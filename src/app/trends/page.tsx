@@ -1,10 +1,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Scissors, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, Scissors, Sparkles } from 'lucide-react';
 
 const TRENDS = [
   {
@@ -27,19 +28,64 @@ const TRENDS = [
   }
 ];
 
+function ordinal(value: string | null) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  if (n === 1) return '1st';
+  if (n === 2) return '2nd';
+  if (n === 3) return '3rd';
+  return `${n}th`;
+}
+
 function TrendsContent() {
   const searchParams = useSearchParams();
+  const [ready, setReady] = useState(false);
+  const [savedStatus, setSavedStatus] = useState<{ position?: number; waitMinutes?: number } | null>(null);
   const shopSlug = searchParams.get('shop') || 'benj-barbers';
+  const urlCheckedIn = searchParams.get('checkedIn') === '1';
+  const urlPosition = searchParams.get('position');
+  const urlWait = searchParams.get('wait');
+  const checkedIn = urlCheckedIn || !!savedStatus;
+  const position = urlPosition || (savedStatus?.position ? String(savedStatus.position) : null);
+  const wait = urlWait || (savedStatus?.waitMinutes !== undefined ? String(savedStatus.waitMinutes) : null);
   const arriveUrl = `/arrive/${shopSlug}`;
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(`yourbarber-arrival-${shopSlug}`);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      const maxAgeMs = 6 * 60 * 60 * 1000;
+      if (Date.now() - parsed.savedAt <= maxAgeMs) {
+        setSavedStatus({
+          position: Number(parsed.position) || undefined,
+          waitMinutes: Number.isFinite(Number(parsed.waitMinutes)) ? Number(parsed.waitMinutes) : undefined,
+        });
+      }
+    } catch {
+      window.localStorage.removeItem(`yourbarber-arrival-${shopSlug}`);
+    }
+  }, [shopSlug]);
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-[#C8F135] selection:text-black">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href={arriveUrl} className="p-2 -ml-2 text-white/40 hover:text-white transition-colors">
-            <ArrowLeft size={20} />
-          </Link>
+          {checkedIn ? (
+            <button
+              type="button"
+              onClick={() => setReady(true)}
+              className="p-2 -ml-2 text-white/40 hover:text-white transition-colors"
+              aria-label="Show queue status"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          ) : (
+            <Link href={arriveUrl} className="p-2 -ml-2 text-white/40 hover:text-white transition-colors">
+              <ArrowLeft size={20} />
+            </Link>
+          )}
           <div className="flex flex-col items-center">
             <h1 className="font-barlow font-black text-xl uppercase tracking-tight flex items-center gap-2">
               <Sparkles size={16} className="text-[#C8F135]" />
@@ -92,16 +138,72 @@ function TrendsContent() {
         </div>
       </main>
 
+      {ready && (
+        <div className="fixed inset-0 z-[80] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
+          <div className="w-full max-w-sm bg-[#111] border border-[#C8F135]/20 rounded-3xl p-8 text-center shadow-2xl">
+            <div className="w-16 h-16 rounded-full bg-[#C8F135]/12 border border-[#C8F135]/30 flex items-center justify-center mx-auto mb-5">
+              <Check size={28} className="text-[#C8F135]" />
+            </div>
+            <h2 className="font-barlow font-black text-3xl uppercase tracking-tight text-white">
+              You&apos;re checked in.
+            </h2>
+            <p className="text-white/45 text-sm leading-relaxed mt-3">
+              Your place is still held in the queue. Keep this screen open and show your barber any style you liked when they call you.
+            </p>
+            {(position || wait) && (
+              <div className="mt-6 rounded-2xl border border-[#C8F135]/15 bg-[#C8F135]/5 p-4">
+                {position && (
+                  <p className="font-barlow font-black text-4xl text-[#C8F135] leading-none">
+                    {ordinal(position)}
+                  </p>
+                )}
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 mt-2">
+                  {position ? 'Your queue position' : 'In the queue'}
+                </p>
+                {wait && wait !== '0' && (
+                  <p className="text-xs text-white/40 mt-2">
+                    Around {wait} min wait
+                  </p>
+                )}
+                {wait === '0' && (
+                  <p className="text-xs text-[#C8F135]/80 mt-2">
+                    You&apos;re up next
+                  </p>
+                )}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setReady(false)}
+              className="mt-6 w-full bg-[#C8F135] text-black py-4 rounded-2xl font-barlow font-black text-sm uppercase tracking-widest active:scale-[0.98] transition-all"
+            >
+              Browse more styles
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Floating CTA */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
         <div className="max-w-xl mx-auto">
-          <Link 
-            href={arriveUrl}
-            className="flex items-center justify-center gap-3 w-full bg-[#C8F135] text-black py-5 rounded-2xl font-barlow font-black text-lg uppercase tracking-tight shadow-[0_20px_50px_rgba(200,241,53,0.3)] active:scale-[0.98] transition-all"
-          >
-            <Scissors size={20} />
-            Ready for your cut?
-          </Link>
+          {checkedIn ? (
+            <button
+              type="button"
+              onClick={() => setReady(true)}
+              className="flex items-center justify-center gap-3 w-full bg-[#C8F135] text-black py-5 rounded-2xl font-barlow font-black text-lg uppercase tracking-tight shadow-[0_20px_50px_rgba(200,241,53,0.3)] active:scale-[0.98] transition-all"
+            >
+              <Check size={20} />
+              Done browsing styles
+            </button>
+          ) : (
+            <Link 
+              href={arriveUrl}
+              className="flex items-center justify-center gap-3 w-full bg-[#C8F135] text-black py-5 rounded-2xl font-barlow font-black text-lg uppercase tracking-tight shadow-[0_20px_50px_rgba(200,241,53,0.3)] active:scale-[0.98] transition-all"
+            >
+              <Scissors size={20} />
+              Check in for a cut
+            </Link>
+          )}
         </div>
       </div>
     </div>
