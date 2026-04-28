@@ -102,7 +102,7 @@ export default function CutPassportPage() {
                 <span className="text-[#C8F135]">barbers get instantly.</span>
               </h2>
               <p className="text-white/56 font-inter text-base leading-relaxed mb-8">
-                In the demo, the Cut Passport is the moment where the product stops feeling like software and starts feeling useful. A barber can see the last cut, trust it, and keep moving.
+                In the demo, the Cut Passport is the moment where it clicks. A barber opens the client, sees the last cut, trusts it, and keeps moving.
               </p>
 
               <div className="space-y-4">

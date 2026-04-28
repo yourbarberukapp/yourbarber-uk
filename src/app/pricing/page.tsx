@@ -199,7 +199,7 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {comparison.map((row, i) => (
+                  {comparison.map((row) => (
                     <tr key={row.feature} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                       <td className="py-5 font-inter text-sm text-white/70">{row.feature}</td>
                       <td className="py-5 font-inter text-sm font-bold text-white">
@@ -242,7 +242,7 @@ export default function PricingPage() {
       {/* CTA */}
       <section className="bg-[#C8F135] py-20 px-6">
         <div className="container mx-auto text-center">
-          <h2 className="font-barlow font-black text-4xl uppercase text-[#0A0A0A] mb-8">Ready to own your client base?</h2>
+          <h2 className="font-barlow font-black text-4xl uppercase text-[#0A0A0A] mb-8">Give your shop a proper memory.</h2>
           <Link href="/demo-hub">
             <button className="bg-[#0A0A0A] text-white px-10 py-4 text-lg rounded-sm font-barlow font-bold uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 mx-auto">
               Try the demo <ArrowRight size={18} />

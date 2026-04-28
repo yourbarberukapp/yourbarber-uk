@@ -92,7 +92,7 @@ export default function Home() {
         <div className="relative z-10 container mx-auto px-6 lg:px-12 py-32 lg:py-44">
           <div className="max-w-3xl">
             <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="badge-lime inline-block mb-7">
-              Built for independent UK barbershops
+              Built for walk-ins, not just bookings
             </motion.div>
 
             <motion.h1

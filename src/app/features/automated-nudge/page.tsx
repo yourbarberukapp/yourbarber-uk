@@ -9,7 +9,7 @@ const proofPoints = [
   'Regulars get a timely nudge before they drift away',
   'The shop can fill quieter mornings without chasing people manually',
   'Messages feel personal because they are based on real visit history',
-  'Owners get a calmer follow-up system instead of scraps of memory and old chats',
+  'Owners stop relying on scraps of memory and old chats to remember who should have come back',
 ];
 
 const reminderParts = [
@@ -133,7 +133,7 @@ export default function AutomatedNudgePage() {
                   'The shop can spot regulars who have gone quiet',
                   'Messages go out without interrupting the day',
                   'Return visits are driven by timing, not luck',
-                  'The reminder system feels like a tool, not more admin',
+                  'Reminders go out without adding to the admin pile',
                 ].map(item => (
                   <div key={item} className="flex items-center gap-3 text-white/72 font-inter text-base">
                     <CheckCircle2 size={16} className="text-[#C8F135] flex-shrink-0" />
