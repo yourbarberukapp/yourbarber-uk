@@ -17,7 +17,7 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { href: "/#features", label: "Features" },
+    { href: "/features", label: "Features" },
     { href: "/pricing", label: "Pricing" },
     { href: "/demo-hub", label: "Live Demo" },
     { href: "/demo", label: "Early Access" },
@@ -25,8 +25,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-[#0A0A0A]/95 backdrop-blur-sm border-b border-white/8" : "bg-transparent"
+      className={`fixed top-0 left-0 right-0 z-50 border-b border-white/8 backdrop-blur-md transition-all duration-300 ${
+        scrolled
+          ? "bg-[#0A0A0A]/94 shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+          : "bg-[#0A0A0A]/72"
       }`}
     >
       <div className="container mx-auto px-6 lg:px-12 flex items-center justify-between h-16">
@@ -43,7 +45,7 @@ export default function Navbar() {
             <Link key={link.href} href={link.href}>
               <span
                 className={`font-inter text-sm transition-colors cursor-pointer ${
-                  pathname === link.href
+                  pathname === link.href || (link.href === "/features" && pathname.startsWith("/features"))
                     ? "text-[#C8F135]"
                     : "text-white/65 hover:text-white"
                 }`}

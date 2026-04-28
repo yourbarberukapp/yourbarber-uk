@@ -17,58 +17,61 @@ const fadeUp = {
 
 const plans = [
   {
-    name: "Independent",
-    price: "19",
-    desc: "Perfect for solo barbers or tiny 2-chair shops.",
+    name: "Solo",
+    price: "24",
+    foundingPrice: null,
+    desc: "For solo barbers running a one-chair operation.",
     features: [
       "1 Barber account",
       "Unlimited customers",
       "4-angle photo history",
       "SMS reminders",
-      "Branded QR card generator",
-      "PWA Home Screen App",
+      "QR code for wall",
+      "Phone-friendly barber view",
     ],
     notIncluded: [
-      "Multi-shop networks",
-      "Shared team database",
+      "Multi-barber team",
       "Owner reporting dashboard",
+      "Multi-shop networks",
     ],
     cta: "Start free trial",
     highlight: false,
   },
   {
-    name: "Shop Team",
-    price: "39",
-    desc: "For multi-chair shops that work as one unit.",
+    name: "Shop",
+    price: "49",
+    foundingPrice: "29",
+    desc: "For multi-chair shops that run as one team.",
     features: [
-      "Up to 6 Barbers",
-      "1 Shop location",
-      "Shared customer history",
-      "Owner management roles",
-      "Team analytics",
+      "Unlimited barbers",
+      "Unlimited customers",
+      "Shared cut history across the team",
+      "Owner management dashboard",
+      "Live walk-in queue + family check-in",
+      "SMS reminders + nudges",
       "Priority UK support",
     ],
     notIncluded: [
       "Multi-shop networks",
-      "Custom branding for QR",
     ],
-    cta: "Launch your shop",
+    cta: "Get founding price",
     highlight: true,
   },
   {
-    name: "The Network",
-    price: "89",
-    desc: "For barbers with 2-5 shops across the city.",
+    name: "Network",
+    price: "99",
+    foundingPrice: null,
+    desc: "For barbers running 2–5 shops across the city.",
     features: [
-      "Unlimited Barbers",
-      "Up to 5 Shops",
-      "Shared global history",
-      "Network-wide analytics",
-      "Multi-shop CRM",
-      "Custom QR branding",
+      "Everything in Shop",
+      "Up to 5 locations",
+      "Shared global client history",
+      "Clear reporting across every shop",
+      "Custom QR branding per shop",
+      "Dedicated onboarding",
     ],
     notIncluded: [],
-    cta: "Scale your empire",
+    cta: "Talk to us",
     highlight: false,
   },
 ];
@@ -96,9 +99,14 @@ export default function PricingPage() {
               Keep your <span className="text-[#C8F135]">profit.</span><br />
               Zero commission.
             </h1>
-            <p className="text-white/55 font-inter text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
-              Booking platforms take 20-30% of your new clients. We don't. You pay a flat monthly fee, and you own your data forever.
+            <p className="text-white/55 font-inter text-lg max-w-2xl mx-auto mb-6 leading-relaxed">
+              Booking platforms take 20–30% of every new client. We don't. One flat monthly fee, you own your data forever.
             </p>
+            <div className="inline-flex items-center gap-3 bg-[#C8F135]/8 border border-[#C8F135]/20 rounded-full px-5 py-2 mb-10">
+              <span className="text-[#C8F135] font-barlow font-black text-base">£29/mo</span>
+              <span className="text-white/30 text-sm font-inter">founding price — locks in for life</span>
+              <span className="text-white/20 line-through text-sm font-inter">£49</span>
+            </div>
           </motion.div>
 
           {/* Plan Grid */}
@@ -118,13 +126,28 @@ export default function PricingPage() {
               >
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#C8F135] text-[#0A0A0A] font-barlow font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">
-                    Most Popular
+                    Founding Offer
                   </div>
                 )}
                 <h3 className="font-barlow font-bold text-xl uppercase tracking-wide mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-4xl font-barlow font-black">£{plan.price}</span>
-                  <span className="text-white/30 text-sm font-inter">/mo</span>
+                <div className="mb-4">
+                  {plan.foundingPrice ? (
+                    <>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-4xl font-barlow font-black text-[#C8F135]">£{plan.foundingPrice}</span>
+                        <span className="text-white/30 text-sm font-inter">/mo</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-white/25 line-through text-sm font-inter">£{plan.price}/mo</span>
+                        <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-[#C8F135]/60">for life</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-barlow font-black">£{plan.price}</span>
+                      <span className="text-white/30 text-sm font-inter">/mo</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-white/45 text-sm font-inter mb-8 h-10">{plan.desc}</p>
                 
@@ -199,13 +222,13 @@ export default function PricingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-left pb-20">
             <div>
               <Zap size={24} className="text-[#C8F135] mb-4" />
-              <h4 className="font-barlow font-bold uppercase tracking-wide mb-3">No Vendor Lock-In</h4>
-              <p className="text-white/45 text-sm leading-relaxed font-inter">Export your entire customer database and photo history at any time. Your data is yours.</p>
+              <h4 className="font-barlow font-bold uppercase tracking-wide mb-3">Take Your History With You</h4>
+              <p className="text-white/45 text-sm leading-relaxed font-inter">Your client list, haircut notes, and photo history belong to your shop. You can take them with you any time.</p>
             </div>
             <div>
               <Shield size={24} className="text-[#C8F135] mb-4" />
-              <h4 className="font-barlow font-bold uppercase tracking-wide mb-3">GDPR Compliant</h4>
-              <p className="text-white/45 text-sm leading-relaxed font-inter">Photos are stored in private S3 buckets. Customers can view and manage their own cut passport.</p>
+              <h4 className="font-barlow font-bold uppercase tracking-wide mb-3">Private by Default</h4>
+              <p className="text-white/45 text-sm leading-relaxed font-inter">Cut photos stay private, and customers can view and manage their own Cut Passport.</p>
             </div>
             <div>
               <Users size={24} className="text-[#C8F135] mb-4" />
