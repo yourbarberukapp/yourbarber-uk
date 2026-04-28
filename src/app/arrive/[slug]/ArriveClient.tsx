@@ -48,11 +48,12 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
-  const [holdPlace, setHoldPlace] = useState(false);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ customerName: string | null; position: number; waitMinutes?: number; alreadyWaiting?: boolean; groupSize?: number; holdPlace?: boolean } | null>(null);
+  const [holdingPlace, setHoldingPlace] = useState(false);
+  const [holdRequested, setHoldRequested] = useState(false);
   const [returningUser, setReturningUser] = useState<{ name: string; familyMembers: FamilyMember[] } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]); // empty means "Me"
 
@@ -134,7 +135,6 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
           note: note || undefined,
           preferredStyle: selectedStyles.length > 0 ? JSON.stringify(selectedStyles) : undefined,
           familyMemberIds: selectedMemberIds,
-          holdPlace,
           final: true,
         }),
       });
@@ -150,6 +150,31 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
       setError('Connection error. Please try again.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function requestHoldPlace() {
+    if (!result || holdRequested) return;
+    setHoldingPlace(true);
+    setError('');
+    try {
+      const res = await fetch('/api/arrive/hold-place', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shopSlug, phone }),
+      });
+      if (!res.ok) {
+        setError('Could not hold your place. Please ask the barber.');
+        return;
+      }
+      const updated = { ...result, holdPlace: true };
+      saveArrivalStatus(shopSlug, updated);
+      setResult(updated);
+      setHoldRequested(true);
+    } catch {
+      setError('Connection error. Please ask the barber.');
+    } finally {
+      setHoldingPlace(false);
     }
   }
 
@@ -433,37 +458,6 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
                 </p>
               )}
 
-              {/* Optional note */}
-              <button
-                type="button"
-                onClick={() => setHoldPlace(prev => !prev)}
-                style={{
-                  display: 'flex', alignItems: 'flex-start', gap: '0.8rem',
-                  width: '100%', textAlign: 'left', borderRadius: 12,
-                  border: holdPlace ? '1px solid rgba(200,241,53,0.35)' : '1px solid rgba(255,255,255,0.1)',
-                  background: holdPlace ? 'rgba(200,241,53,0.08)' : 'rgba(255,255,255,0.03)',
-                  color: 'white', padding: '0.9rem', cursor: 'pointer',
-                }}
-              >
-                <span style={{
-                  width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: holdPlace ? '#C8F135' : 'rgba(255,255,255,0.06)',
-                  color: '#0A0A0A', fontSize: '0.8rem', fontWeight: 900,
-                  marginTop: 2,
-                }}>
-                  {holdPlace ? '✓' : ''}
-                </span>
-                <span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.9rem', color: holdPlace ? '#C8F135' : 'white' }}>
-                    Hold my place
-                  </span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-inter, sans-serif)', color: 'rgba(255,255,255,0.45)', fontSize: '0.78rem', lineHeight: 1.45, marginTop: 3 }}>
-                    Please hold my place in the queue. I&apos;ll be back 20 minutes before my turn.
-                  </span>
-                </span>
-              </button>
-
               <div>
                 <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', marginBottom: '0.5rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
                   Anything else? <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span>
@@ -566,6 +560,23 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
                   </li>
                 </ul>
               </div>
+
+              {result.waitMinutes !== undefined && result.waitMinutes > 30 && !result.holdPlace && (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-5 w-full text-left">
+                  <p className="text-white font-barlow font-black text-sm uppercase tracking-tight mb-2">Need to step out?</p>
+                  <p className="text-white/45 text-xs font-inter leading-relaxed mb-4">
+                    Your wait is over 30 minutes. We can hold your place if you&apos;re back around 20 minutes before your turn.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={requestHoldPlace}
+                    disabled={holdingPlace}
+                    className="w-full bg-[#C8F135] text-[#0A0A0A] rounded-lg py-3 font-barlow font-black uppercase tracking-widest text-xs disabled:opacity-50"
+                  >
+                    {holdingPlace ? 'Holding...' : 'Hold my place'}
+                  </button>
+                </div>
+              )}
 
               {result.holdPlace && (
                 <div className="bg-[#C8F135]/8 border border-[#C8F135]/20 rounded-xl p-5 w-full text-left">
