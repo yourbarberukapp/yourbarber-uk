@@ -1,4 +1,5 @@
 'use client';
+import { Suspense } from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -6,7 +7,7 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Scissors } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -115,7 +116,7 @@ export default function LoginPage() {
               className="btn-lime"
               style={{ padding: '0.875rem', borderRadius: 4, fontSize: '1rem', marginTop: '0.5rem', border: 'none', display: 'block', width: '100%', cursor: 'pointer' }}
             >
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
@@ -148,5 +149,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
