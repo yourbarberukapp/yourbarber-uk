@@ -117,10 +117,16 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
   }
 
   async function deleteWalkIn(id: string) {
-    if (!confirm('Remove this person from the queue?')) return;
+    const previous = walkIns;
     setUpdating(id);
-    await fetch(`/api/waitlist/${id}`, { method: 'DELETE' });
-    await refresh();
+    setWalkIns(current => current.filter(w => w.id !== id));
+    const res = await fetch(`/api/waitlist/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      setWalkIns(previous);
+      alert('Could not remove this person from the queue. Please refresh and try again.');
+    } else {
+      await refresh();
+    }
     setUpdating(null);
   }
 

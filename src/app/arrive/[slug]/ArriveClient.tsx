@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Scissors, ChevronRight, Check, Loader2, Home } from 'lucide-react';
 
@@ -56,6 +56,34 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
   const [holdRequested, setHoldRequested] = useState(false);
   const [returningUser, setReturningUser] = useState<{ name: string; familyMembers: FamilyMember[] } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]); // empty means "Me"
+
+  useEffect(() => {
+    if (step !== 'done' || !result || phone.length < 7) return;
+    const refreshStatus = async () => {
+      try {
+        const res = await fetch('/api/arrive/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shopSlug, phone }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.active) return;
+        setResult(prev => prev ? {
+          ...prev,
+          customerName: data.customerName ?? prev.customerName,
+          position: data.position,
+          waitMinutes: data.waitMinutes,
+          holdPlace: data.holdPlace,
+        } : prev);
+      } catch {
+        // Keep the last known queue position if refresh fails.
+      }
+    };
+    const id = window.setInterval(refreshStatus, 10000);
+    refreshStatus();
+    return () => window.clearInterval(id);
+  }, [phone, result, shopSlug, step]);
 
   // Styles sorted by category order
   const sortedStyles = [...shopStyles].sort((a, b) => {
