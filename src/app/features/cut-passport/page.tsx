@@ -51,7 +51,7 @@ export default function CutPassportPage() {
         titleLines={['Every regular', 'gets a', 'Cut Passport.']}
         description="Your queue gets people in the chair. The Cut Passport is what makes them come back. It gives every barber in the shop the same memory: what the client had last time, what they liked, and what to repeat today."
         primaryHref="/demo-hub"
-        primaryLabel="Try the Ben J Barbers demo"
+        primaryLabel="Try the demo"
         secondaryHref="/login?callbackUrl=%2Fbarber"
         secondaryLabel="Open Barber Mode"
         proofPoints={proofPoints}
@@ -84,7 +84,7 @@ export default function CutPassportPage() {
                   <item.icon size={22} className="text-[#C8F135]" />
                 </div>
                 <h3 className="font-barlow font-black text-2xl uppercase leading-tight mb-3">{item.title}</h3>
-                <p className="text-white/56 font-inter leading-relaxed text-sm">{item.body}</p>
+                <p className="text-white/56 font-inter leading-relaxed text-base">{item.body}</p>
               </div>
             ))}
           </div>
@@ -135,7 +135,7 @@ export default function CutPassportPage() {
                   'Front, left, right, and back photos saved',
                   'Recommendation: back in four weeks',
                 ].map(item => (
-                  <div key={item} className="flex items-center gap-3 text-white/72 font-inter text-sm">
+                  <div key={item} className="flex items-center gap-3 text-white/72 font-inter text-base">
                     <CheckCircle2 size={16} className="text-[#C8F135] flex-shrink-0" />
                     {item}
                   </div>

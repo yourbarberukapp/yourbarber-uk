@@ -51,7 +51,7 @@ export default function LiveWalkInQueuePage() {
         titleLines={['A live queue', 'the whole shop', 'can trust.']}
         description="YourBarber gives walk-in shops a calmer front door. Customers scan the wall QR, join from their own phone, and see where they stand. Barbers see the same queue instantly, so the day moves without the usual shouting, crowding, and guesswork."
         primaryHref="/demo-hub"
-        primaryLabel="Try the Ben J Barbers demo"
+        primaryLabel="Try the demo"
         secondaryHref="/arrive/benj-barbers"
         secondaryLabel="Open Customer Scan"
         proofPoints={proofPoints}
@@ -84,7 +84,7 @@ export default function LiveWalkInQueuePage() {
                   <item.icon size={22} className="text-[#C8F135]" />
                 </div>
                 <h3 className="font-barlow font-black text-2xl uppercase leading-tight mb-3">{item.title}</h3>
-                <p className="text-white/56 font-inter leading-relaxed text-sm">{item.body}</p>
+                <p className="text-white/56 font-inter leading-relaxed text-base">{item.body}</p>
               </div>
             ))}
           </div>
@@ -135,7 +135,7 @@ export default function LiveWalkInQueuePage() {
                   'A customer can step out and come back when they are close',
                   'Barbers spend less time managing the queue and more time cutting',
                 ].map(item => (
-                  <div key={item} className="flex items-center gap-3 text-white/72 font-inter text-sm">
+                  <div key={item} className="flex items-center gap-3 text-white/72 font-inter text-base">
                     <CheckCircle2 size={16} className="text-[#C8F135] flex-shrink-0" />
                     {item}
                   </div>
@@ -154,7 +154,7 @@ export default function LiveWalkInQueuePage() {
                   Watch it in the demo <ArrowRight size={15} />
                 </Link>
                 <Link href="/arrive/benj-barbers" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors">
-                  Try the customer scan <Smartphone size={15} />
+                  Open Customer Scan <Smartphone size={15} />
                 </Link>
               </div>
             </div>

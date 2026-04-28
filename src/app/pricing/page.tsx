@@ -243,9 +243,9 @@ export default function PricingPage() {
       <section className="bg-[#C8F135] py-20 px-6">
         <div className="container mx-auto text-center">
           <h2 className="font-barlow font-black text-4xl uppercase text-[#0A0A0A] mb-8">Ready to own your client base?</h2>
-          <Link href="/demo">
+          <Link href="/demo-hub">
             <button className="bg-[#0A0A0A] text-white px-10 py-4 text-lg rounded-sm font-barlow font-bold uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 mx-auto">
-              Book your demo <ArrowRight size={18} />
+              Try the demo <ArrowRight size={18} />
             </button>
           </Link>
         </div>

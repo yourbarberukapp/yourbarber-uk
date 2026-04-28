@@ -9,6 +9,7 @@ const featureCards = [
     label: 'The Cut Passport',
     title: 'Remember every fade.',
     body: 'Keep the haircut history, photos, grades, and notes against the client so any barber can see what "same as last time" means.',
+    cta: 'See Cut Passport',
     icon: Camera,
   },
   {
@@ -16,6 +17,7 @@ const featureCards = [
     label: 'The Fair-Play Queue',
     title: 'End the "who is next?" shuffle.',
     body: 'Customers scan the wall QR, join from their own phone, and see where they stand without crowding the chair or interrupting a cut.',
+    cta: 'See Live Queue',
     icon: Smartphone,
   },
   {
@@ -23,6 +25,7 @@ const featureCards = [
     label: 'The Automated Nudge',
     title: 'Bring regulars back before they drift.',
     body: 'YourBarber spots who is due back and sends a clean, timely reminder that helps fill quiet slots without more admin.',
+    cta: 'See Automated Nudge',
     icon: MessageSquare,
   },
 ];
@@ -60,12 +63,12 @@ export default function FeaturesPage() {
                 </div>
                 <div className="text-[10px] font-barlow font-bold uppercase tracking-[0.18em] text-[#C8F135]/60 mb-2">{card.label}</div>
                 <h2 className="font-barlow font-black text-3xl uppercase leading-[0.95] mb-4">{card.title}</h2>
-                <p className="text-white/56 font-inter leading-relaxed text-sm mb-8">{card.body}</p>
+                <p className="text-white/56 font-inter leading-relaxed text-base mb-8">{card.body}</p>
                 <Link
                   href={card.href}
                   className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/75 transition-colors hover:text-[#C8F135]"
                 >
-                  Open feature <ArrowRight size={15} />
+                  {card.cta} <ArrowRight size={15} />
                 </Link>
               </div>
             ))}

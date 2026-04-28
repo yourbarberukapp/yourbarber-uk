@@ -60,7 +60,7 @@ export default function FeaturePager({ currentSlug }: { currentSlug: string }) {
                   {active ? 'Current page' : 'Feature page'}
                 </div>
                 <h3 className="font-barlow font-black text-2xl uppercase leading-tight mb-3">{feature.label}</h3>
-                <p className="text-white/56 font-inter leading-relaxed text-sm mb-6">{feature.hook}</p>
+                <p className="text-white/56 font-inter leading-relaxed text-base mb-6">{feature.hook}</p>
                 {active ? (
                   <span className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-[#C8F135]">
                     You&apos;re here

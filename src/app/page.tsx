@@ -63,7 +63,7 @@ const pillars = [
     image: '/showcase-sms.png?v=2',
     imageAlt: 'Customer receiving a YourBarber reminder text inside a barbershop',
     href: '/features/automated-nudge',
-    cta: 'See SMS Reminders',
+    cta: 'See Automated Nudge',
   },
 ];
 
@@ -118,12 +118,12 @@ export default function Home() {
             <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp} className="flex flex-wrap gap-4 mb-10">
               <Link href="/demo-hub">
                 <button className="btn-lime px-8 py-4 text-base flex items-center gap-2 shadow-[0_0_28px_rgba(200,241,53,0.28)]">
-                  Try the Ben J Barbers demo <ArrowRight size={17} />
+                  Try the demo <ArrowRight size={17} />
                 </button>
               </Link>
-              <Link href="/demo-hub">
+              <Link href="/pricing">
                 <button className="px-8 py-4 text-base border border-white/20 text-white hover:border-white/45 transition-colors font-barlow font-bold uppercase tracking-wide rounded-sm">
-                  See how it works
+                  See pricing
                 </button>
               </Link>
             </motion.div>
@@ -438,7 +438,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-col gap-3 flex-shrink-0">
                   <Link href="/demo-hub">
-                    <button className="btn-lime px-8 py-3 text-sm whitespace-nowrap">Try the shop demo</button>
+                    <button className="btn-lime px-8 py-3 text-sm whitespace-nowrap">Try the demo</button>
                   </Link>
                   <Link href="/pricing">
                     <button className="text-white/30 hover:text-white text-xs font-barlow font-bold uppercase tracking-widest transition-colors text-center">

@@ -39,7 +39,7 @@ const screens = [
     creds: null,
     image: '/demo-kiosk-luke.png',
     imageAlt: 'Wall check-in screen in a barbershop with a barber cutting hair in the background',
-    cta: 'Try the Wall Scan',
+    cta: 'Open Customer Scan',
     accent: true,
   },
   {
@@ -52,7 +52,7 @@ const screens = [
     creds: 'jake@benjbarbers.com\nbarber123',
     image: '/demo-barber.png',
     imageAlt: 'Barber queue view on a phone inside a barbershop',
-    cta: 'Open Barber View',
+    cta: 'Open Barber Mode',
     accent: false,
   },
   {
