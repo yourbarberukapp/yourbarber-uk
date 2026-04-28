@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import StartCutButton from './StartCutButton';
+import Link from 'next/link';
+import { Home } from 'lucide-react';
 
 export default async function CheckInPage({ params }: { params: { qrToken: string } }) {
   const checkIn = await db.checkIn.findUnique({
@@ -64,7 +66,14 @@ export default async function CheckInPage({ params }: { params: { qrToken: strin
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col pb-24">
       {/* Top Bar */}
-      <div className="pt-12 px-8 pb-6 border-b border-white/10 bg-[#111]">
+      <div className="pt-12 px-8 pb-6 border-b border-white/10 bg-[#111] relative">
+        <Link 
+          href="/" 
+          className="absolute top-4 right-8 flex items-center gap-2 text-white/30 hover:text-[#C8F135] transition-colors text-xs font-bold uppercase tracking-widest"
+        >
+          <Home size={14} />
+          <span>Home</span>
+        </Link>
         <h1 className="font-barlow font-black text-6xl uppercase tracking-tighter leading-none mb-2">
           {people.length > 1 ? 'Group Check-in' : (people[0]?.name || 'Customer')}
         </h1>

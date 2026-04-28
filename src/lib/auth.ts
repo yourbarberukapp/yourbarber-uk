@@ -28,7 +28,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
           const { email, password } = parsedCredentials.data;
           const barber = await db.barber.findFirst({
             where: { email, isActive: true },
-            include: { shop: { select: { name: true } } }
+            include: { shop: { select: { name: true, slug: true } } }
           });
           if (!barber) return null;
           const passwordsMatch = await bcrypt.compare(password, barber.passwordHash);
@@ -39,6 +39,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             shopId: barber.shopId,
             role: barber.role,
             shopName: barber.shop.name,
+            shopSlug: barber.shop.slug,
           };
         }
         return null;
@@ -70,13 +71,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
       if (account?.provider === 'google' || account?.provider === 'facebook') {
         const barber = await db.barber.findFirst({
           where: { email: token.email!, isActive: true },
-          include: { shop: { select: { name: true } } },
+          include: { shop: { select: { name: true, slug: true } } },
         });
         if (barber) {
           token.id = barber.id;
           token.shopId = barber.shopId;
           token.role = barber.role;
           token.shopName = barber.shop.name;
+          token.shopSlug = barber.shop.slug;
         }
         return token;
       }
@@ -86,6 +88,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         token.shopId = (user as any).shopId;
         token.role = (user as any).role;
         token.shopName = (user as any).shopName;
+        token.shopSlug = (user as any).shopSlug;
       }
       return token;
     },

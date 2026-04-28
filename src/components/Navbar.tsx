@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import DemoOverrideTrigger from "./DemoOverrideTrigger";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -33,11 +34,7 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-6 lg:px-12 flex items-center justify-between h-16">
         {/* Logo */}
-        <Link href="/">
-          <span className="font-barlow font-black text-2xl uppercase tracking-tight text-white cursor-pointer">
-            Your<span className="text-[#C8F135]">Barber</span>
-          </span>
-        </Link>
+        <DemoOverrideTrigger />
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">

@@ -1,3 +1,7 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Scissors, Sparkles } from 'lucide-react';
@@ -23,13 +27,17 @@ const TRENDS = [
   }
 ];
 
-export default function TrendsPage() {
+function TrendsContent() {
+  const searchParams = useSearchParams();
+  const shopSlug = searchParams.get('shop') || 'benj-barbers';
+  const arriveUrl = `/arrive/${shopSlug}`;
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-[#C8F135] selection:text-black">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/arrive" className="p-2 -ml-2 text-white/40 hover:text-white transition-colors">
+          <Link href={arriveUrl} className="p-2 -ml-2 text-white/40 hover:text-white transition-colors">
             <ArrowLeft size={20} />
           </Link>
           <div className="flex flex-col items-center">
@@ -37,7 +45,7 @@ export default function TrendsPage() {
               <Sparkles size={16} className="text-[#C8F135]" />
               Hair Trends
             </h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/30">Ben J Barbers Gallery</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/30">Gallery</p>
           </div>
           <div className="w-9" /> {/* Spacer */}
         </div>
@@ -88,7 +96,7 @@ export default function TrendsPage() {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
         <div className="max-w-xl mx-auto">
           <Link 
-            href="/arrive"
+            href={arriveUrl}
             className="flex items-center justify-center gap-3 w-full bg-[#C8F135] text-black py-5 rounded-2xl font-barlow font-black text-lg uppercase tracking-tight shadow-[0_20px_50px_rgba(200,241,53,0.3)] active:scale-[0.98] transition-all"
           >
             <Scissors size={20} />
@@ -97,5 +105,13 @@ export default function TrendsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TrendsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TrendsContent />
+    </Suspense>
   );
 }

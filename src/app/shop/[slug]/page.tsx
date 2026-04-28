@@ -31,8 +31,11 @@ function fmt(t: string) {
   return m === 0 ? `${h12}${suffix}` : `${h12}:${m.toString().padStart(2, '0')}${suffix}`;
 }
 
+import { cookies } from 'next/headers';
+import DemoOverrideTrigger from '@/components/DemoOverrideTrigger';
+
 export default async function ShopMicrosite({ params }: { params: { slug: string } }) {
-  const shop = await db.shop.findUnique({
+  const shopData = await db.shop.findUnique({
     where: { slug: params.slug },
     include: {
       photos: { orderBy: { sortOrder: 'asc' } },
@@ -53,7 +56,26 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
     },
   });
 
-  if (!shop) notFound();
+  if (!shopData) notFound();
+
+  // Apply Demo Overrides if present in cookies
+  const cookieStore = cookies();
+  const overrideCookie = cookieStore.get(`demo_override_${params.slug}`);
+  let shop = shopData;
+
+  if (overrideCookie) {
+    try {
+      const overrides = JSON.parse(decodeURIComponent(atob(overrideCookie.value)));
+      shop = {
+        ...shopData,
+        name: overrides.name || shopData.name,
+        address: overrides.address || shopData.address,
+        googleMapsUrl: overrides.googleMapsUrl || shopData.googleMapsUrl,
+      };
+    } catch (e) {
+      console.error('Failed to parse demo overrides from cookie');
+    }
+  }
 
   const hours = shop.openingHours as OpeningHours | null;
 
@@ -63,14 +85,7 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
 
       {/* Navbar Overlay */}
       <nav className="fixed top-0 left-0 right-0 z-40 px-6 py-6 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm md:backdrop-blur-none">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-[#C8F135] flex items-center justify-center">
-            <Scissors size={20} className="text-black" />
-          </div>
-          <span className="font-barlow font-black text-2xl uppercase tracking-tighter hidden sm:inline">
-            Your<span className="text-[#C8F135]">Barber</span>
-          </span>
-        </div>
+        <DemoOverrideTrigger shopSlug={shop.slug} />
         
         <div className="flex items-center gap-4">
           <Link 

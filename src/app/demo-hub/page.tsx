@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import {
@@ -95,6 +96,38 @@ const previewScreens = [
 ];
 
 export default function DemoHubPage() {
+  const [loadingRole, setLoadingRole] = useState<string | null>(null);
+
+  async function quickLogin(role: 'barber' | 'owner') {
+    setLoadingRole(role);
+    const { signIn } = await import('next-auth/react');
+    const creds = role === 'barber'
+      ? { email: 'jake@benjbarbers.com', password: 'barber123' }
+      : { email: 'owner@benjbarbers.com', password: 'owner123' };
+    const result = await signIn('credentials', { ...creds, redirect: false });
+    if (!result?.error) {
+      window.location.href = role === 'barber' ? '/barber' : '/dashboard';
+    } else {
+      setLoadingRole(null);
+      alert('Demo login failed. Please try the manual login page.');
+    }
+  }
+
+  async function quickCustomerLogin() {
+    setLoadingRole('customer');
+    const res = await fetch('/api/customer/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'TEST1' }),
+    });
+    if (res.ok) {
+      window.location.href = '/me';
+    } else {
+      setLoadingRole(null);
+      alert('Customer demo login failed.');
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <Navbar />
@@ -184,27 +217,49 @@ export default function DemoHubPage() {
                     ))}
                   </ul>
 
-                  <div className="bg-black/40 rounded-lg p-4 mb-8 border border-white/5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Lock size={12} className="text-white/30" />
-                      <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/30">
-                        {screen.login === 'No login required' ? 'Access' : 'Demo sign-in'}
-                      </span>
-                    </div>
-                    <p className="text-sm font-mono text-white/80">{screen.login}</p>
-                  </div>
-
-                  <Link
-                    href={screen.link}
-                    className="w-full py-4 bg-white/5 hover:bg-[#C8F135] hover:text-[#0A0A0A] text-white font-barlow font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm border border-white/10 hover:border-transparent"
-                  >
-                    {screen.id === 'kiosk'
-                      ? 'Open Customer Scan'
-                      : screen.id === 'barber'
-                        ? 'Open Barber Mode'
-                        : 'Open Owner Dashboard'}
-                    <ExternalLink size={16} />
-                  </Link>
+                  {screen.id === 'kiosk' ? (
+                    <>
+                      <div className="bg-black/40 rounded-lg p-4 mb-8 border border-white/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Lock size={12} className="text-white/30" />
+                          <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/30">Access</span>
+                        </div>
+                        <p className="text-sm font-mono text-white/80">No login required</p>
+                      </div>
+                      <Link
+                        href={screen.link}
+                        className="w-full py-4 bg-white/5 hover:bg-[#C8F135] hover:text-[#0A0A0A] text-white font-barlow font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm border border-white/10 hover:border-transparent mb-3"
+                      >
+                        Open Customer Scan
+                        <ExternalLink size={16} />
+                      </Link>
+                      <button
+                        onClick={quickCustomerLogin}
+                        disabled={loadingRole === 'customer'}
+                        className="w-full py-3 bg-[#C8F135]/10 hover:bg-[#C8F135]/20 text-[#C8F135] font-barlow font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 rounded-sm border border-[#C8F135]/25"
+                      >
+                        {loadingRole === 'customer' ? '⏳ Logging in…' : '⚡ Instant: Open Cut Passport'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => quickLogin(screen.id as 'barber' | 'owner')}
+                        disabled={!!loadingRole}
+                        className="w-full py-4 bg-[#C8F135] hover:bg-[#d4f84d] text-[#0A0A0A] font-barlow font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm border-none mb-3"
+                      >
+                        {loadingRole === screen.id ? '⏳ Signing in…' : `⚡ One-Click ${screen.id === 'barber' ? 'Barber' : 'Owner'} Login`}
+                      </button>
+                      <Link
+                        href={screen.link}
+                        className="w-full py-3 bg-white/5 hover:bg-white/10 text-white/60 font-barlow font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 rounded-sm border border-white/10"
+                      >
+                        Manual login instead
+                        <ExternalLink size={14} />
+                      </Link>
+                      <p className="text-[10px] font-mono text-white/25 text-center mt-3">{screen.login}</p>
+                    </>
+                  )}
                 </div>
               </motion.div>
             ))}

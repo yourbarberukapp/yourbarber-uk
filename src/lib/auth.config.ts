@@ -11,6 +11,7 @@ export const authConfig = {
         token.shopId = (user as any).shopId;
         token.role = (user as any).role;
         token.shopName = (user as any).shopName;
+        token.shopSlug = (user as any).shopSlug;
       }
       return token;
     },
@@ -20,6 +21,7 @@ export const authConfig = {
         (session.user as any).shopId = token.shopId;
         (session.user as any).role = token.role;
         (session.user as any).shopName = token.shopName;
+        (session.user as any).shopSlug = token.shopSlug;
       }
       return session;
     },

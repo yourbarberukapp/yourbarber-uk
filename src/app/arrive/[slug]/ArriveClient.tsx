@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Scissors, ChevronRight, Check, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Scissors, ChevronRight, Check, Loader2, Home } from 'lucide-react';
 
 type Step = 'phone' | 'name' | 'welcome_back' | 'who' | 'style' | 'done';
 
@@ -149,7 +150,34 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
     <div style={{
       minHeight: '100svh', background: '#0a0a0a', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', padding: '1.5rem',
+      position: 'relative',
     }}>
+      {/* Demo Home Navigation */}
+      <Link 
+        href="/"
+        className="home-nav-link"
+        style={{
+          position: 'absolute',
+          top: '2rem',
+          left: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          textDecoration: 'none',
+          color: 'rgba(255,255,255,0.2)',
+          fontSize: '0.75rem',
+          fontFamily: 'var(--font-barlow, sans-serif)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          fontWeight: 700,
+          transition: 'all 0.2s ease',
+          zIndex: 50,
+        }}
+      >
+        <Home size={18} />
+        <span>Home</span>
+      </Link>
+
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Header */}
@@ -489,7 +517,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
 
               <button 
                 style={{ ...btnStyle, background: 'white', color: '#0A0A0A' }}
-                onClick={() => window.open('/trends', '_blank')}
+                onClick={() => window.open(`/trends?shop=${shopSlug}`, '_blank')}
               >
                 Browse Hair Ideas
               </button>
@@ -499,7 +527,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
 
         {/* Footer */}
         <p style={{ textAlign: 'center', marginTop: '2rem', color: 'rgba(255,255,255,0.15)', fontSize: '0.7rem', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-          Powered by YourBarber
+          Powered by <Link href="/" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'} onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>YourBarber</Link>
         </p>
       </div>
 
@@ -507,6 +535,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles }: Props) 
         @keyframes spin { to { transform: rotate(360deg); } }
         input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
         input:focus, textarea:focus { border-color: rgba(200,241,53,0.4) !important; }
+        .home-nav-link:hover { color: #C8F135 !important; transform: translateX(2px); }
       `}</style>
     </div>
   );

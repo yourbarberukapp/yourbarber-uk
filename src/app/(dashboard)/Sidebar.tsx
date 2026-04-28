@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered, BarChart2, Scissors } from 'lucide-react';
+import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered, BarChart2, Scissors, Home } from 'lucide-react';
 import { AppSession } from '@/lib/session';
 
 interface Props {
@@ -112,12 +112,20 @@ export function Sidebar({ session, signOutAction }: Props) {
           <form action={signOutAction}>
             <button
               type="submit"
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-sm text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors group"
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-sm text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors group mb-1"
             >
               <LogOut size={16} className="text-muted-foreground group-hover:text-white" />
               <span className="text-xs font-medium">Sign out</span>
             </button>
           </form>
+
+          <Link
+            href="/"
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-sm text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors group"
+          >
+            <Home size={16} className="text-muted-foreground group-hover:text-white" />
+            <span className="text-xs font-medium">View Website</span>
+          </Link>
         </div>
       </div>
     );

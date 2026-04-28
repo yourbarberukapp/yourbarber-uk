@@ -1,9 +1,26 @@
 import { getRequiredSession } from '@/lib/session';
 import Link from 'next/link';
 import { LayoutDashboard } from 'lucide-react';
+import DemoOverrideTrigger from '@/components/DemoOverrideTrigger';
+
+import { cookies } from 'next/headers';
 
 export default async function BarberLayout({ children }: { children: React.ReactNode }) {
   const session = await getRequiredSession();
+  
+  // Apply Demo Overrides for display
+  const cookieStore = cookies();
+  const overrideCookie = cookieStore.get(`demo_override_${session.shopSlug}`);
+  let shopName = session.shopName;
+
+  if (overrideCookie) {
+    try {
+      const overrides = JSON.parse(decodeURIComponent(atob(overrideCookie.value)));
+      if (overrides.name) shopName = overrides.name;
+    } catch (e) {
+      // Ignore
+    }
+  }
 
   return (
     <div style={{ minHeight: '100svh', background: '#0a0a0a', color: 'white' }}>
@@ -14,21 +31,7 @@ export default async function BarberLayout({ children }: { children: React.React
         padding: '0.875rem 1.25rem',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{
-            fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900,
-            fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.02em', color: 'white',
-          }}>
-            YOUR<span style={{ color: '#C8F135' }}>BARBER</span>
-          </span>
-          <span style={{
-            fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
-            background: 'rgba(200,241,53,0.1)', color: '#C8F135',
-            border: '1px solid rgba(200,241,53,0.2)',
-            padding: '0.2rem 0.5rem', borderRadius: 2,
-            fontFamily: 'var(--font-barlow, sans-serif)',
-          }}>Barber</span>
-        </div>
+        <DemoOverrideTrigger shopSlug={session.shopSlug} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{
@@ -41,7 +44,7 @@ export default async function BarberLayout({ children }: { children: React.React
               fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)',
               fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em',
             }}>
-              {session.shopName}
+              {shopName}
             </div>
           </div>
           {session.role === 'owner' && (

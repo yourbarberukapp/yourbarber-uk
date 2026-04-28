@@ -7,6 +7,7 @@ export interface AppSession {
   role: 'owner' | 'barber';
   name: string;
   shopName: string;
+  shopSlug: string;
 }
 
 export async function getRequiredSession(): Promise<AppSession> {
@@ -19,6 +20,7 @@ export async function getRequiredSession(): Promise<AppSession> {
     role: user.role,
     name: user.name ?? '',
     shopName: user.shopName ?? '',
+    shopSlug: user.shopSlug ?? '',
   };
 }
 
@@ -32,5 +34,6 @@ export async function getSession(): Promise<AppSession | null> {
     role: user.role,
     name: user.name ?? '',
     shopName: user.shopName ?? '',
+    shopSlug: user.shopSlug ?? '',
   };
 }

@@ -26,10 +26,16 @@ export const metadata: Metadata = {
   },
 };
 
+import { DemoOverrideProvider } from '@/components/DemoOverrideProvider';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${barlowCondensed.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        <DemoOverrideProvider>
+          {children}
+        </DemoOverrideProvider>
+      </body>
     </html>
   );
 }
