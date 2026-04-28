@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { UserCheck, Check, X, Search, Clock, ChevronRight, Loader2, Scissors } from 'lucide-react';
+import { UserCheck, Check, X, Search, Clock, ChevronRight, Loader2, Scissors, Trash2 } from 'lucide-react';
 
 type WalkInStatus = 'waiting' | 'in_progress' | 'done' | 'no_show';
 
@@ -112,6 +112,14 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
   async function sendReturnReminder(id: string) {
     setUpdating(id);
     await fetch(`/api/waitlist/${id}/return-reminder`, { method: 'POST' });
+    await refresh();
+    setUpdating(null);
+  }
+
+  async function deleteWalkIn(id: string) {
+    if (!confirm('Remove this person from the queue?')) return;
+    setUpdating(id);
+    await fetch(`/api/waitlist/${id}`, { method: 'DELETE' });
     await refresh();
     setUpdating(null);
   }
@@ -401,6 +409,18 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
                             }}
                           >
                             <X size={14} />
+                          </button>
+                          <button
+                            onClick={() => deleteWalkIn(w.id)}
+                            title="Remove from queue"
+                            style={{
+                              padding: '0.75rem', borderRadius: 8,
+                              background: 'rgba(255,80,80,0.06)', border: '1px solid rgba(255,80,80,0.14)',
+                              color: 'rgba(255,120,120,0.6)', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center',
+                            }}
+                          >
+                            <Trash2 size={14} />
                           </button>
                           <Link
                             href={`/customers/${w.customer.id}`}

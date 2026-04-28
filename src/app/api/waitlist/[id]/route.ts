@@ -31,3 +31,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const shopId = (session.user as any).shopId as string;
+
+  const walkIn = await db.walkIn.findFirst({ where: { id: params.id, shopId } });
+  if (!walkIn) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  await db.walkIn.delete({ where: { id: params.id } });
+
+  return NextResponse.json({ success: true });
+}
