@@ -48,10 +48,11 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
+  const [holdPlace, setHoldPlace] = useState(false);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<{ customerName: string | null; position: number; waitMinutes?: number; alreadyWaiting?: boolean; groupSize?: number } | null>(null);
+  const [result, setResult] = useState<{ customerName: string | null; position: number; waitMinutes?: number; alreadyWaiting?: boolean; groupSize?: number; holdPlace?: boolean } | null>(null);
   const [returningUser, setReturningUser] = useState<{ name: string; familyMembers: FamilyMember[] } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]); // empty means "Me"
 
@@ -133,6 +134,7 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
           note: note || undefined,
           preferredStyle: selectedStyles.length > 0 ? JSON.stringify(selectedStyles) : undefined,
           familyMemberIds: selectedMemberIds,
+          holdPlace,
           final: true,
         }),
       });
@@ -432,6 +434,36 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
               )}
 
               {/* Optional note */}
+              <button
+                type="button"
+                onClick={() => setHoldPlace(prev => !prev)}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.8rem',
+                  width: '100%', textAlign: 'left', borderRadius: 12,
+                  border: holdPlace ? '1px solid rgba(200,241,53,0.35)' : '1px solid rgba(255,255,255,0.1)',
+                  background: holdPlace ? 'rgba(200,241,53,0.08)' : 'rgba(255,255,255,0.03)',
+                  color: 'white', padding: '0.9rem', cursor: 'pointer',
+                }}
+              >
+                <span style={{
+                  width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: holdPlace ? '#C8F135' : 'rgba(255,255,255,0.06)',
+                  color: '#0A0A0A', fontSize: '0.8rem', fontWeight: 900,
+                  marginTop: 2,
+                }}>
+                  {holdPlace ? '✓' : ''}
+                </span>
+                <span>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.9rem', color: holdPlace ? '#C8F135' : 'white' }}>
+                    Hold my place
+                  </span>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-inter, sans-serif)', color: 'rgba(255,255,255,0.45)', fontSize: '0.78rem', lineHeight: 1.45, marginTop: 3 }}>
+                    Please hold my place in the queue. I&apos;ll be back 20 minutes before my turn.
+                  </span>
+                </span>
+              </button>
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', marginBottom: '0.5rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
                   Anything else? <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span>
@@ -534,6 +566,15 @@ export default function ArriveClient({ shopSlug, shopName, shopStyles, demoWalkI
                   </li>
                 </ul>
               </div>
+
+              {result.holdPlace && (
+                <div className="bg-[#C8F135]/8 border border-[#C8F135]/20 rounded-xl p-5 w-full text-left">
+                  <p className="text-[#C8F135] font-barlow font-black text-sm uppercase tracking-tight mb-2">Place held</p>
+                  <p className="text-white/50 text-xs font-inter leading-relaxed">
+                    You can leave the shop for now. The barber can see you&apos;re away and can text you when you&apos;re close to the chair.
+                  </p>
+                </div>
+              )}
 
               <button 
                 style={{ ...btnStyle, background: 'white', color: '#0A0A0A' }}

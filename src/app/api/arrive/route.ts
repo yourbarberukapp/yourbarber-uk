@@ -11,6 +11,7 @@ const schema = z.object({
   note: z.string().max(300).optional(),
   preferredStyle: z.string().max(500).optional(),
   demoName: z.string().max(100).optional(),
+  holdPlace: z.boolean().optional(),
   final: z.boolean().optional(), // true on the submit call, absent on the lookup call
   familyMemberIds: z.array(z.string()).optional(), // List of family members to check in
 });
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
 
-  const { shopSlug, phone: rawPhone, name, demoName, note, preferredStyle, final: isFinal } = parsed.data;
+  const { shopSlug, phone: rawPhone, name, demoName, note, preferredStyle, holdPlace, final: isFinal } = parsed.data;
   const phone = normalizePhone(rawPhone);
   const customerName = name || demoName;
   const shop = await db.shop.findUnique({
@@ -131,6 +132,8 @@ export async function POST(req: NextRequest) {
         groupId,
         note: note || null,
         preferredStyle: preferredStyle || null,
+        isAway: holdPlace ?? false,
+        returnByMinutes: holdPlace ? 20 : null,
       },
     })
   ));
@@ -149,6 +152,7 @@ export async function POST(req: NextRequest) {
     customerName: customer.name, 
     position, 
     waitMinutes: calcWait(position + walkIns.length - 1),
+    holdPlace: holdPlace ?? false,
     groupSize: walkIns.length 
   });
 }

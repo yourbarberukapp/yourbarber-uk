@@ -17,6 +17,7 @@ export default async function BarberPage() {
       },
       include: {
         customer: { select: { id: true, name: true, phone: true, lastVisitAt: true } },
+        familyMember: { select: { name: true } },
       },
       orderBy: { arrivedAt: 'asc' },
     }),

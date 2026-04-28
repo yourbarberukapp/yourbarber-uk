@@ -20,6 +20,9 @@ interface WalkIn {
   status: WalkInStatus;
   arrivedAt: string;
   groupId: string | null;
+  isAway: boolean;
+  returnByMinutes: number | null;
+  queueReminderSentAt: string | null;
   familyMemberId: string | null;
   familyMember: { name: string } | null;
   customer: WalkInCustomer;
@@ -37,6 +40,9 @@ interface WalkInGroup {
   lastVisitAt: string | null;
   note: string | null;
   preferredStyle: string | null;
+  isAway: boolean;
+  returnByMinutes: number | null;
+  queueReminderSentAt: string | null;
 }
 
 function groupWalkIns(walkIns: WalkIn[]): WalkInGroup[] {
@@ -67,6 +73,9 @@ function groupWalkIns(walkIns: WalkIn[]): WalkInGroup[] {
       lastVisitAt: primary.customer.lastVisitAt,
       note: primary.note,
       preferredStyle: primary.preferredStyle,
+      isAway: members.some(m => m.isAway),
+      returnByMinutes: primary.returnByMinutes,
+      queueReminderSentAt: primary.queueReminderSentAt,
     };
   });
 }
@@ -125,6 +134,13 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
         body: JSON.stringify({ status }),
       })
     ));
+    await refresh();
+    setUpdating(null);
+  }
+
+  async function sendReturnReminder(id: string) {
+    setUpdating(id);
+    await fetch(`/api/waitlist/${id}/return-reminder`, { method: 'POST' });
     await refresh();
     setUpdating(null);
   }
@@ -197,6 +213,7 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
             const isUpdating = updating === g.primaryId || g.ids.includes(updating ?? '');
             const barberCount = Math.max(barbers.length, 1);
             const waitMins = g.status === 'in_progress' ? 0 : Math.ceil((i / barberCount) * defaultCutTime);
+            const canSendReturnReminder = g.isAway && !g.queueReminderSentAt && i <= 1;
             return (
               <div key={g.primaryId} style={{
                 background: '#111', border: `1px solid ${cfg.border}`,
@@ -245,6 +262,16 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                       }}>
                         {cfg.label}
                       </span>
+                      {g.isAway && (
+                        <span style={{
+                          fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                          padding: '0.15rem 0.5rem', borderRadius: 3,
+                          background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.12)',
+                          fontFamily: 'var(--font-barlow, sans-serif)',
+                        }}>
+                          Away {g.queueReminderSentAt ? '· text sent' : '· place held'}
+                        </span>
+                      )}
                     </div>
                     <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: 2 }}>
                       {g.phone}
@@ -296,19 +323,35 @@ export default function WaitlistClient({ initialWalkIns, initialBarbers, default
                   ) : (
                     <>
                       {g.status === 'waiting' && (
-                        <button
-                          onClick={() => updateGroup(g.ids, 'in_progress')}
-                          title="Start cut"
-                          style={{
-                            background: 'rgba(200,241,53,0.1)', border: '1px solid rgba(200,241,53,0.25)',
-                            color: '#C8F135', borderRadius: 6, padding: '0.5rem 0.875rem',
-                            fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-                            cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)',
-                            display: 'flex', alignItems: 'center', gap: 5,
-                          }}
-                        >
-                          <UserCheck size={13} /> In chair
-                        </button>
+                        <>
+                          {canSendReturnReminder && (
+                            <button
+                              onClick={() => sendReturnReminder(g.primaryId)}
+                              title="Text customer to come back"
+                              style={{
+                                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
+                                color: 'rgba(255,255,255,0.6)', borderRadius: 6, padding: '0.5rem 0.875rem',
+                                fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                                cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)',
+                              }}
+                            >
+                              Text back
+                            </button>
+                          )}
+                          <button
+                            onClick={() => updateGroup(g.ids, 'in_progress')}
+                            title="Start cut"
+                            style={{
+                              background: 'rgba(200,241,53,0.1)', border: '1px solid rgba(200,241,53,0.25)',
+                              color: '#C8F135', borderRadius: 6, padding: '0.5rem 0.875rem',
+                              fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                              cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)',
+                              display: 'flex', alignItems: 'center', gap: 5,
+                            }}
+                          >
+                            <UserCheck size={13} /> In chair
+                          </button>
+                        </>
                       )}
                       {g.status === 'in_progress' && (
                         <button

@@ -14,6 +14,9 @@ interface WalkIn {
   arrivedAt: string;
   customer: { id: string; name: string | null; phone: string; lastVisitAt: string | null };
   familyMember: { name: string | null } | null;
+  isAway: boolean;
+  returnByMinutes: number | null;
+  queueReminderSentAt: string | null;
 }
 
 interface CustomerResult {
@@ -102,6 +105,13 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
     // Auto-sync barber availability with chair state
     if (status === 'in_progress') await setBarberBusy(true);
     if (status === 'done' || status === 'no_show') await setBarberBusy(false);
+    await refresh();
+    setUpdating(null);
+  }
+
+  async function sendReturnReminder(id: string) {
+    setUpdating(id);
+    await fetch(`/api/waitlist/${id}/return-reminder`, { method: 'POST' });
     await refresh();
     setUpdating(null);
   }
@@ -203,6 +213,7 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
               {active.map((w, i) => {
                 const inChair = w.status === 'in_progress';
                 const isUpdating = updating === w.id;
+                const canSendReturnReminder = w.isAway && !w.queueReminderSentAt && i <= 1;
                 return (
                   <div key={w.id} style={{
                     background: '#111',
@@ -261,6 +272,17 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
                               In chair
                             </span>
                           )}
+                          {w.isAway && (
+                            <span style={{
+                              fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                              background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)',
+                              border: '1px solid rgba(255,255,255,0.12)',
+                              padding: '0.15rem 0.45rem', borderRadius: 2,
+                              fontFamily: 'var(--font-barlow, sans-serif)',
+                            }}>
+                              Away {w.queueReminderSentAt ? '· text sent' : '· place held'}
+                            </span>
+                          )}
                         </div>
                         <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', fontFamily: 'monospace', marginTop: 2 }}>
                           {timeAgo(w.arrivedAt)} · {w.customer.phone}
@@ -309,18 +331,35 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
                       ) : (
                         <>
                           {w.status === 'waiting' && (
-                            <button
-                              onClick={() => updateStatus(w.id, 'in_progress')}
-                              style={{
-                                flex: 1, padding: '0.75rem', borderRadius: 8, border: 'none',
-                                background: '#C8F135', color: '#0a0a0a',
-                                fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
-                                fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                              }}
-                            >
-                              <UserCheck size={14} /> In chair
-                            </button>
+                            <>
+                              {canSendReturnReminder && (
+                                <button
+                                  onClick={() => sendReturnReminder(w.id)}
+                                  style={{
+                                    flex: 1, padding: '0.75rem', borderRadius: 8,
+                                    background: 'rgba(200,241,53,0.08)', color: '#C8F135',
+                                    border: '1px solid rgba(200,241,53,0.25)',
+                                    fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
+                                    fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  Text back
+                                </button>
+                              )}
+                              <button
+                                onClick={() => updateStatus(w.id, 'in_progress')}
+                                style={{
+                                  flex: 1, padding: '0.75rem', borderRadius: 8, border: 'none',
+                                  background: '#C8F135', color: '#0a0a0a',
+                                  fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
+                                  fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                }}
+                              >
+                                <UserCheck size={14} /> In chair
+                              </button>
+                            </>
                           )}
                           {w.status === 'in_progress' && (
                             <>

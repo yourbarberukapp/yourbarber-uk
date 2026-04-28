@@ -296,6 +296,9 @@ model WalkIn {
   preferredStyle String?
   familyMemberId String?
   groupId        String?
+  isAway         Boolean   @default(false)
+  returnByMinutes Int?
+  queueReminderSentAt DateTime?
   customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   familyMember   FamilyMember? @relation(fields: [familyMemberId], references: [id])
   shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
