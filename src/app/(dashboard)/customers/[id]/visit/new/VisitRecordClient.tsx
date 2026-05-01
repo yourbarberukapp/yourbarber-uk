@@ -41,6 +41,7 @@ export function VisitRecordClient({ customer, shopName }: Props) {
   const [cutDetails, setCutDetails] = useState<CutDetails>(EMPTY_CUT_DETAILS);
   const [recommendation, setRecommendation] = useState('');
   const [notes, setNotes] = useState('');
+  const [privateNotes, setPrivateNotes] = useState('');
   const [smsOptIn, setSmsOptIn] = useState<SmsOptIn>(
     customer.smsOptIn === 'yes' || customer.smsOptIn === 'no' || customer.smsOptIn === 'not_asked'
       ? customer.smsOptIn
@@ -84,7 +85,7 @@ export function VisitRecordClient({ customer, shopName }: Props) {
     const res = await fetch(`/api/customers/${customer.id}/visits`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes, cutDetails, recommendation, smsOptIn }),
+      body: JSON.stringify({ notes, privateNotes, cutDetails, recommendation, smsOptIn }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -310,10 +311,10 @@ export function VisitRecordClient({ customer, shopName }: Props) {
               />
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <label style={label}>Internal notes (barber only)</label>
+              <label style={label}>Shared notes (whole shop sees this)</label>
               <textarea
-                rows={3}
-                placeholder="Anything else to remember about this cut…"
+                rows={2}
+                placeholder="Cut notes the team should know…"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 style={{
@@ -324,6 +325,28 @@ export function VisitRecordClient({ customer, shopName }: Props) {
                   fontFamily: 'var(--font-inter, sans-serif)',
                 }}
               />
+            </div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ ...label, color: '#C8F135' }}>Private notes — only you see this</label>
+              <textarea
+                rows={3}
+                placeholder="His dog is called Max. Arsenal fan. Gets a bit nervous in the chair…"
+                value={privateNotes}
+                onChange={e => setPrivateNotes(e.target.value)}
+                style={{
+                  width: '100%', background: '#0A0A0A',
+                  border: '1px solid rgba(200,241,53,0.2)', borderRadius: 4,
+                  padding: '0.625rem 0.875rem', color: 'white', fontSize: '0.875rem',
+                  resize: 'vertical', outline: 'none', lineHeight: 1.6,
+                  fontFamily: 'var(--font-inter, sans-serif)',
+                }}
+              />
+              <p style={{
+                fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)', margin: '0.35rem 0 0',
+                fontFamily: 'var(--font-inter, sans-serif)',
+              }}>
+                Conversation details, personal touches. Never visible to the owner or other barbers.
+              </p>
             </div>
           </>
         )}

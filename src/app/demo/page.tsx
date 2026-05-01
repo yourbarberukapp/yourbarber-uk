@@ -121,7 +121,24 @@ export default function DemoPage() {
             </p>
           </motion.div>
 
-          <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp} className="flex justify-center mb-14">
+          {/* Leave-behind demo link */}
+          <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp} className="flex justify-center mb-6">
+            <Link
+              href="/demo/barber"
+              className="flex items-center gap-3 bg-[#C8F135]/8 border border-[#C8F135]/25 rounded-xl px-6 py-4 hover:bg-[#C8F135]/12 transition-all group"
+            >
+              <div className="w-8 h-8 rounded-sm bg-[#C8F135]/15 flex items-center justify-center flex-shrink-0">
+                <Monitor size={15} className="text-[#C8F135]" />
+              </div>
+              <div className="text-left">
+                <div className="text-sm font-barlow font-black uppercase tracking-widest text-white">Try the barber view</div>
+                <div className="text-[11px] font-inter text-white/40 mt-0.5">No login · Works on your phone · Share the QR with any barber</div>
+              </div>
+              <ArrowRight size={14} className="text-[#C8F135] ml-2 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </motion.div>
+
+          <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp} className="flex justify-center mb-14">
             <div className="flex items-center gap-4 bg-white/[0.03] border border-white/6 rounded-full px-5 py-2.5">
               <span className="text-[11px] font-barlow font-bold uppercase tracking-widest text-white/30">Switching between views?</span>
               <button
@@ -139,7 +156,7 @@ export default function DemoPage() {
                 key={s.id}
                 initial="hidden"
                 animate="visible"
-                custom={i + 3}
+                custom={i + 4}
                 variants={fadeUp}
                 className={`group relative rounded-xl border overflow-hidden flex flex-col transition-all hover:-translate-y-1 ${
                   s.accent
@@ -202,6 +219,16 @@ export default function DemoPage() {
                   {s.id === 'customer' && (
                     <div className="mt-3">
                       <ArrivalQrDemoButton shopSlug="benj-barbers" shopName="Ben J Barbers" className="w-full py-4" />
+                    </div>
+                  )}
+                  {s.id === 'barber' && (
+                    <div className="mt-3">
+                      <Link
+                        href="/demo/passport"
+                        className="w-full py-3 rounded-sm font-barlow font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 bg-white/[0.04] border border-white/8 text-white/60 hover:text-[#C8F135] hover:border-[#C8F135]/30 transition-all"
+                      >
+                        Quick passport demo <ExternalLink size={13} />
+                      </Link>
                     </div>
                   )}
                 </div>

@@ -139,6 +139,7 @@ model Visit {
   barberId            String
   visitedAt           DateTime     @default(now())
   notes               String?
+  privateNotes        String?
   createdAt           DateTime     @default(now())
   cutDetails          Json?
   recommendation      String?
@@ -299,12 +300,16 @@ model WalkIn {
   isAway         Boolean   @default(false)
   returnByMinutes Int?
   queueReminderSentAt DateTime?
+  presenceStatus String    @default("IN_SHOP")
+  standbySince   DateTime?
+  nudgeSentAt    DateTime?
   customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   familyMember   FamilyMember? @relation(fields: [familyMemberId], references: [id])
   shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId, arrivedAt])
   @@index([shopId, status])
+  @@index([shopId, presenceStatus])
 }
 
 model DemoLead {

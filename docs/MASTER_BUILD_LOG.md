@@ -1,6 +1,6 @@
 # YourBarber — Master Build Log
 
-**Last updated:** 2026-04-27  
+**Last updated:** 2026-05-02  
 **For:** Claude, Gemini, OpenAI, or any AI assistant working on this codebase.
 
 > **Read this before touching anything.** This document is the single source of truth for what has been built, what is in progress, and what is next. If something is marked ✅ — it is done. Do not re-implement it, do not refactor it unless explicitly asked, do not create duplicate routes or components. Check here first.
@@ -91,6 +91,31 @@
 - ✅ Busy/free toggle — `PATCH /api/barber/status`
 - ✅ Role-gated — only barbers land here
 
+### Private Barber Notes (2026-05-02)
+- ✅ `Visit.privateNotes` — barber's personal relationship notes (dog name, conversation details, personal touches)
+- ✅ **Strictly scoped to the recording barber** — never returned to owner, other barbers, or customers
+- ✅ API strips `privateNotes` from GET responses unless `session.barberId === visit.barberId`
+- ✅ Recording form — Notes tab now has "Shared notes" (whole shop) + lime-bordered "Private notes — only you see this"
+- ✅ Customer detail page — private notes render with lime left border only for the barber who wrote them
+- **Why this matters:** A barber manager (first live pitch) specifically requested this. If the owner can read it, barbers stop writing honest notes. It's the personal relationship layer that makes regulars feel recognised — and it's the moat that no other shop has access to even if the client takes their Cut Passport elsewhere.
+
+### Shop Window Signage (2026-05-02)
+- ✅ `/window/[slug]` — public TV display for shop window, no auth required
+- ✅ Two states: "Walk in now. No wait." (empty queue) vs "~X min wait / Scan to save your place"
+- ✅ Live QR code → `/arrive/[slug]`, polls every 30s, opening hours, rotating portfolio photos
+- ✅ Footer ticker scrollable from street, 16:9 landscape layout
+- ✅ `GET /api/window/[slug]` — public API, returns queue state + presigned portfolio photos
+- **Different from in-shop TV:** No client names shown (privacy), outward-facing message for passersby
+
+### Demo Phone View (2026-05-02)
+- ✅ `/demo/passport` — mobile-first Cut Passport demo, no login required
+- ✅ Shows real data from benj-barbers demo shop (clients with visit photos)
+- ✅ Queue-style list of 3–4 clients, tap to expand Cut Passport inline
+- ✅ First client pre-expanded — hand phone to barber, say "this is the whole app"
+- ✅ `GET /api/demo/passport` — public, scoped strictly to `benj-barbers` slug
+- ✅ Linked from `/demo` page as "Quick passport demo" button on the Barber card
+- **Purpose:** Replaces the "scrabbling" in live pitches. One URL, pre-loaded, no login, works in 30 seconds.
+
 ### Customer Portal
 - ✅ `/me` — `src/app/(customer)/me/page.tsx` — visit history, photos, family management
 - ✅ **5-star rating** — replaces old thumbs up/down. Stars 1–2 = negative (with feedback textarea), 3 = neutral, 4–5 = positive
@@ -139,7 +164,7 @@
 - `Customer` — phone, name, smsOptIn, lastVisitAt, accessCode, preferredReminderWeeks, primaryBarberId, otpCode, otpExpiry
 - `FamilyMember` — customerId, name
 - `FamilySharing` — ownerId, sharedWithPhone
-- `Visit` — barberId, visitedAt, notes, cutDetails (JSON), recommendation, cutRating, **stars**, familyMemberId
+- `Visit` — barberId, visitedAt, notes, **privateNotes**, cutDetails (JSON), recommendation, cutRating, **stars**, familyMemberId
 - `VisitPhoto` — visitId, url, angle
 - `WalkIn` — customerId, familyMemberId, **groupId**, status, arrivedAt, note, preferredStyle
 - `CheckIn` — qrToken, expiresAt, familyMemberId, groupMemberIds, includeCustomer
@@ -168,10 +193,46 @@
 13. `20260427200000_shop_google_review_url`
 14. `20260427300000_family_and_stars` — FamilyMember, FamilySharing, stars on Feedback+Visit, familyMemberId on WalkIn+CheckIn, groupMemberIds+includeCustomer on CheckIn
 15. `20260427400000_walkin_group_id` — groupId on WalkIn
+16. `20260502000000_visit_private_notes` — privateNotes (TEXT, nullable) on Visit
 
 ---
 
 ## What's NOT Built Yet ❌
+
+### 0. Digital Wallet Pass — Apple Wallet / Google Wallet (Priority 0 — Vision, Not Started)
+
+**The idea (decided 2026-05-02):** Replace SMS as the primary client communication channel with a branded `.pkpass` / Google Wallet pass that lives permanently on the client's phone.
+
+**Why it matters:**
+- SMS (Vonage) costs ~5p per message. At scale this becomes a meaningful monthly cost that grows with success.
+- A Wallet pass, once installed, allows **free push notifications** to the client's lock screen via Apple APNS / Google FCM.
+- The pass QR code becomes the client's permanent identity — barber scans it, system looks up who it is, no phone number typing required for returning clients.
+- It elevates YourBarber from "web utility" to "phone citizen" — sits in the wallet next to Lloyds, Tesco, and boarding passes.
+
+**The architecture (agreed):**
+- **Wallet pass = quick identity + free nudges.** Contains a QR with a unique client token. Barber scans it → auto check-in.
+- **Browser = full passport.** Tapping "Details" on the back of the pass opens a secure browser page (token in URL, no login needed) showing full cut history, photos, grades.
+- SMS stays as **fallback only** for clients who haven't installed the pass yet.
+
+**What needs building:**
+1. Apple Developer account ($99/yr) + Pass Type ID certificate + signing server that wraps pass JSON → `.pkpass`
+2. Google Wallet service account + pass class definition
+3. `WalletPass` model on Customer — `applePassSerial`, `googlePassId`, `passToken` (UUID, the QR payload)
+4. `POST /api/customer/wallet/apple` — generates and returns `.pkpass` file
+5. `POST /api/customer/wallet/google` — returns Google Wallet save link
+6. `POST /api/customer/wallet/notify` — sends free push update to installed passes (e.g. "Your place is next")
+7. Update `/arrive/[slug]` — after check-in, offer "Add to Apple/Google Wallet" button
+8. Update barber QR scanner — recognise `passToken` as a valid scan payload (alongside existing `qrToken`)
+9. Update `/me` customer portal — "Your pass" section with install buttons
+
+**The modular vision (do not build all at once):**
+- **Phase 1 — YourBarber:** Pass = client identity for barbershops. Replaces SMS for queue nudges.
+- **Phase 2 — YourStyle network:** One master pass works across barbershops, nail bars, threading studios. The shop gets a branded entry point; the client gets one universal card. Each shop pays for only the modules they need (Loyalty stamps / Cut Passport / Queue).
+- **Phase 3 — Consumer passport:** Clients register once at `yourstyle.uk`, get a free pass. Shops who aren't on the platform still see the client's passport when shown the phone — "Trojan Horse" acquisition.
+
+**Do not start this until:** At least 5 barbershops are actively paying. The pass infrastructure is meaningless without a user base.
+
+---
 
 ### 1. QR Code Download (Priority 1)
 - Owner should be able to download a printable QR code for `/arrive/[slug]`
@@ -258,6 +319,8 @@ SESSION_SECRET
 | Waitlist API | `src/app/api/waitlist/route.ts` + `src/app/api/waitlist/[id]/route.ts` |
 | Barber mode | `src/app/(barber)/barber/BarberClient.tsx` |
 | Customer portal | `src/app/(customer)/me/page.tsx` |
+| Shop window signage | `src/app/window/[slug]/page.tsx` + `src/app/api/window/[slug]/route.ts` |
+| Demo phone passport | `src/app/demo/passport/page.tsx` + `src/app/api/demo/passport/route.ts` |
 | Star rating component | `src/app/(customer)/me/RateVisit.tsx` |
 | Rate API | `src/app/api/customer/visits/[id]/rate/route.ts` |
 | Settings API | `src/app/api/settings/route.ts` |

@@ -14,6 +14,7 @@ const cutDetailsSchema = z.object({
 
 const createVisitSchema = z.object({
   notes: z.string().max(2000).optional(),
+  privateNotes: z.string().max(2000).optional(),
   smsOptIn: z.enum(['yes', 'no', 'not_asked']),
   visitedAt: z.string().datetime().optional(),
   cutDetails: cutDetailsSchema,
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         customerId: params.id,
         barberId,
         notes: parsed.data.notes,
+        privateNotes: parsed.data.privateNotes,
         cutDetails: parsed.data.cutDetails ?? undefined,
         recommendation: parsed.data.recommendation,
         visitedAt,
@@ -71,11 +73,19 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const shopId = (session.user as any).shopId as string;
+  const requesterId = (session.user as any).id as string;
 
   const visits = await db.visit.findMany({
     where: { customerId: params.id, shopId },
     orderBy: { visitedAt: 'desc' },
     include: { photos: true, barber: { select: { name: true } } },
   });
-  return NextResponse.json(visits);
+
+  // Strip privateNotes from any visit not recorded by the requesting barber
+  const safeVisits = visits.map(v => ({
+    ...v,
+    privateNotes: v.barberId === requesterId ? v.privateNotes : undefined,
+  }));
+
+  return NextResponse.json(safeVisits);
 }

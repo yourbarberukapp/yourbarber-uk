@@ -232,7 +232,8 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
         {visits.map(visit => {
           const details = visit.cutDetails as CutDetails | null;
           const photos = sortPhotos(visit.photos);
-          const hasContent = details || visit.notes || visit.recommendation;
+          const isOwnVisit = visit.barberId === session.barberId;
+          const hasContent = details || visit.notes || visit.recommendation || (isOwnVisit && visit.privateNotes);
 
           return (
             <div key={visit.id} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden' }}>
@@ -306,10 +307,24 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                       borderRadius: '0 4px 4px 0', padding: '0.625rem 0.875rem',
                     }}>
                       <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.25)', marginBottom: '0.25rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
-                        Internal notes
+                        Shared notes
                       </p>
                       <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-inter, sans-serif)', margin: 0 }}>
                         {visit.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {isOwnVisit && visit.privateNotes && (
+                    <div style={{
+                      background: 'rgba(200,241,53,0.04)', borderLeft: '2px solid rgba(200,241,53,0.3)',
+                      borderRadius: '0 4px 4px 0', padding: '0.625rem 0.875rem',
+                    }}>
+                      <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(200,241,53,0.5)', marginBottom: '0.25rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+                        Private — just you
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-inter, sans-serif)', margin: 0 }}>
+                        {visit.privateNotes}
                       </p>
                     </div>
                   )}
