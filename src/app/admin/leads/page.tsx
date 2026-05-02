@@ -19,10 +19,11 @@ function timeAgo(date: Date) {
 export default async function AdminLeadsPage({
   searchParams,
 }: {
-  searchParams?: { key?: string };
+  searchParams?: Promise<{ key?: string }>;
 }) {
+  const params = await searchParams;
   const adminKey = process.env.ADMIN_KEY;
-  if (!adminKey || searchParams?.key !== adminKey) notFound();
+  if (!adminKey || params?.key !== adminKey) notFound();
 
   const leads = await db.demoLead.findMany({ orderBy: { createdAt: 'desc' } });
 
