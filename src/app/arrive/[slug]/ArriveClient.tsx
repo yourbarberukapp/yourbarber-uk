@@ -77,6 +77,8 @@ export default function ArriveClient({
   } | null>(null);
   const [holdingPlace, setHoldingPlace] = useState(false);
   const [holdRequested, setHoldRequested] = useState(false);
+  const [leftQueue, setLeftQueue] = useState(false);
+  const [leavingQueue, setLeavingQueue] = useState(false);
   const [returningUser, setReturningUser] = useState<{ name: string; familyMembers: FamilyMember[] } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [waitingCount, setWaitingCount] = useState(initialWaitingCount);
@@ -156,7 +158,30 @@ export default function ArriveClient({
     if (!notifySupported) return;
     const perm = await Notification.requestPermission();
     setNotifyPermission(perm);
+    if (perm === 'granted' && isDemoShop) {
+      setTimeout(() => {
+        new Notification(`${shopName} — queue update`, {
+          body: "It's quieted down — just 1 person ahead now. Want to come back in?",
+          icon: '/icon-192.png',
+        });
+      }, 3000);
+    }
     return perm;
+  }
+
+  async function leaveQueue() {
+    if (leavingQueue || !phone) return;
+    setLeavingQueue(true);
+    try {
+      await fetch('/api/arrive/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shopSlug, phone }),
+      });
+      setLeftQueue(true);
+    } catch { /* ignore */ } finally {
+      setLeavingQueue(false);
+    }
   }
 
   async function submitPhone() {
@@ -777,6 +802,12 @@ export default function ArriveClient({
           {/* ── Step: notify_standby ── */}
           {step === 'notify_standby' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center' }}>
+              <button
+                onClick={() => setStep('queue_info')}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ← Back
+              </button>
               <div>
                 <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
                   No worries.
@@ -990,6 +1021,20 @@ export default function ArriveClient({
               >
                 Browse Hair Ideas
               </button>
+
+              {leftQueue ? (
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
+                  You&apos;ve left the queue. See you next time.
+                </p>
+              ) : (
+                <button
+                  onClick={leaveQueue}
+                  disabled={leavingQueue}
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.25rem', opacity: leavingQueue ? 0.5 : 1 }}
+                >
+                  Leave the queue
+                </button>
+              )}
             </div>
           )}
         </div>

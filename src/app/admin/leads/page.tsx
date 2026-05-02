@@ -1,6 +1,5 @@
-import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 function toWaPhone(phone: string) {
@@ -17,9 +16,13 @@ function timeAgo(date: Date) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export default async function AdminLeadsPage() {
-  const session = await getSession();
-  if (!session) redirect('/login');
+export default async function AdminLeadsPage({
+  searchParams,
+}: {
+  searchParams?: { key?: string };
+}) {
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey || searchParams?.key !== adminKey) notFound();
 
   const leads = await db.demoLead.findMany({ orderBy: { createdAt: 'desc' } });
 
@@ -36,8 +39,8 @@ export default async function AdminLeadsPage() {
               {leads.length} {leads.length === 1 ? 'enquiry' : 'enquiries'}
             </p>
           </div>
-          <Link href="/dashboard" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', textDecoration: 'none', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            ← Dashboard
+          <Link href="/" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', textDecoration: 'none', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            ← Home
           </Link>
         </div>
 
