@@ -145,7 +145,7 @@ function LoginForm() {
               onClick={async () => {
                 setLoading(true);
                 setError('');
-                const result = await signIn('credentials', { email: 'jake@benjbarbers.com', password: 'barber123', redirect: false });
+                const result = await signIn('credentials', { email: 'james@thebarbershop.com', password: 'barber123', redirect: false });
                 if (result?.error) { setError('Demo login failed'); setLoading(false); }
                 else { router.push('/barber'); }
               }}
@@ -159,7 +159,7 @@ function LoginForm() {
               onClick={async () => {
                 setLoading(true);
                 setError('');
-                const result = await signIn('credentials', { email: 'owner@benjbarbers.com', password: 'owner123', redirect: false });
+                const result = await signIn('credentials', { email: 'ben@thebarbershop.com', password: 'owner123', redirect: false });
                 if (result?.error) { setError('Demo login failed'); setLoading(false); }
                 else { router.push('/dashboard'); }
               }}

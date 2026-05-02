@@ -50,7 +50,7 @@ const screens = [
     desc: 'The barber sees the live queue, opens the next client, checks what they had last time, and records the new cut before they leave the chair.',
     icon: Monitor,
     link: '/login?callbackUrl=%2Fbarber',
-    login: 'jake@benjbarbers.com / barber123',
+    login: 'james@thebarbershop.com / barber123',
     image: '/demo-barber.png',
     imageAlt: 'Barber mode showing the live queue and client cut history on a phone in a barbershop',
     features: ['Live queue in the pocket', 'Mark in chair and done', 'Open the Cut Passport', 'Save grades, notes, and photos'],
@@ -62,7 +62,7 @@ const screens = [
     desc: 'The owner sees the whole shop in one place: the queue, the team, the regulars, reminders, feedback, and the tools that bring clients back.',
     icon: Layout,
     link: '/login?callbackUrl=%2Fdashboard',
-    login: 'owner@benjbarbers.com / owner123',
+    login: 'ben@thebarbershop.com / owner123',
     image: '/demo-dashboard.png',
     imageAlt: 'Owner dashboard on a laptop in a barbershop',
     features: ['Live shop view', 'Customer history', 'Return-visit reminders', 'Feedback and settings'],
@@ -103,8 +103,8 @@ export default function DemoHubPage() {
     setLoadingRole(role);
     const { signIn } = await import('next-auth/react');
     const creds = role === 'barber'
-      ? { email: 'jake@benjbarbers.com', password: 'barber123' }
-      : { email: 'owner@benjbarbers.com', password: 'owner123' };
+      ? { email: 'james@thebarbershop.com', password: 'barber123' }
+      : { email: 'ben@thebarbershop.com', password: 'owner123' };
     const result = await signIn('credentials', { ...creds, redirect: false });
     if (!result?.error) {
       window.location.href = role === 'barber' ? '/barber' : '/dashboard';

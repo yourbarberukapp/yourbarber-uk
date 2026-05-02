@@ -50,7 +50,7 @@ const screens = [
     title: 'Remember the Fade',
     desc: "Open the next client, check their last cut, and record today's photos in under 30 seconds. This is the Cut Passport in the chair.",
     link: '/login?callbackUrl=%2Fbarber',
-    creds: 'jake@benjbarbers.com\nbarber123',
+    creds: 'james@thebarbershop.com\nbarber123',
     image: '/demo-barber.png',
     imageAlt: 'Barber queue view on a phone inside a barbershop',
     cta: 'Open Barber Mode',
@@ -63,7 +63,7 @@ const screens = [
     title: 'Run the Shop',
     desc: 'See the queue, the team, customer history, reminders, feedback, bookings, and settings from one owner dashboard.',
     link: '/login?callbackUrl=%2Fdashboard',
-    creds: 'owner@benjbarbers.com\nowner123',
+    creds: 'ben@thebarbershop.com\nowner123',
     image: '/demo-dashboard.png',
     imageAlt: 'Owner dashboard on a laptop in a barbershop',
     cta: 'Open Owner Dashboard',
@@ -286,7 +286,7 @@ export default function DemoPage() {
                       { key: 'name', label: 'Your name', placeholder: 'Ben Thompson', type: 'text' },
                       { key: 'shopName', label: 'Shop name', placeholder: 'The Barber Room', type: 'text' },
                       { key: 'phone', label: 'Your mobile', placeholder: '07700 900 000', type: 'tel' },
-                      { key: 'email', label: 'Email address', placeholder: 'ben@benjbarbers.co.uk', type: 'email' },
+                      { key: 'email', label: 'Email address', placeholder: 'ben@thebarbershop.com', type: 'email' },
                     ].map(({ key, label, placeholder, type }) => (
                       <div key={key}>
                         <label className="block text-[10px] font-bold uppercase tracking-widest text-white/35 font-barlow mb-1.5">{label}</label>
