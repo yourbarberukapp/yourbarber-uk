@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Scissors, Clock, ChevronLeft, ArrowRight, Users } from 'lucide-react';
+import { Scissors, Clock, ChevronLeft, ArrowRight, Users, Radio } from 'lucide-react';
 
 type CutDetails = {
   style?: string[];
@@ -13,7 +13,11 @@ type CutDetails = {
 
 type Client = {
   id: string;
+  walkInId: string | null;
   name: string | null;
+  arrivedAt: string | null;
+  status: string | null;
+  note: string | null;
   lastVisit: {
     visitedAt: string;
     cutDetails: CutDetails | null;
@@ -21,14 +25,22 @@ type Client = {
     notes: string | null;
     privateNotes: string | null;
     photos: { id: string; url: string; angle: string }[];
-  };
+  } | null;
 };
 
-// Simulated arrival times (minutes ago) for the demo queue
-const ARRIVAL_OFFSETS = [4, 11, 23, 37];
+// Fallback arrival offsets for example data
+const ARRIVAL_OFFSETS = [4, 11, 23, 37, 52, 68, 84, 99];
+
+function minutesAgo(dateStr: string) {
+  const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins === 1) return '1m ago';
+  return `${mins}m ago`;
+}
 
 function weeksAgo(dateStr: string) {
   const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
+  if (days === 0) return 'today';
   if (days < 7) return `${days}d ago`;
   const weeks = Math.floor(days / 7);
   return `${weeks}w ago`;
@@ -43,12 +55,15 @@ const ANGLE_ORDER = ['front', 'back', 'left', 'right', 'top'];
 
 function PassportView({ client, onBack }: { client: Client; onBack: () => void }) {
   const { lastVisit } = client;
-  const photos = [...lastVisit.photos].sort((a, b) => {
-    const ai = ANGLE_ORDER.indexOf(a.angle);
-    const bi = ANGLE_ORDER.indexOf(b.angle);
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
-  const d = lastVisit.cutDetails;
+  const photos = lastVisit
+    ? [...lastVisit.photos].sort((a, b) => {
+        const ai = ANGLE_ORDER.indexOf(a.angle);
+        const bi = ANGLE_ORDER.indexOf(b.angle);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      })
+    : [];
+
+  const d = lastVisit?.cutDetails;
   const chips: string[] = [];
   if (d?.style?.length) chips.push(...d.style);
   if (d?.sidesGrade) chips.push(`Grade ${d.sidesGrade} sides`);
@@ -88,7 +103,7 @@ function PassportView({ client, onBack }: { client: Client; onBack: () => void }
             fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)',
             fontFamily: 'var(--font-inter, sans-serif)',
           }}>
-            Last cut {weeksAgo(lastVisit.visitedAt)}
+            {lastVisit ? `Last cut ${weeksAgo(lastVisit.visitedAt)}` : 'New client — no previous visit'}
           </div>
         </div>
         <div style={{
@@ -104,12 +119,41 @@ function PassportView({ client, onBack }: { client: Client; onBack: () => void }
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 6rem' }}>
 
+        {/* Client note from check-in */}
+        {client.note && (
+          <div style={{
+            margin: '0.75rem 1rem 0',
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8, padding: '0.65rem 0.85rem',
+            display: 'flex', alignItems: 'flex-start', gap: 8,
+          }}>
+            <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow, sans-serif)', flexShrink: 0, marginTop: 2 }}>Today</div>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>{client.note}</p>
+          </div>
+        )}
+
+        {/* No previous visit */}
+        {!lastVisit && (
+          <div style={{
+            margin: '1rem', background: '#111', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, padding: '2rem', textAlign: 'center',
+          }}>
+            <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.85rem', fontFamily: 'var(--font-inter, sans-serif)', marginBottom: 6 }}>
+              First visit to this shop
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
+              Record their cut today to start their passport.
+            </div>
+          </div>
+        )}
+
         {/* Photos */}
-        {photos.length > 0 ? (
+        {photos.length > 0 && (
           <div style={{
             display: 'grid',
             gridTemplateColumns: photos.length === 1 ? '1fr' : '1fr 1fr',
             gap: 2,
+            marginTop: client.note ? '0.75rem' : 0,
           }}>
             {photos.slice(0, 4).map(p => (
               <div key={p.id} style={{ position: 'relative', aspectRatio: '1', background: '#1a1a1a' }}>
@@ -127,84 +171,73 @@ function PassportView({ client, onBack }: { client: Client; onBack: () => void }
               </div>
             ))}
           </div>
-        ) : (
-          <div style={{
-            margin: '1rem', background: '#111', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 10, padding: '2rem', textAlign: 'center',
-            color: 'rgba(255,255,255,0.2)', fontSize: '0.85rem',
-            fontFamily: 'var(--font-inter, sans-serif)',
-          }}>
-            No photos yet for this client.
-          </div>
         )}
 
         {/* Cut details */}
-        <div style={{ padding: '1rem 1rem 0' }}>
-          {chips.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: '0.85rem' }}>
-              {chips.map(c => (
-                <span key={c} style={{
-                  background: 'rgba(200,241,53,0.1)', color: '#C8F135',
-                  border: '1px solid rgba(200,241,53,0.2)',
-                  fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
-                  letterSpacing: '0.05em', padding: '3px 9px', borderRadius: 20,
-                  fontFamily: 'var(--font-barlow, sans-serif)',
-                }}>
-                  {c}
+        {lastVisit && (
+          <div style={{ padding: '1rem 1rem 0' }}>
+            {chips.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: '0.85rem' }}>
+                {chips.map(c => (
+                  <span key={c} style={{
+                    background: 'rgba(200,241,53,0.1)', color: '#C8F135',
+                    border: '1px solid rgba(200,241,53,0.2)',
+                    fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
+                    letterSpacing: '0.05em', padding: '3px 9px', borderRadius: 20,
+                    fontFamily: 'var(--font-barlow, sans-serif)',
+                  }}>
+                    {c}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {lastVisit.notes && (
+              <div style={{
+                background: 'rgba(255,255,255,0.03)', borderLeft: '2px solid rgba(255,255,255,0.1)',
+                borderRadius: '0 6px 6px 0', padding: '0.65rem 0.85rem', marginBottom: '0.75rem',
+              }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.25)', marginBottom: 4, fontFamily: 'var(--font-barlow, sans-serif)' }}>Notes</div>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>{lastVisit.notes}</p>
+              </div>
+            )}
+
+            {lastVisit.recommendation && (
+              <div style={{
+                background: 'rgba(200,241,53,0.05)', border: '1px solid rgba(200,241,53,0.15)',
+                borderRadius: 8, padding: '0.65rem 0.85rem', marginBottom: '0.75rem',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <Clock size={13} color="#C8F135" style={{ flexShrink: 0 }} />
+                <span style={{ color: '#C8F135', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+                  {lastVisit.recommendation}
                 </span>
-              ))}
-            </div>
-          )}
-
-          {lastVisit.notes && (
-            <div style={{
-              background: 'rgba(255,255,255,0.03)', borderLeft: '2px solid rgba(255,255,255,0.1)',
-              borderRadius: '0 6px 6px 0', padding: '0.65rem 0.85rem', marginBottom: '0.75rem',
-            }}>
-              <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.25)', marginBottom: 4, fontFamily: 'var(--font-barlow, sans-serif)' }}>Notes</div>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>{lastVisit.notes}</p>
-            </div>
-          )}
-
-          {lastVisit.recommendation && (
-            <div style={{
-              background: 'rgba(200,241,53,0.05)', border: '1px solid rgba(200,241,53,0.15)',
-              borderRadius: 8, padding: '0.65rem 0.85rem', marginBottom: '0.75rem',
-              display: 'flex', alignItems: 'center', gap: 8,
-            }}>
-              <Clock size={13} color="#C8F135" style={{ flexShrink: 0 }} />
-              <span style={{ color: '#C8F135', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-barlow, sans-serif)' }}>
-                {lastVisit.recommendation}
-              </span>
-            </div>
-          )}
-
-          {chips.length === 0 && !lastVisit.notes && !lastVisit.recommendation && (
-            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.8rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
-              No cut notes recorded for this visit.
-            </p>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Private notes */}
-        <div style={{
-          margin: '0 1rem 1rem',
-          background: 'rgba(200,241,53,0.03)', border: '1px solid rgba(200,241,53,0.1)',
-          borderRadius: 8, padding: '0.75rem 0.9rem',
-        }}>
-          <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(200,241,53,0.4)', marginBottom: 4, fontFamily: 'var(--font-barlow, sans-serif)' }}>
-            Private notes — just you
+        {lastVisit && (
+          <div style={{
+            margin: '0 1rem 1rem',
+            background: 'rgba(200,241,53,0.03)', border: '1px solid rgba(200,241,53,0.1)',
+            borderRadius: 8, padding: '0.75rem 0.9rem',
+          }}>
+            <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(200,241,53,0.4)', marginBottom: 4, fontFamily: 'var(--font-barlow, sans-serif)' }}>
+              Private notes — just you
+            </div>
+            {lastVisit.privateNotes ? (
+              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>
+                {lastVisit.privateNotes}
+              </p>
+            ) : (
+              <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.8rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic', fontFamily: 'var(--font-inter, sans-serif)' }}>
+                Your personal notes about this client. Only you ever see these.
+              </p>
+            )}
           </div>
-          {lastVisit.privateNotes ? (
-            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>
-              {lastVisit.privateNotes}
-            </p>
-          ) : (
-            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.8rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic', fontFamily: 'var(--font-inter, sans-serif)' }}>
-              Your personal notes about this client — conversation details, preferences, anything you want to remember. Only you ever see these.
-            </p>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
@@ -213,21 +246,38 @@ function PassportView({ client, onBack }: { client: Client; onBack: () => void }
 export default function DemoBarbersPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [shopName, setShopName] = useState('Ben J Barbers');
+  const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<Client | null>(null);
   const [showShare, setShowShare] = useState(false);
 
   const demoUrl = 'https://yourbarber.uk/demo/barber';
+  const arriveUrl = 'https://yourbarber.uk/arrive/benj-barbers';
 
-  useEffect(() => {
-    fetch('/api/demo/passport', { cache: 'no-store' })
+  const fetchQueue = useCallback(() => {
+    fetch('/api/demo/queue', { cache: 'no-store' })
       .then(r => r.json())
       .then(d => {
         setClients(d.clients ?? []);
+        setIsLive(d.isLive ?? false);
         if (d.shopName) setShopName(d.shopName);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchQueue();
+    const interval = setInterval(fetchQueue, 8_000);
+    return () => clearInterval(interval);
+  }, [fetchQueue]);
+
+  // Keep active client in sync with latest data
+  useEffect(() => {
+    if (active) {
+      const updated = clients.find(c => c.id === active.id);
+      if (updated) setActive(updated);
+    }
+  }, [clients, active]);
 
   if (loading) {
     return (
@@ -247,7 +297,7 @@ export default function DemoBarbersPage() {
       position: 'relative', overflow: 'hidden',
     }}>
 
-      {/* ── PASSPORT VIEW (slides over queue) ── */}
+      {/* ── PASSPORT VIEW ── */}
       {active && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 50,
@@ -259,7 +309,6 @@ export default function DemoBarbersPage() {
       )}
 
       {/* ── QUEUE VIEW ── */}
-      {/* Header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 10,
         background: 'rgba(10,10,10,0.97)', backdropFilter: 'blur(8px)',
@@ -279,8 +328,19 @@ export default function DemoBarbersPage() {
             <div style={{ fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.1 }}>
               {shopName}
             </div>
-            <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow, sans-serif)' }}>
-              Barber view · Demo
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              {isLive ? (
+                <>
+                  <Radio size={9} color="#C8F135" />
+                  <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#C8F135', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+                    Live queue
+                  </span>
+                </>
+              ) : (
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+                  Example data · queue empty
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -304,16 +364,41 @@ export default function DemoBarbersPage() {
         <div style={{
           background: '#111', borderBottom: '1px solid rgba(255,255,255,0.08)',
           padding: '1.25rem 1.1rem',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
         }}>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textAlign: 'center', margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>
-            Let a barber scan this to try the demo on their own phone.
-          </p>
-          <div style={{ background: 'white', padding: 12, borderRadius: 10 }}>
-            <QRCodeSVG value={demoUrl} size={160} bgColor="#ffffff" fgColor="#0A0A0A" level="M" />
+          <div style={{ display: 'flex', gap: 14, width: '100%' }}>
+            {/* Barber demo QR */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div style={{ background: 'white', padding: 10, borderRadius: 8 }}>
+                <QRCodeSVG value={demoUrl} size={110} bgColor="#ffffff" fgColor="#0A0A0A" level="M" />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+                  Barber view
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.6rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: 2 }}>
+                  Let them try this demo
+                </div>
+              </div>
+            </div>
+
+            {/* Customer arrival QR */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div style={{ background: 'white', padding: 10, borderRadius: 8 }}>
+                <QRCodeSVG value={arriveUrl} size={110} bgColor="#ffffff" fgColor="#0A0A0A" level="M" />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: '#C8F135', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+                  Customer scan
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.6rem', fontFamily: 'var(--font-inter, sans-serif)', marginTop: 2 }}>
+                  Scan to join the live queue
+                </div>
+              </div>
+            </div>
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem', textAlign: 'center', margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            yourbarber.uk/demo/barber
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72rem', textAlign: 'center', margin: 0, fontFamily: 'var(--font-inter, sans-serif)', lineHeight: 1.5 }}>
+            Customer scans the right QR → they appear on this screen within 8 seconds.
           </p>
         </div>
       )}
@@ -326,12 +411,12 @@ export default function DemoBarbersPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <Users size={13} color="rgba(255,255,255,0.3)" />
           <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow, sans-serif)' }}>
-            Waiting now
+            {isLive ? 'Waiting now' : 'Example clients'}
           </span>
         </div>
         {clients.length > 0 && (
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#C8F135', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            {clients.length} in queue
+          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: isLive ? '#C8F135' : 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            {clients.length} {isLive ? 'in queue' : 'clients'}
           </span>
         )}
       </div>
@@ -340,13 +425,16 @@ export default function DemoBarbersPage() {
       <div style={{ padding: '0 0.75rem', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
         {clients.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.2)', fontSize: '0.85rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
-            No demo clients found. Add some visits with photos to Ben J Barbers first.
+            Queue is empty.
           </div>
         ) : (
           clients.map((client, i) => {
             const isNext = i === 0;
-            const arrivedMins = ARRIVAL_OFFSETS[i] ?? 40;
-            const hasPhotos = client.lastVisit.photos.length > 0;
+            const arrivedDisplay = client.arrivedAt
+              ? minutesAgo(client.arrivedAt)
+              : `${ARRIVAL_OFFSETS[i] ?? 99}m ago`;
+            const hasPhotos = (client.lastVisit?.photos.length ?? 0) > 0;
+            const hasPassport = !!client.lastVisit;
 
             return (
               <button
@@ -358,10 +446,8 @@ export default function DemoBarbersPage() {
                   border: isNext ? '1px solid rgba(200,241,53,0.25)' : '1px solid rgba(255,255,255,0.07)',
                   borderRadius: 10, padding: '0.9rem 1rem',
                   cursor: 'pointer', textAlign: 'left',
-                  position: 'relative',
                 }}
               >
-                {/* Position bubble */}
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                   background: isNext ? '#C8F135' : 'rgba(255,255,255,0.08)',
@@ -373,7 +459,6 @@ export default function DemoBarbersPage() {
                   {i + 1}
                 </div>
 
-                {/* Avatar */}
                 <div style={{
                   width: 40, height: 40, borderRadius: 8, flexShrink: 0,
                   background: 'rgba(255,255,255,0.07)',
@@ -385,17 +470,26 @@ export default function DemoBarbersPage() {
                   {initials(client.name)}
                 </div>
 
-                {/* Name + meta */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', color: 'white', lineHeight: 1.2, marginBottom: 3 }}>
                     {client.name ?? 'Unknown'}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', fontFamily: 'var(--font-inter, sans-serif)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <Clock size={10} /> Arrived {arrivedMins}m ago
+                      <Clock size={10} /> {arrivedDisplay}
                     </span>
-                    <span>·</span>
-                    <span>Last cut {weeksAgo(client.lastVisit.visitedAt)}</span>
+                    {hasPassport && (
+                      <>
+                        <span>·</span>
+                        <span>Last cut {weeksAgo(client.lastVisit!.visitedAt)}</span>
+                      </>
+                    )}
+                    {!hasPassport && client.walkInId && (
+                      <>
+                        <span>·</span>
+                        <span style={{ color: 'rgba(255,255,255,0.25)' }}>New client</span>
+                      </>
+                    )}
                     {hasPhotos && (
                       <span style={{
                         background: 'rgba(200,241,53,0.08)', color: 'rgba(200,241,53,0.65)',
@@ -404,7 +498,19 @@ export default function DemoBarbersPage() {
                         textTransform: 'uppercase', letterSpacing: '0.08em',
                         fontFamily: 'var(--font-barlow, sans-serif)',
                       }}>
-                        {client.lastVisit.photos.length} photos
+                        {client.lastVisit!.photos.length} photos
+                      </span>
+                    )}
+                    {client.note && (
+                      <span style={{
+                        background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: 3,
+                        textTransform: 'uppercase', letterSpacing: '0.08em',
+                        fontFamily: 'var(--font-barlow, sans-serif)',
+                        maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {client.note}
                       </span>
                     )}
                   </div>
@@ -417,7 +523,7 @@ export default function DemoBarbersPage() {
         )}
       </div>
 
-      {/* Bottom CTA — fixed */}
+      {/* Bottom CTA */}
       <div style={{
         position: 'sticky', bottom: 0,
         background: 'rgba(10,10,10,0.97)', backdropFilter: 'blur(8px)',
