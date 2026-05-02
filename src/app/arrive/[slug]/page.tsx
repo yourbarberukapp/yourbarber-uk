@@ -33,7 +33,7 @@ export default async function ArrivePage({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const waitingCount = await db.walkIn.count({
+  const liveWaitingCount = await db.walkIn.count({
     where: {
       shopId: shop.id,
       arrivedAt: { gte: today },
@@ -41,6 +41,8 @@ export default async function ArrivePage({
     },
   });
 
+  const isDemoShop = shop.slug === 'the-barber-room';
+  const waitingCount = isDemoShop && liveWaitingCount === 0 ? 3 : liveWaitingCount;
   const waitMinutes = waitingCount * (shop.defaultCutTime ?? 20);
 
   return (
@@ -56,6 +58,7 @@ export default async function ArrivePage({
       barbers={shop.barbers}
       initialWaitingCount={waitingCount}
       initialWaitMinutes={waitMinutes}
+      isDemoShop={isDemoShop}
       demoWalkIn={searchParams?.demo === 'walkin'}
     />
   );

@@ -30,6 +30,7 @@ interface Props {
   barbers: ShopBarber[];
   initialWaitingCount: number;
   initialWaitMinutes: number;
+  isDemoShop?: boolean;
   demoWalkIn?: boolean;
 }
 
@@ -56,7 +57,7 @@ const MAX_SERVICES_SHOWN = 5;
 export default function ArriveClient({
   shopSlug, shopName, services, barbers,
   initialWaitingCount, initialWaitMinutes,
-  demoWalkIn = false,
+  isDemoShop = false, demoWalkIn = false,
 }: Props) {
   const [step, setStep] = useState<Step>('queue_info');
   const [phone, setPhone] = useState('');
@@ -355,6 +356,18 @@ export default function ArriveClient({
           }}>
             {stepLabel(step)}
           </p>
+          {isDemoShop && (
+            <div style={{
+              display: 'inline-block', marginTop: '0.5rem',
+              background: 'rgba(200,241,53,0.08)', border: '1px solid rgba(200,241,53,0.2)',
+              borderRadius: 100, padding: '0.2rem 0.75rem',
+              color: 'rgba(200,241,53,0.6)', fontSize: '0.65rem', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.12em',
+              fontFamily: 'var(--font-barlow, sans-serif)',
+            }}>
+              Demo shop
+            </div>
+          )}
         </div>
 
         {/* Card */}
