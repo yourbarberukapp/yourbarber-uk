@@ -261,7 +261,6 @@ export default function DemoHubPage() {
                         Manual login instead
                         <ExternalLink size={14} />
                       </Link>
-                      <p className="text-[10px] font-mono text-white/25 text-center mt-3">{screen.login}</p>
                     </>
                   )}
                 </div>

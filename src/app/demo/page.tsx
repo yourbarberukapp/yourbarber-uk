@@ -190,15 +190,7 @@ export default function DemoPage() {
                   <h3 className="font-barlow font-black text-2xl uppercase leading-tight mb-3">{s.title}</h3>
                   <p className="text-white/50 text-sm font-inter leading-relaxed">{s.desc}</p>
 
-                  {s.creds ? (
-                    <div className="mt-6 bg-black/40 rounded-lg p-4 border border-white/6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lock size={11} className="text-white/25" />
-                        <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/25">Demo sign-in</span>
-                      </div>
-                      <pre className="text-sm font-mono text-white/70 whitespace-pre-wrap leading-relaxed">{s.creds}</pre>
-                    </div>
-                  ) : (
+                  {!s.creds && (
                     <div className="mt-6 bg-black/30 rounded-lg p-3 border border-white/6">
                       <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-[#C8F135]/60">No login required</span>
                     </div>
