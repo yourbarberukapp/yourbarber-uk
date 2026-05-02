@@ -23,16 +23,7 @@ export default async function AdminLeadsPage({
 }) {
   const params = await searchParams;
   const adminKey = process.env.ADMIN_KEY;
-  if (!adminKey || params?.key !== adminKey) {
-    return (
-      <div style={{ padding: '2rem', fontFamily: 'monospace', background: '#0a0a0a', minHeight: '100vh', color: 'white' }}>
-        <p>Access denied.</p>
-        <p>ENV key set: {adminKey ? `yes (${adminKey.length} chars)` : 'NO — not found in env'}</p>
-        <p>Key in URL: {params?.key ? `yes (${params.key.length} chars)` : 'NO — missing from URL'}</p>
-        <p>Match: {adminKey && params?.key === adminKey ? 'YES' : 'NO'}</p>
-      </div>
-    );
-  }
+  if (!adminKey || params?.key !== adminKey) notFound();
 
   const leads = await db.demoLead.findMany({ orderBy: { createdAt: 'desc' } });
 
