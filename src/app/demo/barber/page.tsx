@@ -245,14 +245,14 @@ function PassportView({ client, onBack }: { client: Client; onBack: () => void }
 
 export default function DemoBarbersPage() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [shopName, setShopName] = useState('Ben J Barbers');
+  const [shopName, setShopName] = useState('The Barber Room');
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<Client | null>(null);
   const [showShare, setShowShare] = useState(false);
 
   const demoUrl = 'https://yourbarber.uk/demo/barber';
-  const arriveUrl = 'https://yourbarber.uk/arrive/benj-barbers';
+  const arriveUrl = 'https://yourbarber.uk/arrive/the-barber-room';
 
   const fetchQueue = useCallback(() => {
     fetch('/api/demo/queue', { cache: 'no-store' })

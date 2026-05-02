@@ -12,21 +12,50 @@ export default async function ArrivePage({
   const shop = await db.shop.findUnique({
     where: { slug: params.slug },
     select: {
-      id: true, name: true, slug: true,
-      styles: {
-        where: { active: true },
+      id: true,
+      name: true,
+      slug: true,
+      defaultCutTime: true,
+      services: {
+        where: { isActive: true },
         orderBy: { sortOrder: 'asc' },
-        select: { name: true, category: true },
+        select: { id: true, name: true, price: true, duration: true },
+      },
+      barbers: {
+        where: { isActive: true, acceptsBookings: true },
+        select: { id: true, name: true },
+        orderBy: { createdAt: 'asc' },
       },
     },
   });
   if (!shop) notFound();
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const waitingCount = await db.walkIn.count({
+    where: {
+      shopId: shop.id,
+      arrivedAt: { gte: today },
+      status: { in: ['waiting', 'in_progress'] },
+    },
+  });
+
+  const waitMinutes = waitingCount * (shop.defaultCutTime ?? 20);
+
   return (
     <ArriveClient
       shopSlug={shop.slug}
       shopName={shop.name}
-      shopStyles={shop.styles}
+      services={shop.services.map(s => ({
+        id: s.id,
+        name: s.name,
+        price: s.price ? s.price.toString() : null,
+        duration: s.duration,
+      }))}
+      barbers={shop.barbers}
+      initialWaitingCount={waitingCount}
+      initialWaitMinutes={waitMinutes}
       demoWalkIn={searchParams?.demo === 'walkin'}
     />
   );

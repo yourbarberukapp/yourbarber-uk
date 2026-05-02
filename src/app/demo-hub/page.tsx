@@ -37,7 +37,7 @@ const screens = [
     subtitle: 'Step 1 - Join the queue',
     desc: 'A customer walks in, scans the QR, chooses today\'s cut from their phone, and joins the live queue without stopping the barber.',
     icon: Smartphone,
-    link: '/arrive/benj-barbers',
+    link: '/arrive/the-barber-room',
     login: 'No login required',
     image: '/demo-kiosk-luke.png',
     imageAlt: 'Wall check-in screen in a barbershop with a barber cutting hair in the background',
@@ -74,12 +74,12 @@ const previewScreens = [
     id: 'microsite',
     title: 'Shop Microsite Preview',
     subtitle: 'Public shop page',
-    desc: 'See how Ben J Barbers looks to a customer online, with services, opening hours, gallery, and a cleaner first impression than a bare link tree.',
+    desc: 'See how The Barber Room looks to a customer online, with services, opening hours, gallery, and a cleaner first impression than a bare link tree.',
     icon: Store,
-    link: '/shop/benj-barbers',
+    link: '/shop/the-barber-room',
     status: 'No login required',
     image: '/showcase-team.png',
-    imageAlt: 'Public-facing shop microsite preview for Ben J Barbers',
+    imageAlt: 'Public-facing shop microsite preview for The Barber Room',
     cta: 'Open Microsite Preview',
   },
   {
@@ -140,7 +140,7 @@ export default function DemoHubPage() {
 
         <div className="container relative mx-auto max-w-6xl">
           <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="text-center mb-20">
-            <span className="badge-lime mb-6 inline-block">Ben J Barbers - Demo Shop</span>
+            <span className="badge-lime mb-6 inline-block">The Barber Room - Demo Shop</span>
             <h1 className="font-barlow font-black text-[clamp(2.5rem,8vw,5.5rem)] uppercase leading-[0.9] mb-8">
               Follow the
               <br />
@@ -235,7 +235,7 @@ export default function DemoHubPage() {
                         <ExternalLink size={16} />
                       </Link>
                       <div className="mb-3">
-                        <ArrivalQrDemoButton shopSlug="benj-barbers" shopName="Ben J Barbers" className="w-full py-4" />
+                        <ArrivalQrDemoButton shopSlug="the-barber-room" shopName="The Barber Room" className="w-full py-4" />
                       </div>
                       <button
                         onClick={quickCustomerLogin}

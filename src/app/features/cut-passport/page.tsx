@@ -153,7 +153,7 @@ export default function CutPassportPage() {
                 <Link href="/demo-hub" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-[#C8F135] hover:text-white transition-colors">
                   Watch it in the demo <ArrowRight size={15} />
                 </Link>
-                <Link href="/shop/benj-barbers" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors">
+                <Link href="/shop/the-barber-room" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors">
                   View the shop microsite <Smartphone size={15} />
                 </Link>
               </div>

@@ -80,7 +80,7 @@ export default function FeaturesPage() {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-4xl">
             <span className="mb-4 inline-block rounded-sm border border-black/10 bg-black/5 px-4 py-2 font-barlow font-bold text-[11px] uppercase tracking-[0.18em]">
-              Ben J Barbers demo
+              The Barber Room demo
             </span>
             <h2 className="font-barlow font-black text-[clamp(2rem,5vw,4rem)] uppercase leading-[0.92] mb-5">
               See how the three pieces

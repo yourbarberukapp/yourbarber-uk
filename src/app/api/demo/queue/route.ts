@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateReadUrl } from '@/lib/s3';
 
-const DEMO_SLUG = 'benj-barbers';
+const DEMO_SLUG = 'the-barber-room';
 const ANGLE_ORDER = ['front', 'back', 'left', 'right', 'top'];
 
 async function getPassportForCustomer(customerId: string) {
@@ -65,6 +65,17 @@ export async function GET() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // Auto-reset: if no walk-in arrived in the last 30 min, wipe any stale ones so each new demo starts clean
+  const recentCutoff = new Date(Date.now() - 30 * 60 * 1000);
+  const hasRecentActivity = await db.walkIn.findFirst({
+    where: { shopId: shop.id, arrivedAt: { gte: recentCutoff }, status: { in: ['waiting', 'in_progress'] } },
+  });
+  if (!hasRecentActivity) {
+    await db.walkIn.deleteMany({
+      where: { shopId: shop.id, status: { in: ['waiting', 'in_progress'] } },
+    });
+  }
 
   // Check for real live walk-ins first
   const walkIns = await db.walkIn.findMany({

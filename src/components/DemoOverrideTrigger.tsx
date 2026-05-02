@@ -11,7 +11,7 @@ interface DemoOverrideTriggerProps {
 }
 
 export default function DemoOverrideTrigger({ 
-  shopSlug = 'benj-barbers',
+  shopSlug = 'the-barber-room',
   showBadge = false 
 }: DemoOverrideTriggerProps) {
   const { overrides, setOverride, clearOverride } = useDemoOverride();
@@ -119,7 +119,7 @@ export default function DemoOverrideTrigger({
       setOverride(shopSlug, formData);
       
       // 2. Optionally update DB if it's the primary demo slug
-      if (shopSlug === 'benj-barbers') {
+      if (shopSlug === 'the-barber-room') {
         await fetch('/api/demo/override-shop', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

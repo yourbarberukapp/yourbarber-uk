@@ -52,7 +52,7 @@ export default function LiveWalkInQueuePage() {
         description="YourBarber gives walk-in shops a calmer front door. Customers scan the wall QR, join from their own phone, and see where they stand. Barbers see the same queue instantly, so the day moves without the usual shouting, crowding, and guesswork."
         primaryHref="/demo-hub"
         primaryLabel="Try the demo"
-        secondaryHref="/arrive/benj-barbers"
+        secondaryHref="/arrive/the-barber-room"
         secondaryLabel="Open Customer Scan"
         proofPoints={proofPoints}
         imageSrc="/demo-kiosk.png"
@@ -153,7 +153,7 @@ export default function LiveWalkInQueuePage() {
                 <Link href="/demo-hub" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-[#C8F135] hover:text-white transition-colors">
                   Watch it in the demo <ArrowRight size={15} />
                 </Link>
-                <Link href="/arrive/benj-barbers" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors">
+                <Link href="/arrive/the-barber-room" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors">
                   Open Customer Scan <Smartphone size={15} />
                 </Link>
               </div>

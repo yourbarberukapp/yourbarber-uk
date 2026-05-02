@@ -41,7 +41,7 @@ function TrendsContent() {
   const searchParams = useSearchParams();
   const [ready, setReady] = useState(false);
   const [savedStatus, setSavedStatus] = useState<{ position?: number; waitMinutes?: number } | null>(null);
-  const shopSlug = searchParams.get('shop') || 'benj-barbers';
+  const shopSlug = searchParams.get('shop') || 'the-barber-room';
   const urlCheckedIn = searchParams.get('checkedIn') === '1';
   const urlPosition = searchParams.get('position');
   const urlWait = searchParams.get('wait');

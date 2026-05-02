@@ -36,7 +36,7 @@ const screens = [
     who: 'CUSTOMER',
     title: 'Join the Queue',
     desc: 'Walk in, scan the wall QR, add your phone number, and take your place in line. This is the fair-play queue your customers see.',
-    link: '/arrive/benj-barbers',
+    link: '/arrive/the-barber-room',
     creds: null,
     image: '/demo-kiosk-luke.png',
     imageAlt: 'Wall check-in screen in a barbershop with a barber cutting hair in the background',
@@ -108,7 +108,7 @@ export default function DemoPage() {
           </motion.div>
 
           <motion.div initial="hidden" animate="visible" custom={1} variants={fadeUp} className="text-center mb-6">
-            <span className="badge-lime mb-5 inline-block">Ben J Barbers - Live Demo Shop</span>
+            <span className="badge-lime mb-5 inline-block">The Barber Room - Live Demo Shop</span>
             <h1 className="font-barlow font-black text-[clamp(2.5rem,8vw,5rem)] uppercase leading-[0.9] mb-5">
               Walk through
               <br />
@@ -218,7 +218,7 @@ export default function DemoPage() {
                   </Link>
                   {s.id === 'customer' && (
                     <div className="mt-3">
-                      <ArrivalQrDemoButton shopSlug="benj-barbers" shopName="Ben J Barbers" className="w-full py-4" />
+                      <ArrivalQrDemoButton shopSlug="the-barber-room" shopName="The Barber Room" className="w-full py-4" />
                     </div>
                   )}
                   {s.id === 'barber' && (
@@ -284,7 +284,7 @@ export default function DemoPage() {
                   <form onSubmit={handleSubmit} className="space-y-4">
                     {[
                       { key: 'name', label: 'Your name', placeholder: 'Ben Thompson', type: 'text' },
-                      { key: 'shopName', label: 'Shop name', placeholder: 'Ben J Barbers', type: 'text' },
+                      { key: 'shopName', label: 'Shop name', placeholder: 'The Barber Room', type: 'text' },
                       { key: 'phone', label: 'Your mobile', placeholder: '07700 900 000', type: 'tel' },
                       { key: 'email', label: 'Email address', placeholder: 'ben@benjbarbers.co.uk', type: 'email' },
                     ].map(({ key, label, placeholder, type }) => (

@@ -192,7 +192,7 @@ export default function DemoPassportPage() {
           color: 'rgba(255,255,255,0.35)', textAlign: 'center', lineHeight: 1.6,
           fontFamily: 'var(--font-inter, sans-serif)', fontSize: '0.9rem',
         }}>
-          No cut history with photos found in the Ben J Barbers demo shop.
+          No cut history with photos found in the The Barber Room demo shop.
           <br />Record a few visits with photos to see the passport demo.
         </p>
       </div>

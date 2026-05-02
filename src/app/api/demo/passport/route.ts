@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateReadUrl } from '@/lib/s3';
 
-const DEMO_SLUG = 'benj-barbers';
+const DEMO_SLUG = 'the-barber-room';
 const ANGLE_ORDER = ['front', 'back', 'left', 'right', 'top'];
 
 export async function GET() {

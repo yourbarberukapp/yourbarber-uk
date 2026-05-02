@@ -327,7 +327,7 @@ export default function Home() {
                 <div className="bg-[#111] px-5 py-3 flex items-center justify-between border-b border-white/5">
                   <div className="flex items-center gap-2">
                     <Tv2 size={13} className="text-[#C8F135]" />
-                    <span className="font-barlow font-bold text-[10px] uppercase tracking-[0.18em] text-white/35">Ben J Barbers - Live Queue</span>
+                    <span className="font-barlow font-bold text-[10px] uppercase tracking-[0.18em] text-white/35">The Barber Room - Live Queue</span>
                   </div>
                   <span className="font-mono text-[10px] text-white/20">11:42</span>
                 </div>

@@ -20,7 +20,7 @@ const CLIENTS: Array<{
   smsOptIn: 'yes' | 'no' | 'not_asked';
   visits: Array<{
     daysAgo: number;
-    barberKey: 'jake' | 'marcus' | 'danny';
+    barberKey: 'james' | 'kieran' | 'matthew';
     cutDetails: object;
     recommendation: string;
     notes?: string;
@@ -34,7 +34,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 12,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['High Fade'], sidesGrade: '0.5', topLength: 'Textured', beard: 'Blend' },
         recommendation: 'Back in 3 weeks',
         notes: 'Wants the fade tighter each time',
@@ -42,13 +42,13 @@ const CLIENTS: Array<{
       },
       {
         daysAgo: 38,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['High Fade'], sidesGrade: '1', topLength: 'Textured', beard: 'Blend' },
         recommendation: 'Back in 4 weeks',
       },
       {
         daysAgo: 70,
-        barberKey: 'marcus',
+        barberKey: 'kieran',
         cutDetails: { style: ['Mid Fade'], sidesGrade: '1', topLength: 'Scissor Finish', beard: 'Not done' },
         recommendation: 'Back in 4 weeks',
       },
@@ -61,7 +61,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 29,
-        barberKey: 'marcus',
+        barberKey: 'kieran',
         cutDetails: { style: ['Mid Fade'], sidesGrade: '1.5', topLength: 'Crop', beard: 'Line Up' },
         recommendation: 'Back in 4 weeks',
         notes: 'Prefers the parting on the left',
@@ -69,7 +69,7 @@ const CLIENTS: Array<{
       },
       {
         daysAgo: 62,
-        barberKey: 'marcus',
+        barberKey: 'kieran',
         cutDetails: { style: ['Mid Fade'], sidesGrade: '2', topLength: 'Crop', beard: 'Not done' },
         recommendation: 'Back in 4 weeks',
       },
@@ -82,7 +82,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 8,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['Skin Fade'], sidesGrade: '0', topLength: 'Textured', beard: 'Full Tidy' },
         recommendation: 'Back in 3 weeks',
         notes: 'Zero on the sides, blended very gradual. Likes the skin to show right up to the temple',
@@ -90,7 +90,7 @@ const CLIENTS: Array<{
       },
       {
         daysAgo: 35,
-        barberKey: 'danny',
+        barberKey: 'matthew',
         cutDetails: { style: ['Skin Fade'], sidesGrade: '0', topLength: 'Textured', beard: 'Full Tidy' },
         recommendation: 'Back in 3 weeks',
       },
@@ -103,7 +103,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 45,
-        barberKey: 'danny',
+        barberKey: 'matthew',
         cutDetails: { style: ['Taper'], sidesGrade: '2', topLength: 'Scissor Finish', beard: 'Not done' },
         recommendation: 'Back in 5 weeks',
         notes: 'Classic taper, nothing too tight — works in finance',
@@ -117,7 +117,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 21,
-        barberKey: 'marcus',
+        barberKey: 'kieran',
         cutDetails: { style: ['Low Fade'], sidesGrade: '2', topLength: 'Quiff', beard: 'Line Up' },
         recommendation: 'Back in 4 weeks',
         notes: 'Quiff styled forward. Uses clay — bring own product',
@@ -125,13 +125,13 @@ const CLIENTS: Array<{
       },
       {
         daysAgo: 52,
-        barberKey: 'marcus',
+        barberKey: 'kieran',
         cutDetails: { style: ['Low Fade'], sidesGrade: '2', topLength: 'Quiff', beard: 'Blend' },
         recommendation: 'Back in 4 weeks',
       },
       {
         daysAgo: 84,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['Mid Fade'], sidesGrade: '1.5', topLength: 'Textured', beard: 'Not done' },
         recommendation: 'Back in 4 weeks',
       },
@@ -144,14 +144,14 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 18,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['High Fade'], sidesGrade: '1', topLength: 'Textured', beard: 'Blend' },
         recommendation: 'Back in 3 weeks',
         notes: 'Skin behind ears, blend into 1 guard quickly',
       },
       {
         daysAgo: 44,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['High Fade'], sidesGrade: '1', topLength: 'Textured', beard: 'Blend' },
         recommendation: 'Back in 3 weeks',
       },
@@ -164,7 +164,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 33,
-        barberKey: 'danny',
+        barberKey: 'matthew',
         cutDetails: { style: ['Classic Cut'], sidesGrade: '3', topLength: 'Scissor Finish', beard: 'Not done' },
         recommendation: 'Back in 5 weeks',
         notes: 'Short back and sides, nothing too trendy — been coming here 3 years',
@@ -172,7 +172,7 @@ const CLIENTS: Array<{
       },
       {
         daysAgo: 70,
-        barberKey: 'danny',
+        barberKey: 'matthew',
         cutDetails: { style: ['Classic Cut'], sidesGrade: '3', topLength: 'Scissor Finish', beard: 'Not done' },
         recommendation: 'Back in 5 weeks',
       },
@@ -185,7 +185,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 55,
-        barberKey: 'marcus',
+        barberKey: 'kieran',
         cutDetails: { style: ['Skin Fade', 'High Fade'], sidesGrade: '0', topLength: 'Crop', beard: 'Full Tidy' },
         recommendation: 'Back in 3 weeks',
         notes: 'Very high skin fade — almost surgical. Blunt crop on top',
@@ -200,14 +200,14 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 27,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['Taper'], sidesGrade: '2', topLength: 'Textured', beard: 'Not done' },
         recommendation: 'Back in 4 weeks',
         notes: 'Taper not fade — hair is fine, goes see-through if cut too tight',
       },
       {
         daysAgo: 60,
-        barberKey: 'jake',
+        barberKey: 'james',
         cutDetails: { style: ['Taper'], sidesGrade: '3', topLength: 'Scissor Finish', beard: 'Not done' },
         recommendation: 'Back in 5 weeks',
       },
@@ -220,7 +220,7 @@ const CLIENTS: Array<{
     visits: [
       {
         daysAgo: 14,
-        barberKey: 'danny',
+        barberKey: 'matthew',
         cutDetails: { style: ['Mid Fade'], sidesGrade: '1', topLength: 'Textured', beard: 'Line Up' },
         recommendation: 'Back in 4 weeks',
         notes: 'Neat line up — uses a beard pen. Fine with clippers on beard',
@@ -228,13 +228,13 @@ const CLIENTS: Array<{
       },
       {
         daysAgo: 46,
-        barberKey: 'danny',
+        barberKey: 'matthew',
         cutDetails: { style: ['Mid Fade'], sidesGrade: '1.5', topLength: 'Textured', beard: 'Line Up' },
         recommendation: 'Back in 4 weeks',
       },
       {
         daysAgo: 80,
-        barberKey: 'marcus',
+        barberKey: 'kieran',
         cutDetails: { style: ['Mid Fade'], sidesGrade: '2', topLength: 'Crop', beard: 'Not done' },
         recommendation: 'Back in 5 weeks',
       },
@@ -263,15 +263,15 @@ async function main() {
   // ── Shop ──
   const shop = await prisma.shop.create({
     data: {
-      name: 'Ben J Barbers',
-      slug: 'benj-barbers',
-      address: '78A High Street, Poole, BH15 1DB',
-      phone: '01202 661075',
+      name: 'The Barber Room',
+      slug: 'the-barber-room',
+      address: '14 Market Street, Southampton, SO14 1AB',
+      phone: '023 8099 1234',
       shopType: 'uk_general',
       defaultCutTime: 25,
-      about: "Ben J Barbers is Poole's go-to barbershop for precision fades, classic cuts, and top-tier grooming. Walk-ins welcome.",
-      googleMapsUrl: 'https://maps.google.com/?q=78A+High+Street+Poole+BH15+1DB',
-      googleReviewUrl: 'https://g.page/r/benjbarbers/review',
+      about: 'The Barber Room is your local destination for precision fades, classic cuts, and top-tier grooming. Walk-ins always welcome.',
+      googleMapsUrl: 'https://maps.google.com/?q=14+Market+Street+Southampton+SO14+1AB',
+      googleReviewUrl: 'https://g.page/r/thebarbershop/review',
       openingHours: {
         mon: { open: '09:30', close: '18:00', closed: false },
         tue: { open: '09:30', close: '18:00', closed: false },
@@ -288,12 +288,12 @@ async function main() {
   const ownerHash = await bcrypt.hash('owner123', 12);
   const barberHash = await bcrypt.hash('barber123', 12);
 
-  const [ben, jake, marcus, danny] = await Promise.all([
+  const [ben, james, kieran, matthew] = await Promise.all([
     prisma.barber.create({
       data: {
         shopId: shop.id,
         name: 'Ben',
-        email: 'owner@benjbarbers.com',
+        email: 'ben@thebarbershop.com',
         passwordHash: ownerHash,
         role: 'owner',
         bio: 'Owner and head barber. 12 years experience, specialising in skin fades and classic cuts.',
@@ -302,8 +302,8 @@ async function main() {
     prisma.barber.create({
       data: {
         shopId: shop.id,
-        name: 'Jake',
-        email: 'jake@benjbarbers.com',
+        name: 'James',
+        email: 'james@thebarbershop.com',
         passwordHash: barberHash,
         role: 'barber',
         bio: 'Specialist in high fades and textured styling.',
@@ -312,8 +312,8 @@ async function main() {
     prisma.barber.create({
       data: {
         shopId: shop.id,
-        name: 'Marcus',
-        email: 'marcus@benjbarbers.com',
+        name: 'Kieran',
+        email: 'kieran@thebarbershop.com',
         passwordHash: barberHash,
         role: 'barber',
         bio: 'Known for clean low fades and beard work.',
@@ -322,8 +322,8 @@ async function main() {
     prisma.barber.create({
       data: {
         shopId: shop.id,
-        name: 'Danny',
-        email: 'danny@benjbarbers.com',
+        name: 'Matthew',
+        email: 'matthew@thebarbershop.com',
         passwordHash: barberHash,
         role: 'barber',
         bio: 'Classic cuts and tapers, 6 years in the trade.',
@@ -331,7 +331,7 @@ async function main() {
     }),
   ]);
 
-  const barberMap = { jake: jake.id, marcus: marcus.id, danny: danny.id, ben: ben.id };
+  const barberMap = { james: james.id, kieran: kieran.id, matthew: matthew.id, ben: ben.id };
 
   // ── Services ──
   await prisma.shopService.createMany({
@@ -384,20 +384,20 @@ async function main() {
   console.log('');
   console.log('✅ Demo shop seeded.');
   console.log('');
-  console.log('  Shop:    Ben J Barbers (benj-barbers)');
+  console.log('  Shop:    The Barber Room (the-barber-room)');
   console.log('  Clients:', CLIENTS.length);
   console.log('  Visits: ', CLIENTS.reduce((n, c) => n + c.visits.length, 0));
   console.log('');
   console.log('  Logins:');
-  console.log('  owner@benjbarbers.com  / owner123  → owner dashboard');
-  console.log('  jake@benjbarbers.com   / barber123 → barber mode');
-  console.log('  marcus@benjbarbers.com / barber123 → barber mode');
-  console.log('  danny@benjbarbers.com  / barber123 → barber mode');
+  console.log('  ben@thebarbershop.com     / owner123  → owner dashboard');
+  console.log('  james@thebarbershop.com   / barber123 → barber mode');
+  console.log('  kieran@thebarbershop.com  / barber123 → barber mode');
+  console.log('  matthew@thebarbershop.com / barber123 → barber mode');
   console.log('');
   console.log('  Demo URLs:');
-  console.log('  /arrive/benj-barbers   → customer queue join');
-  console.log('  /demo/barber           → leave-behind demo');
-  console.log('  /window/benj-barbers   → shop window signage');
+  console.log('  /arrive/the-barber-room → customer queue join');
+  console.log('  /demo/barber            → leave-behind demo');
+  console.log('  /window/the-barber-room → shop window signage');
 }
 
 main()
