@@ -1,5 +1,4 @@
 import { db } from '@/lib/db';
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 function toWaPhone(phone: string) {
@@ -16,15 +15,7 @@ function timeAgo(date: Date) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export default async function AdminLeadsPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ key?: string }>;
-}) {
-  const params = await searchParams;
-  const adminKey = process.env.ADMIN_KEY;
-  if (!adminKey || params?.key !== adminKey) notFound();
-
+export default async function AdminLeadsPage() {
   const leads = await db.demoLead.findMany({ orderBy: { createdAt: 'desc' } });
 
   return (
