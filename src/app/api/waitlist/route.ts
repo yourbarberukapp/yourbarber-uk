@@ -17,7 +17,19 @@ export async function GET(req: NextRequest) {
       status: { in: ['waiting', 'in_progress'] },
     },
     include: {
-      customer: { select: { id: true, name: true, phone: true, lastVisitAt: true } },
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          lastVisitAt: true,
+          visits: {
+            orderBy: { visitedAt: 'desc' },
+            take: 1,
+            select: { visitedAt: true, cutDetails: true, notes: true },
+          },
+        },
+      },
       familyMember: { select: { name: true } },
     },
     orderBy: { arrivedAt: 'asc' },

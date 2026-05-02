@@ -9,7 +9,7 @@ export default async function BarberLayout({ children }: { children: React.React
   const session = await getRequiredSession();
   
   // Apply Demo Overrides for display
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const overrideCookie = cookieStore.get(`demo_override_${session.shopSlug}`);
   let shopName = session.shopName;
 

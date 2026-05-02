@@ -6,13 +6,30 @@ import { UserCheck, Check, X, Search, Clock, ChevronRight, Loader2, Scissors, Tr
 
 type WalkInStatus = 'waiting' | 'in_progress' | 'done' | 'no_show';
 
+interface LastVisit {
+  visitedAt: string;
+  cutDetails: {
+    style?: string[];
+    sidesGrade?: string;
+    topLength?: string;
+    beard?: string;
+  } | null;
+  notes: string | null;
+}
+
 interface WalkIn {
   id: string;
   note: string | null;
   preferredStyle: string | null;
   status: WalkInStatus;
   arrivedAt: string;
-  customer: { id: string; name: string | null; phone: string; lastVisitAt: string | null };
+  customer: {
+    id: string;
+    name: string | null;
+    phone: string;
+    lastVisitAt: string | null;
+    visits: LastVisit[];
+  };
   familyMember: { name: string | null } | null;
   isAway: boolean;
   returnByMinutes: number | null;
@@ -35,7 +52,8 @@ function timeAgo(dateStr: string) {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
-  return days === 1 ? 'yesterday' : `${days} days ago`;
+  if (days < 7) return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
 }
 
 function initials(name: string | null) {
@@ -43,7 +61,32 @@ function initials(name: string | null) {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export default function BarberClient({ initialWalkIns, initialIsBusy }: { initialWalkIns: WalkIn[]; initialIsBusy: boolean }) {
+function parseNote(note: string | null): { preferredBarber: string | null; text: string | null } {
+  if (!note) return { preferredBarber: null, text: null };
+  const match = note.match(/^See:\s*([^\n]+)(?:\n([\s\S]+))?/);
+  if (match) {
+    return { preferredBarber: match[1].trim(), text: match[2]?.trim() || null };
+  }
+  return { preferredBarber: null, text: note.trim() || null };
+}
+
+function formatCutSummary(cutDetails: LastVisit['cutDetails']): string | null {
+  if (!cutDetails) return null;
+  const parts: string[] = [];
+  if (cutDetails.style?.length) parts.push(cutDetails.style.join(', '));
+  if (cutDetails.sidesGrade) parts.push(`#${cutDetails.sidesGrade} sides`);
+  if (cutDetails.topLength) parts.push(cutDetails.topLength);
+  if (cutDetails.beard && cutDetails.beard !== 'none') parts.push(`beard: ${cutDetails.beard}`);
+  return parts.length ? parts.join(' · ') : null;
+}
+
+export default function BarberClient({
+  initialWalkIns,
+  initialIsBusy,
+}: {
+  initialWalkIns: WalkIn[];
+  initialIsBusy: boolean;
+}) {
   const [tab, setTab] = useState<Tab>('queue');
   const [walkIns, setWalkIns] = useState<WalkIn[]>(initialWalkIns);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -61,7 +104,7 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
   }, []);
 
   useEffect(() => {
-    const id = setInterval(refresh, 15000);
+    const id = setInterval(refresh, 8000);
     return () => clearInterval(id);
   }, [refresh]);
 
@@ -102,7 +145,6 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
-    // Auto-sync barber availability with chair state
     if (status === 'in_progress') await setBarberBusy(true);
     if (status === 'done' || status === 'no_show') await setBarberBusy(false);
     await refresh();
@@ -121,54 +163,24 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
     setUpdating(id);
     setWalkIns(current => current.filter(w => w.id !== id));
     const res = await fetch(`/api/waitlist/${id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      setWalkIns(previous);
-      alert('Could not remove this person from the queue. Please refresh and try again.');
-    } else {
-      await refresh();
-    }
+    if (!res.ok) setWalkIns(previous);
+    else await refresh();
     setUpdating(null);
   }
 
   const active = walkIns.filter(w => w.status === 'waiting' || w.status === 'in_progress');
-  const inChairWalkIns = active.filter(w => w.status === 'in_progress');
-  const waitingWalkIns = active.filter(w => w.status === 'waiting');
-
-  const tabBtn = (t: Tab, label: string) => (
-    <button
-      onClick={() => setTab(t)}
-      style={{
-        flex: 1, padding: '0.75rem', border: 'none', cursor: 'pointer', borderRadius: 8,
-        fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 700, fontSize: '0.8rem',
-        textTransform: 'uppercase', letterSpacing: '0.08em', transition: 'all 0.15s',
-        background: tab === t ? 'rgba(200,241,53,0.1)' : 'transparent',
-        color: tab === t ? '#C8F135' : 'rgba(255,255,255,0.35)',
-        borderBottom: tab === t ? '2px solid #C8F135' : '2px solid transparent',
-      }}
-    >
-      {label} {t === 'queue' && active.length > 0 && (
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: 18, height: 18, borderRadius: '50%',
-          background: '#C8F135', color: '#0a0a0a',
-          fontSize: '0.6rem', fontWeight: 900, marginLeft: 4,
-        }}>
-          {active.length}
-        </span>
-      )}
-    </button>
-  );
+  const inChair = active.filter(w => w.status === 'in_progress');
+  const waiting = active.filter(w => w.status === 'waiting');
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-      {/* Status toggle */}
+      {/* Availability toggle */}
       <button
         onClick={toggleBarberStatus}
         disabled={togglingStatus}
         style={{
-          width: '100%', marginBottom: '1rem',
-          padding: '1rem 1.25rem',
+          width: '100%', marginBottom: '1rem', padding: '1rem 1.25rem',
           background: isBusy ? 'rgba(255,255,255,0.04)' : 'rgba(200,241,53,0.08)',
           border: isBusy ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(200,241,53,0.25)',
           borderRadius: 12, cursor: 'pointer',
@@ -204,367 +216,73 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
         display: 'flex', background: '#111', border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: 10, marginBottom: '1.25rem', overflow: 'hidden',
       }}>
-        {tabBtn('queue', 'Queue')}
-        {tabBtn('search', 'Find client')}
+        {(['queue', 'search'] as Tab[]).map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              flex: 1, padding: '0.75rem', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 700,
+              fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+              transition: 'all 0.15s',
+              background: tab === t ? 'rgba(200,241,53,0.1)' : 'transparent',
+              color: tab === t ? '#C8F135' : 'rgba(255,255,255,0.35)',
+              borderBottom: tab === t ? '2px solid #C8F135' : '2px solid transparent',
+            }}
+          >
+            {t === 'queue' ? 'Queue' : 'Find client'}
+            {t === 'queue' && active.length > 0 && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 18, height: 18, borderRadius: '50%',
+                background: '#C8F135', color: '#0a0a0a',
+                fontSize: '0.6rem', fontWeight: 900, marginLeft: 6,
+              }}>
+                {active.length}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Queue tab */}
       {tab === 'queue' && (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {active.length === 0 ? (
             <div style={{
               background: '#111', border: '1px solid rgba(255,255,255,0.06)',
               borderRadius: 12, padding: '3rem 1.5rem', textAlign: 'center',
             }}>
               <Clock size={32} color="rgba(255,255,255,0.1)" style={{ marginBottom: '0.75rem' }} />
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.95rem', margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>
-                Queue is empty
-              </p>
-              <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.8rem', margin: '0.375rem 0 0', fontFamily: 'var(--font-inter, sans-serif)' }}>
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.95rem', margin: 0 }}>Queue is empty</p>
+              <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.8rem', margin: '0.375rem 0 0' }}>
                 Clients check in on their phone
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {inChairWalkIns.length > 0 && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '0.6rem',
-                  color: '#C8F135', fontFamily: 'var(--font-barlow, sans-serif)',
-                  fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em',
-                  fontSize: '0.75rem', margin: '0 0 0.25rem',
-                }}>
-                  <Scissors size={14} /> In the chair
-                </div>
+            <>
+              {inChair.length > 0 && (
+                <SectionLabel icon={<Scissors size={13} />} label="In the chair" color="#C8F135" />
               )}
-              {inChairWalkIns.map((w) => {
-                const isUpdating = updating === w.id;
-                return (
-                  <div key={w.id} style={{
-                    background: '#111',
-                    border: '1px solid rgba(200,241,53,0.25)',
-                    borderRadius: 12,
-                    boxShadow: '0 0 20px rgba(200,241,53,0.05)',
-                  }}>
-                    {/* Client row */}
-                    <div style={{ padding: '1rem 1.125rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                      {/* Position */}
-                      <span style={{
-                        fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900,
-                        fontSize: '0.7rem', color: '#C8F135', width: 44, flexShrink: 0, lineHeight: 1,
-                        textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center',
-                      }}>
-                        Chair
-                      </span>
+              {inChair.map(w => (
+                <QueueCard key={w.id} walkIn={w} position="chair" isUpdating={updating === w.id}
+                  onDone={() => updateStatus(w.id, 'done')} onNoShow={() => updateStatus(w.id, 'no_show')}
+                  onDelete={() => deleteWalkIn(w.id)} onInChair={() => updateStatus(w.id, 'in_progress')}
+                  onReturnReminder={() => sendReturnReminder(w.id)} canSendReturnReminder={false} />
+              ))}
 
-                      {/* Avatar */}
-                      <div style={{
-                        width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-                        background: 'rgba(200,241,53,0.1)',
-                        border: '2px solid rgba(200,241,53,0.3)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <span style={{
-                          color: '#C8F135',
-                          fontWeight: 900, fontSize: '1rem',
-                          fontFamily: 'var(--font-barlow, sans-serif)',
-                        }}>
-                          {initials(w.customer.name)}
-                        </span>
-                      </div>
-
-                      {/* Name + meta */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{
-                            fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
-                            fontSize: '1.1rem', color: 'white', textTransform: 'uppercase',
-                          }}>
-                            {w.familyMember?.name || w.customer.name || 'Unknown'}
-                          </span>
-                          {w.familyMember && (
-                            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>
-                              (Account: {w.customer.name})
-                            </span>
-                          )}
-                          <span style={{
-                            fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
-                            background: 'rgba(200,241,53,0.12)', color: '#C8F135',
-                            border: '1px solid rgba(200,241,53,0.25)',
-                            padding: '0.15rem 0.45rem', borderRadius: 2,
-                            fontFamily: 'var(--font-barlow, sans-serif)',
-                          }}>
-                            In chair
-                          </span>
-                        </div>
-                        <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', fontFamily: 'monospace', marginTop: 2 }}>
-                          {timeAgo(w.arrivedAt)} · {w.customer.phone}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div style={{
-                      borderTop: '1px solid rgba(255,255,255,0.05)',
-                      padding: '0.75rem 1.125rem',
-                      display: 'flex', gap: '0.5rem',
-                    }}>
-                      {isUpdating ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>
-                          <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Updating...
-                        </div>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => updateStatus(w.id, 'done')}
-                            style={{
-                              flex: 1, padding: '0.75rem', borderRadius: 8, border: 'none',
-                              background: '#C8F135', color: '#0a0a0a',
-                              fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
-                              fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                            }}
-                          >
-                            <Check size={14} /> Done
-                          </button>
-                          <Link
-                            href={`/customers/${w.customer.id}/visit/new`}
-                            style={{
-                              padding: '0.75rem 1rem', borderRadius: 8,
-                              background: 'rgba(200,241,53,0.08)', border: '1px solid rgba(200,241,53,0.2)',
-                              color: '#C8F135', textDecoration: 'none',
-                              fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 700,
-                              fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.06em',
-                              display: 'flex', alignItems: 'center', gap: 5,
-                            }}
-                          >
-                            <Scissors size={13} /> Record
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {waitingWalkIns.length > 0 && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '0.6rem',
-                  color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-barlow, sans-serif)',
-                  fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em',
-                  fontSize: '0.75rem', margin: inChairWalkIns.length > 0 ? '0.75rem 0 0.25rem' : '0 0 0.25rem',
-                }}>
-                  <Clock size={14} /> Waiting
-                </div>
+              {waiting.length > 0 && (
+                <SectionLabel icon={<Clock size={13} />} label="Waiting" color="rgba(255,255,255,0.35)"
+                  style={{ marginTop: inChair.length > 0 ? '0.5rem' : 0 }} />
               )}
-              {waitingWalkIns.map((w, i) => {
-                const isUpdating = updating === w.id;
-                const canSendReturnReminder = w.isAway && !w.queueReminderSentAt && i <= 1;
-                return (
-                  <div key={w.id} style={{
-                    background: '#111',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 12,
-                    boxShadow: 'none',
-                  }}>
-                    {/* Client row */}
-                    <div style={{ padding: '1rem 1.125rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                      {/* Position */}
-                      <span style={{
-                        fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900,
-                        fontSize: '1.5rem', color: 'rgba(255,255,255,0.12)', width: 28, flexShrink: 0, lineHeight: 1,
-                      }}>
-                        {i + 1}
-                      </span>
-
-                      {/* Avatar */}
-                      <div style={{
-                        width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1.5px solid rgba(255,255,255,0.1)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <span style={{
-                          color: 'rgba(255,255,255,0.5)',
-                          fontWeight: 900, fontSize: '1rem',
-                          fontFamily: 'var(--font-barlow, sans-serif)',
-                        }}>
-                          {initials(w.customer.name)}
-                        </span>
-                      </div>
-
-                      {/* Name + meta */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{
-                            fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
-                            fontSize: '1.1rem', color: 'white', textTransform: 'uppercase',
-                          }}>
-                            {w.familyMember?.name || w.customer.name || 'Unknown'}
-                          </span>
-                          {w.familyMember && (
-                            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>
-                              (Account: {w.customer.name})
-                            </span>
-                          )}
-                          {w.isAway && (
-                            <span style={{
-                              fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
-                              background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)',
-                              border: '1px solid rgba(255,255,255,0.12)',
-                              padding: '0.15rem 0.45rem', borderRadius: 2,
-                              fontFamily: 'var(--font-barlow, sans-serif)',
-                            }}>
-                              Away {w.queueReminderSentAt ? '· text sent' : '· place held'}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', fontFamily: 'monospace', marginTop: 2 }}>
-                          {timeAgo(w.arrivedAt)} · {w.customer.phone}
-                        </div>
-                        {w.preferredStyle && (() => {
-                          try {
-                            const styles: string[] = JSON.parse(w.preferredStyle);
-                            return styles.length > 0 ? (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: 5 }}>
-                                {styles.map(s => (
-                                  <span key={s} style={{
-                                    fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
-                                    background: 'rgba(200,241,53,0.1)', color: '#C8F135',
-                                    border: '1px solid rgba(200,241,53,0.2)', borderRadius: 3,
-                                    padding: '0.1rem 0.4rem',
-                                    fontFamily: 'var(--font-barlow, sans-serif)',
-                                  }}>
-                                    {s}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : null;
-                          } catch { return null; }
-                        })()}
-                        {w.note && (
-                          <div style={{
-                            color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem',
-                            fontFamily: 'var(--font-inter, sans-serif)', marginTop: 4, fontStyle: 'italic',
-                          }}>
-                            &ldquo;{w.note}&rdquo;
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div style={{
-                      borderTop: '1px solid rgba(255,255,255,0.05)',
-                      padding: '0.75rem 1.125rem',
-                      display: 'flex', gap: '0.5rem',
-                    }}>
-                      {isUpdating ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>
-                          <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Updating…
-                        </div>
-                      ) : (
-                        <>
-                          {w.status === 'waiting' && (
-                            <>
-                              {canSendReturnReminder && (
-                                <button
-                                  onClick={() => sendReturnReminder(w.id)}
-                                  style={{
-                                    flex: 1, padding: '0.75rem', borderRadius: 8,
-                                    background: 'rgba(200,241,53,0.08)', color: '#C8F135',
-                                    border: '1px solid rgba(200,241,53,0.25)',
-                                    fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
-                                    fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  Text back
-                                </button>
-                              )}
-                              <button
-                                onClick={() => updateStatus(w.id, 'in_progress')}
-                                style={{
-                                  flex: 1, padding: '0.75rem', borderRadius: 8, border: 'none',
-                                  background: '#C8F135', color: '#0a0a0a',
-                                  fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
-                                  fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
-                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                }}
-                              >
-                                <UserCheck size={14} /> In chair
-                              </button>
-                            </>
-                          )}
-                          {w.status === 'in_progress' && (
-                            <>
-                              <button
-                                onClick={() => updateStatus(w.id, 'done')}
-                                style={{
-                                  flex: 1, padding: '0.75rem', borderRadius: 8, border: 'none',
-                                  background: '#C8F135', color: '#0a0a0a',
-                                  fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
-                                  fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em',
-                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                }}
-                              >
-                                <Check size={14} /> Done
-                              </button>
-                              <Link
-                                href={`/customers/${w.customer.id}/visit/new`}
-                                style={{
-                                  padding: '0.75rem 1rem', borderRadius: 8,
-                                  background: 'rgba(200,241,53,0.08)', border: '1px solid rgba(200,241,53,0.2)',
-                                  color: '#C8F135', textDecoration: 'none',
-                                  fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 700,
-                                  fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.06em',
-                                  display: 'flex', alignItems: 'center', gap: 5,
-                                }}
-                              >
-                                <Scissors size={13} /> Record
-                              </Link>
-                            </>
-                          )}
-                          <button
-                            onClick={() => updateStatus(w.id, 'no_show')}
-                            title="No show"
-                            style={{
-                              padding: '0.75rem', borderRadius: 8,
-                              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                              color: 'rgba(255,255,255,0.3)', cursor: 'pointer',
-                              display: 'flex', alignItems: 'center',
-                            }}
-                          >
-                            <X size={14} />
-                          </button>
-                          <button
-                            onClick={() => deleteWalkIn(w.id)}
-                            title="Remove from queue"
-                            style={{
-                              padding: '0.75rem', borderRadius: 8,
-                              background: 'rgba(255,80,80,0.06)', border: '1px solid rgba(255,80,80,0.14)',
-                              color: 'rgba(255,120,120,0.6)', cursor: 'pointer',
-                              display: 'flex', alignItems: 'center',
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                          <Link
-                            href={`/customers/${w.customer.id}`}
-                            style={{
-                              padding: '0.75rem', borderRadius: 8,
-                              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                              color: 'rgba(255,255,255,0.3)', textDecoration: 'none',
-                              display: 'flex', alignItems: 'center',
-                            }}
-                          >
-                            <ChevronRight size={14} />
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+              {waiting.map((w, i) => (
+                <QueueCard key={w.id} walkIn={w} position={i + 1} isUpdating={updating === w.id}
+                  onDone={() => updateStatus(w.id, 'done')} onNoShow={() => updateStatus(w.id, 'no_show')}
+                  onDelete={() => deleteWalkIn(w.id)} onInChair={() => updateStatus(w.id, 'in_progress')}
+                  onReturnReminder={() => sendReturnReminder(w.id)}
+                  canSendReturnReminder={w.isAway && !w.queueReminderSentAt && i <= 1} />
+              ))}
+            </>
           )}
         </div>
       )}
@@ -573,30 +291,37 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
       {tab === 'search' && (
         <div>
           <div style={{ position: 'relative', marginBottom: '1rem' }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }} />
+            <Search size={16} style={{
+              position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)',
+              color: 'rgba(255,255,255,0.3)', pointerEvents: 'none',
+            }} />
             <input
-              ref={searchRef}
-              type="text"
-              placeholder="Name or phone number…"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
+              ref={searchRef} type="text" placeholder="Name or phone number…"
+              value={query} onChange={e => setQuery(e.target.value)}
               style={{
                 width: '100%', boxSizing: 'border-box',
                 background: '#111', border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 10, padding: '0.9rem 0.875rem 0.9rem 2.75rem',
-                color: 'white', fontSize: '1rem', fontFamily: 'var(--font-inter, sans-serif)',
-                outline: 'none',
+                color: 'white', fontSize: '1rem', fontFamily: 'var(--font-inter, sans-serif)', outline: 'none',
               }}
             />
             {searching && (
-              <Loader2 size={14} style={{ position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', animation: 'spin 1s linear infinite' }} />
+              <Loader2 size={14} style={{
+                position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)',
+                color: 'rgba(255,255,255,0.3)', animation: 'spin 1s linear infinite',
+              }} />
             )}
           </div>
 
           {query.length >= 2 && results.length === 0 && !searching && (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.25)', fontSize: '0.875rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
+            <p style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.25)', fontSize: '0.875rem', margin: 0 }}>
               No clients found
-            </div>
+            </p>
+          )}
+          {query.length < 2 && (
+            <p style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'rgba(255,255,255,0.2)', fontSize: '0.875rem', margin: 0 }}>
+              Type a name or phone number
+            </p>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -606,15 +331,7 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
                 padding: '1rem 1.125rem', textDecoration: 'none',
                 display: 'flex', alignItems: 'center', gap: '0.875rem',
               }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                  background: 'rgba(200,241,53,0.08)', border: '1px solid rgba(200,241,53,0.15)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <span style={{ color: '#C8F135', fontWeight: 900, fontSize: '0.85rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
-                    {initials(c.name)}
-                  </span>
-                </div>
+                <Avatar name={c.name} size={44} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800, fontSize: '1rem', color: 'white', textTransform: 'uppercase' }}>
                     {c.name ?? 'No name'}
@@ -628,12 +345,6 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
               </Link>
             ))}
           </div>
-
-          {query.length < 2 && (
-            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'rgba(255,255,255,0.2)', fontSize: '0.875rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
-              Type a name or phone number
-            </div>
-          )}
         </div>
       )}
 
@@ -644,4 +355,261 @@ export default function BarberClient({ initialWalkIns, initialIsBusy }: { initia
       `}</style>
     </div>
   );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function SectionLabel({ icon, label, color, style: extra }: {
+  icon: React.ReactNode; label: string; color: string; style?: React.CSSProperties;
+}) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.5rem', color,
+      fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900,
+      textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '0.7rem', ...extra,
+    }}>
+      {icon} {label}
+    </div>
+  );
+}
+
+function Avatar({ name, size = 48, active = false }: { name: string | null; size?: number; active?: boolean }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      background: active ? 'rgba(200,241,53,0.1)' : 'rgba(255,255,255,0.05)',
+      border: active ? '2px solid rgba(200,241,53,0.3)' : '1.5px solid rgba(255,255,255,0.1)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <span style={{
+        color: active ? '#C8F135' : 'rgba(255,255,255,0.5)',
+        fontWeight: 900, fontSize: size * 0.35,
+        fontFamily: 'var(--font-barlow, sans-serif)',
+      }}>
+        {initials(name)}
+      </span>
+    </div>
+  );
+}
+
+function QueueCard({
+  walkIn: w, position, isUpdating,
+  onDone, onNoShow, onDelete, onInChair, onReturnReminder, canSendReturnReminder,
+}: {
+  walkIn: WalkIn;
+  position: number | 'chair';
+  isUpdating: boolean;
+  onDone: () => void;
+  onNoShow: () => void;
+  onDelete: () => void;
+  onInChair: () => void;
+  onReturnReminder: () => void;
+  canSendReturnReminder: boolean;
+}) {
+  const isInChair = w.status === 'in_progress';
+  const { preferredBarber, text: noteText } = parseNote(w.note);
+  const lastVisit = w.customer.visits?.[0] ?? null;
+  const cutSummary = lastVisit ? formatCutSummary(lastVisit.cutDetails) : null;
+  const isFirstVisit = !lastVisit;
+  const displayName = w.familyMember?.name || w.customer.name || 'Unknown';
+
+  let preferredStyles: string[] = [];
+  try { if (w.preferredStyle) preferredStyles = JSON.parse(w.preferredStyle); } catch { /* noop */ }
+
+  return (
+    <div style={{
+      background: '#111',
+      border: isInChair ? '1px solid rgba(200,241,53,0.25)' : '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 12,
+      boxShadow: isInChair ? '0 0 24px rgba(200,241,53,0.04)' : 'none',
+    }}>
+      {/* Main row */}
+      <div style={{ padding: '1rem 1.125rem', display: 'flex', alignItems: 'flex-start', gap: '0.875rem' }}>
+
+        {/* Position */}
+        <div style={{
+          width: 28, flexShrink: 0, textAlign: 'center', paddingTop: 12,
+          fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 900, lineHeight: 1,
+          ...(isInChair
+            ? { fontSize: '0.5rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#C8F135' }
+            : { fontSize: '1.4rem', color: 'rgba(255,255,255,0.12)' }
+          ),
+        }}>
+          {isInChair ? 'Chair' : position}
+        </div>
+
+        <Avatar name={displayName} size={48} active={isInChair} />
+
+        {/* Info block */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{
+              fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
+              fontSize: '1.05rem', color: 'white', textTransform: 'uppercase', lineHeight: 1.2,
+            }}>
+              {displayName}
+            </span>
+            {w.familyMember && (
+              <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>
+                via {w.customer.name}
+              </span>
+            )}
+          </div>
+
+          <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: '0.7rem', fontFamily: 'monospace', marginTop: 3 }}>
+            {timeAgo(w.arrivedAt)} · {w.customer.phone}
+          </div>
+
+          {/* Passport — last cut or first visit */}
+          <div style={{ marginTop: 7, display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
+            {isFirstVisit ? (
+              <span style={{
+                fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                background: 'rgba(255,200,50,0.1)', color: 'rgba(255,200,50,0.85)',
+                border: '1px solid rgba(255,200,50,0.2)', borderRadius: 3,
+                padding: '0.15rem 0.45rem', fontFamily: 'var(--font-barlow, sans-serif)',
+              }}>
+                First visit
+              </span>
+            ) : (
+              <>
+                {cutSummary && (
+                  <span style={{
+                    fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                    background: 'rgba(200,241,53,0.08)', color: '#C8F135',
+                    border: '1px solid rgba(200,241,53,0.18)', borderRadius: 3,
+                    padding: '0.15rem 0.45rem', fontFamily: 'var(--font-barlow, sans-serif)',
+                  }}>
+                    {cutSummary}
+                  </span>
+                )}
+                {lastVisit && (
+                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)' }}>
+                    {timeAgo(lastVisit.visitedAt)}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Wants a specific barber */}
+          {preferredBarber && (
+            <div style={{ marginTop: 5 }}>
+              <span style={{
+                fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                background: 'rgba(200,241,53,0.06)', color: 'rgba(200,241,53,0.65)',
+                border: '1px solid rgba(200,241,53,0.15)', borderRadius: 3,
+                padding: '0.15rem 0.45rem', fontFamily: 'var(--font-barlow, sans-serif)',
+              }}>
+                Wants {preferredBarber}
+              </span>
+            </div>
+          )}
+
+          {/* Service selected at check-in */}
+          {preferredStyles.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: 5 }}>
+              {preferredStyles.map(s => (
+                <span key={s} style={{
+                  fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
+                  background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)',
+                  border: '1px solid rgba(255,255,255,0.09)', borderRadius: 3,
+                  padding: '0.1rem 0.4rem', fontFamily: 'var(--font-barlow, sans-serif)',
+                }}>
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Away badge */}
+          {w.isAway && (
+            <div style={{ marginTop: 5 }}>
+              <span style={{
+                fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3,
+                padding: '0.15rem 0.45rem', fontFamily: 'var(--font-barlow, sans-serif)',
+              }}>
+                Away {w.queueReminderSentAt ? '· text sent' : '· place held'}
+              </span>
+            </div>
+          )}
+
+          {/* Custom note */}
+          {noteText && (
+            <div style={{
+              color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem',
+              fontFamily: 'var(--font-inter, sans-serif)', marginTop: 6, fontStyle: 'italic',
+            }}>
+              &ldquo;{noteText}&rdquo;
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Action bar */}
+      <div style={{
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        padding: '0.75rem 1.125rem',
+        display: 'flex', gap: '0.5rem',
+      }}>
+        {isUpdating ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>
+            <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Updating…
+          </div>
+        ) : (
+          <>
+            {w.status === 'waiting' && (
+              <>
+                {canSendReturnReminder && (
+                  <button onClick={onReturnReminder} style={actionBtn('ghost')}>Text back</button>
+                )}
+                <button onClick={onInChair} style={actionBtn('primary')}>
+                  <UserCheck size={14} /> In chair
+                </button>
+              </>
+            )}
+            {w.status === 'in_progress' && (
+              <>
+                <button onClick={onDone} style={actionBtn('primary')}>
+                  <Check size={14} /> Done
+                </button>
+                <Link href={`/customers/${w.customer.id}/visit/new`} style={actionBtn('ghost-link')}>
+                  <Scissors size={13} /> Record
+                </Link>
+              </>
+            )}
+            <button onClick={onNoShow} title="No show" style={actionBtn('icon')}><X size={14} /></button>
+            <button onClick={onDelete} title="Remove" style={actionBtn('danger')}><Trash2 size={14} /></button>
+            <Link href={`/customers/${w.customer.id}`} style={actionBtn('icon-link')}>
+              <ChevronRight size={14} />
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Button style helper ──────────────────────────────────────────────────────
+
+type BtnVariant = 'primary' | 'ghost' | 'ghost-link' | 'icon' | 'icon-link' | 'danger';
+
+function actionBtn(variant: BtnVariant): React.CSSProperties {
+  const base: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+    borderRadius: 8, cursor: 'pointer', border: 'none', textDecoration: 'none',
+    fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
+    fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.75rem',
+  };
+  const variants: Record<BtnVariant, React.CSSProperties> = {
+    primary:    { ...base, flex: 1, background: '#C8F135', color: '#0a0a0a' },
+    ghost:      { ...base, flex: 1, background: 'rgba(200,241,53,0.08)', color: '#C8F135', border: '1px solid rgba(200,241,53,0.25)' },
+    'ghost-link': { ...base, padding: '0.75rem 1rem', background: 'rgba(200,241,53,0.08)', color: '#C8F135', border: '1px solid rgba(200,241,53,0.2)' },
+    icon:       { ...base, padding: '0.75rem', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' },
+    'icon-link': { ...base, padding: '0.75rem', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' },
+    danger:     { ...base, padding: '0.75rem', background: 'rgba(255,80,80,0.06)', color: 'rgba(255,120,120,0.6)', border: '1px solid rgba(255,80,80,0.14)' },
+  };
+  return variants[variant];
 }
