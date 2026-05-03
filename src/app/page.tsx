@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowRight, Camera, Check, MessageSquare, Scissors, ShieldCheck, Smartphone, Tv2, X } from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck, Scissors } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import WaitlistForm from '@/components/WaitlistForm';
 
 const fadeUp = {
-  hidden: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 24 },
   visible: (i: number = 0) => ({
     opacity: 1,
     y: 0,
@@ -17,55 +17,200 @@ const fadeUp = {
   }),
 };
 
-const pains = [
-  {
-    headline: 'The "same as last time" problem',
-    body: 'They said it last time too. But which guard? Was the neckline squared or tapered? You cut from memory — and sometimes memory fails. They notice.',
-  },
-  {
-    headline: 'The lobby loitering problem',
-    body: 'When the shop looks rammed, new clients keep walking. A disorganised queue sends good money straight back out the door.',
-  },
-  {
-    headline: 'The knowledge walk-out problem',
-    body: 'That barber built up two years of client knowledge. When they left, it went with them. The client has to explain themselves all over again. So do you.',
-  },
+function PhoneChrome({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      width: 260, flexShrink: 0,
+      background: '#111', border: '6px solid #1e1e1e',
+      borderRadius: 36,
+      boxShadow: '0 40px 80px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.04)',
+      overflow: 'hidden',
+    }}>
+      <div style={{ background: '#0a0a0a', padding: '10px 20px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: 'white', fontFamily: 'monospace' }}>9:41</span>
+        <div style={{ width: 40, height: 4, background: '#1e1e1e', borderRadius: 2 }} />
+      </div>
+      <div style={{ background: '#0a0a0a' }}>{children}</div>
+    </div>
+  );
+}
+
+function CustomerMockup() {
+  return (
+    <PhoneChrome>
+      <div style={{ padding: '1rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1rem', paddingTop: '0.5rem' }}>
+          <div style={{ fontSize: 9, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', marginBottom: 6 }}>The Barber Room</div>
+          <div style={{ fontSize: 22, fontFamily: 'var(--font-barlow)', fontWeight: 900, textTransform: 'uppercase', color: 'white', lineHeight: 1 }}>3 waiting</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-inter)', marginTop: 2 }}>About 20 minutes</div>
+        </div>
+
+        <div style={{ background: '#C8F135', borderRadius: 6, padding: '0.6rem', textAlign: 'center', marginBottom: '1rem' }}>
+          <span style={{ fontSize: 11, fontFamily: 'var(--font-barlow)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#0a0a0a' }}>Join the queue</span>
+        </div>
+
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.75rem' }}>
+          {[
+            { pos: 1, name: 'Marcus T.', service: 'Skin Fade', status: 'IN CHAIR', lime: true },
+            { pos: 2, name: 'Jordan K.', service: 'Textured Crop', status: "NEXT", dim: true },
+            { pos: 3, name: 'Theo P.', service: 'Standard Cut', status: '~10 min', dim: true },
+            { pos: 4, name: 'You', service: 'Taper Fade', status: '~20 min', you: true },
+          ].map(r => (
+            <div key={r.pos} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '5px 4px',
+              background: r.you ? 'rgba(200,241,53,0.06)' : 'transparent',
+              borderRadius: 4,
+              marginBottom: 2,
+            }}>
+              <span style={{ fontSize: 9, fontFamily: 'var(--font-barlow)', fontWeight: 900, color: r.lime ? '#C8F135' : r.you ? '#C8F135' : 'rgba(255,255,255,0.2)', width: 12, textAlign: 'center' }}>{r.pos}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9, fontFamily: 'var(--font-barlow)', fontWeight: 800, textTransform: 'uppercase', color: r.you ? 'white' : r.lime ? 'white' : 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
+                <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>{r.service}</div>
+              </div>
+              <span style={{ fontSize: 7, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: r.lime ? '#C8F135' : r.you ? 'rgba(200,241,53,0.7)' : 'rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}>{r.status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PhoneChrome>
+  );
+}
+
+function BarberMockup() {
+  return (
+    <PhoneChrome>
+      <div style={{ padding: '0.875rem 0.875rem 1rem' }}>
+        <div style={{ fontSize: 8, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>Queue · 4 waiting</div>
+
+        {/* Card 1 - in chair with passport */}
+        <div style={{ background: 'rgba(200,241,53,0.07)', border: '1px solid rgba(200,241,53,0.2)', borderRadius: 8, padding: '0.625rem', marginBottom: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+            <div>
+              <div style={{ fontSize: 10, fontFamily: 'var(--font-barlow)', fontWeight: 900, textTransform: 'uppercase', color: 'white' }}>Marcus T.</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>Skin Fade</div>
+            </div>
+            <span style={{ fontSize: 7, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#C8F135' }}>In Chair</span>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 5, padding: '0.4rem 0.5rem' }}>
+            <div style={{ fontSize: 7, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(200,241,53,0.6)', marginBottom: 4 }}>Cut Passport</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, marginBottom: 4 }}>
+              {[['Top', '#2'], ['Sides', '#1'], ['Neckline', 'Tapered'], ['Beard', 'Lined']].map(([k, v]) => (
+                <div key={k}>
+                  <div style={{ fontSize: 6, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>{k}</div>
+                  <div style={{ fontSize: 8, color: 'white', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{ aspectRatio: '4/3', background: 'rgba(255,255,255,0.06)', borderRadius: 3, border: '1px solid rgba(255,255,255,0.05)' }} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2 */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '0.5rem 0.625rem', marginBottom: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 10, fontFamily: 'var(--font-barlow)', fontWeight: 800, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>Jordan K.</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>Textured Crop</div>
+            </div>
+            <span style={{ fontSize: 7, background: 'rgba(255,200,50,0.15)', color: 'rgba(255,200,50,0.8)', padding: '2px 5px', borderRadius: 3, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase' }}>First visit</span>
+          </div>
+        </div>
+
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: '0.5rem 0.625rem' }}>
+          <div style={{ fontSize: 10, fontFamily: 'var(--font-barlow)', fontWeight: 800, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>Theo P. + 1 more</div>
+          <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>Standard Cut · ~15 min</div>
+        </div>
+      </div>
+    </PhoneChrome>
+  );
+}
+
+function OwnerMockup() {
+  const bars = [6, 8, 12, 9, 7];
+  const days = ['M', 'T', 'W', 'T', 'F'];
+  const max = Math.max(...bars);
+  return (
+    <div style={{
+      width: 300, flexShrink: 0,
+      background: '#111', border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 16, overflow: 'hidden',
+      boxShadow: '0 32px 64px rgba(0,0,0,0.6)',
+    }}>
+      <div style={{ background: '#0d0d0d', padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 9, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)' }}>Owner Dashboard</span>
+        <span style={{ fontSize: 9, color: '#C8F135', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>The Barber Room</span>
+      </div>
+      <div style={{ padding: '1rem' }}>
+        {/* Stats row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 14 }}>
+          {[['47', 'Cuts this week'], ['£1,127', 'Revenue'], ['89%', 'Retention']].map(([v, l]) => (
+            <div key={l} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 6, padding: '0.5rem', textAlign: 'center' }}>
+              <div style={{ fontSize: 14, fontFamily: 'var(--font-barlow)', fontWeight: 900, color: '#C8F135' }}>{v}</div>
+              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase', lineHeight: 1.3 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bar chart */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 7, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>Cuts per day</div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 36 }}>
+            {bars.map((b, i) => (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                <div style={{ width: '100%', height: (b / max) * 28, background: i === 2 ? '#C8F135' : 'rgba(255,255,255,0.12)', borderRadius: '2px 2px 0 0' }} />
+                <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>{days[i]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Reminders */}
+        <div style={{ background: 'rgba(200,241,53,0.05)', border: '1px solid rgba(200,241,53,0.15)', borderRadius: 6, padding: '0.5rem 0.625rem', marginBottom: 8 }}>
+          <div style={{ fontSize: 8, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#C8F135', marginBottom: 4 }}>3 clients due a reminder</div>
+          {['Marcus T. — 5 weeks', 'Zara H. — 6 weeks', 'Ryan M. — 5 weeks'].map(n => (
+            <div key={n} style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-inter)', padding: '1px 0' }}>{n}</div>
+          ))}
+        </div>
+
+        {/* Popular */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.375rem 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>Most popular</span>
+          <span style={{ fontSize: 8, color: 'white', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>Skin Fade · 38%</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.375rem 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>Busiest slot</span>
+          <span style={{ fontSize: 8, color: 'white', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>Wed 2–4pm</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const customerSteps = [
+  { n: '01', title: 'Scan the wall QR', body: 'The client scans the QR code on your wall or desk from their own phone. No app to download.' },
+  { n: '02', title: 'See the queue and join', body: 'They see how many are waiting, pick their service, and join in under 30 seconds.' },
+  { n: '03', title: 'All barbers updated instantly', body: "The moment they join, every barber's screen updates. No front desk, no shouting across the shop." },
+  { n: '04', title: 'New or returning — handled automatically', body: 'Known clients get a welcome back message. New clients are created on the spot and added to the record.' },
+  { n: '05', title: 'Cut saved. Reminder set.', body: 'After the chair, the cut is logged. Five weeks later YourBarber nudges them back in — automatically.' },
 ];
 
-const pillars = [
-  {
-    icon: Camera,
-    label: 'The Cut Passport',
-    hook: 'Know the cut before you pick up the clippers.',
-    body: 'Four photos, the guard sizes, the taper, the beard shape — all saved in under 30 seconds after every cut. When they sit back down, you open the passport and you already know.',
-    result: 'No guessing. No awkward first question. Just confidence from the moment they hit the chair.',
-    image: '/demo-barber.png',
-    imageAlt: 'Barber checking a client\'s cut history on their phone before the cut begins',
-    href: '/features/cut-passport',
-    cta: 'See Cut Passport',
-  },
-  {
-    icon: Smartphone,
-    label: 'The Fair-Play Queue',
-    hook: 'Know who\'s waiting and what they want.',
-    body: 'Clients scan the wall QR from their own phone. By the time they reach the chair, you know their name, their service, and whether they\'re a regular — before you\'ve said a word.',
-    result: 'A calmer shop, a clearer lobby, and no surprises.',
-    image: '/demo-kiosk-luke.png',
-    imageAlt: 'Wall check-in screen in a barbershop with a barber cutting hair in the background',
-    href: '/features/live-walk-in-queue',
-    cta: 'See Live Queue',
-  },
-  {
-    icon: MessageSquare,
-    label: 'The Automated Nudge',
-    hook: 'Know when a regular is about to drift.',
-    body: 'When someone has not been in for five weeks, YourBarber sends a quiet "time for a trim?" on your behalf. You do not have to think about it.',
-    result: 'You fill quiet mornings without stopping a haircut to chase anyone.',
-    image: '/showcase-sms.png?v=2',
-    imageAlt: 'Customer receiving a YourBarber reminder text inside a barbershop',
-    href: '/features/automated-nudge',
-    cta: 'See Automated Nudge',
-  },
+const barberSteps = [
+  { n: '01', title: "Open the app — see today's queue", body: 'Walk-ins and any pre-booked clients in one view. You know exactly what the day looks like.' },
+  { n: '02', title: 'Client sits down — open their passport', body: 'For returning clients, their Cut Passport opens immediately. Grade, taper, beard notes, and four reference photos from last time.' },
+  { n: '03', title: 'Record the cut in under 30 seconds', body: 'Four photos, guard sizes, a note if needed. The next barber — or your future self — will know exactly what was done.' },
+  { n: '04', title: 'Save. Next client loads up.', body: 'One tap and the queue advances. The reminder fires automatically. You stay in the chair, not the admin.' },
+];
+
+const ownerSteps = [
+  { n: '01', title: 'Analytics at a glance', body: 'Cuts per day, revenue, retention rate, busiest slots. Know where the money comes from and when the quiet patches hit.' },
+  { n: '02', title: 'Team and queue view', body: "See every barber's status, queue load, and availability in real time. Spot the bottleneck before it becomes a walkout." },
+  { n: '03', title: 'Reminders — one tap to send', body: 'Any client overdue for a visit shows up in the reminders panel. Send a nudge in one tap, from the dashboard or your phone.' },
+  { n: '04', title: 'Your microsite and shop screens', body: 'A public-facing shop page for Google searches. A live queue board for your TV. Both managed from the same place.' },
 ];
 
 export default function Home() {
@@ -73,60 +218,42 @@ export default function Home() {
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden selection:bg-[#C8F135] selection:text-[#0A0A0A]">
       <Navbar />
 
+      {/* HERO */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-        <Image
-          src="/hero-ipad.png"
-          alt="A barber using YourBarber on an iPad inside a busy barbershop"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center opacity-55 z-0"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/80 to-[#0A0A0A]/30 pointer-events-none z-[1]" />
-        <div className="absolute inset-0 pointer-events-none z-[2]">
-          <div
-            className="absolute inset-0"
-            style={{ backgroundImage: 'radial-gradient(ellipse 80% 50% at 70% 50%, rgba(200,241,53,0.13) 0%, transparent 70%)' }}
-          />
-        </div>
+        <Image src="/hero-ipad.png" alt="YourBarber in a barbershop" fill priority sizes="100vw"
+          className="object-cover object-center opacity-45 z-0" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/85 to-[#0A0A0A]/20 pointer-events-none z-[1]" />
 
         <div className="relative z-10 container mx-auto px-6 lg:px-12 py-32 lg:py-44">
-          <div className="max-w-2xl">
+          <div className="max-w-xl">
             <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="badge-lime inline-block mb-7">
               Founding member — £20/month, locked in for life
             </motion.div>
 
-            <motion.h1
-              initial="hidden"
-              animate="visible"
-              custom={1}
-              variants={fadeUp}
-              className="font-barlow font-black text-[clamp(3.25rem,9vw,7rem)] leading-[0.88] tracking-tight uppercase mb-7"
-            >
+            <motion.h1 initial="hidden" animate="visible" custom={1} variants={fadeUp}
+              className="font-barlow font-black text-[clamp(3.25rem,9vw,7rem)] leading-[0.88] tracking-tight uppercase mb-7">
               Know every
-              <br />
-              client before
-              <br />
-              <span className="text-[#C8F135]">they sit down.</span>
+              <br />client before
+              <br /><span className="text-[#C8F135]">they sit down.</span>
             </motion.h1>
 
-            <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp} className="text-lg text-white/62 max-w-xl leading-relaxed mb-4 font-inter">
+            <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp}
+              className="text-lg text-white/60 max-w-md leading-relaxed mb-3 font-inter">
               The Cut Passport puts every grade, taper, photo, and beard note in your hand before the cape goes on. Walk to the chair knowing — not guessing.
             </motion.p>
 
-            <motion.p initial="hidden" animate="visible" custom={3} variants={fadeUp} className="text-sm text-white/38 max-w-xl leading-relaxed mb-8 font-inter">
+            <motion.p initial="hidden" animate="visible" custom={3} variants={fadeUp}
+              className="text-sm text-white/35 max-w-md leading-relaxed mb-8 font-inter">
               Be one of the first 50 shops. Help us build it right, and pay £20/month for as long as you use YourBarber — no matter what the price becomes when we go live.
             </motion.p>
 
-            <motion.div initial="hidden" animate="visible" custom={4} variants={fadeUp} className="mb-10">
+            <motion.div initial="hidden" animate="visible" custom={4} variants={fadeUp} className="mb-8">
               <WaitlistForm />
             </motion.div>
 
-            <motion.div initial="hidden" animate="visible" custom={5} variants={fadeUp} className="flex flex-wrap items-center gap-5 text-sm text-white/35 font-inter">
-              <Link href="/demo-hub" className="flex items-center gap-1.5 hover:text-white/60 transition-colors">
-                <ArrowRight size={13} className="text-[#C8F135]" /> Try the demo first
-              </Link>
-              {['No customer app needed', 'Your data, your clients'].map(item => (
+            <motion.div initial="hidden" animate="visible" custom={5} variants={fadeUp}
+              className="flex flex-wrap items-center gap-5 text-sm text-white/30 font-inter">
+              {['No customer app needed', 'Your data, your clients', 'We call you personally'].map(item => (
                 <span key={item} className="flex items-center gap-1.5">
                   <ShieldCheck size={13} className="text-[#C8F135]" /> {item}
                 </span>
@@ -136,355 +263,159 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-[#0f0f0f]">
-        <div className="container mx-auto px-6 lg:px-12">
-          <div className="max-w-5xl mx-auto">
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="mb-10">
-              <h2 className="font-barlow font-black text-[clamp(2rem,5vw,3.25rem)] uppercase leading-tight mb-3">
-                Every barber
-                <br />
-                <span className="text-[#C8F135]">knows the feeling.</span>
-              </h2>
-              <p className="text-white/45 font-inter text-base">
-                Three moments that cost you confidence — and clients.
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              {pains.map((p, i) => (
-                <motion.div
-                  key={p.headline}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: '-40px' }}
-                  custom={i}
-                  variants={fadeUp}
-                  className="bg-[#111] border border-red-500/12 rounded-xl p-7"
-                >
-                  <X size={20} className="text-red-400/55 mb-4" />
-                  <h3 className="font-barlow font-bold text-base uppercase leading-tight mb-3 text-white/85">{p.headline}</h3>
-                  <p className="text-white/50 text-base font-inter leading-relaxed">{p.body}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={fadeUp} className="bg-[#C8F135]/5 border border-[#C8F135]/20 rounded-xl p-7 flex items-start gap-4">
-              <Check size={20} className="text-[#C8F135] mt-0.5 flex-shrink-0" />
-              <p className="text-white/72 text-base font-inter leading-relaxed">
-                <span className="text-white font-semibold">YourBarber gives you certainty.</span> Before the cape goes on, you know the grade, the taper, the beard shape, and what it looked like last time. No guessing. No awkward questions. Just a great cut.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      <section id="features" className="py-24 lg:py-32 bg-[#0A0A0A]">
-        <div className="container mx-auto px-6 lg:px-12">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="mb-16">
-            <span className="badge-lime mb-4 inline-block">Three tools barbers actually use</span>
-            <h2 className="font-barlow font-black text-[clamp(2.25rem,5vw,3.75rem)] uppercase leading-tight">
-              The Cut Passport
-              <br />
-              <span className="text-[#C8F135]">is the star.</span>
-            </h2>
-            <p className="text-white/45 font-inter mt-4 max-w-lg text-base leading-relaxed">
-              The history is the product. The queue is how you earn the right to use it.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {pillars.map((pillar, i) => (
-              <motion.div
-                key={pillar.label}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: '-40px' }}
-                custom={i}
-                variants={fadeUp}
-                className="bg-[#0f0f0f] border border-white/8 rounded-xl p-8 flex flex-col"
-              >
-                <div className="relative mb-6 aspect-[4/3] overflow-hidden rounded-lg border border-white/8 bg-black">
-                  <Image
-                    src={pillar.image}
-                    alt={pillar.imageAlt}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, 100vw"
-                    loading="eager"
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f]/80 via-transparent to-transparent" />
-                </div>
-                <div className="w-12 h-12 rounded-sm bg-[#C8F135]/10 flex items-center justify-center mb-6 flex-shrink-0">
-                  <pillar.icon size={22} className="text-[#C8F135]" />
-                </div>
-                <div className="text-[10px] font-barlow font-bold uppercase tracking-[0.18em] text-[#C8F135]/60 mb-1">{pillar.label}</div>
-                <h3 className="font-barlow font-black text-2xl uppercase leading-tight mb-4 text-white">{pillar.hook}</h3>
-                <p className="text-white/56 text-base leading-relaxed font-inter flex-1">{pillar.body}</p>
-                <p className="mt-6 text-sm text-[#C8F135]/75 font-inter leading-relaxed">{pillar.result}</p>
-                {pillar.href ? (
-                  <Link
-                    href={pillar.href}
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/75 transition-colors hover:text-[#C8F135]"
-                  >
-                    {pillar.cta} <ArrowRight size={14} />
-                  </Link>
-                ) : null}
-              </motion.div>
+      {/* SECTION INTRO */}
+      <div className="bg-[#0f0f0f] border-y border-white/5 py-12 px-6">
+        <div className="container mx-auto max-w-5xl text-center">
+          <p className="text-white/30 font-barlow font-bold text-sm uppercase tracking-[0.2em]">How the system works</p>
+          <h2 className="font-barlow font-black text-[clamp(1.75rem,4vw,2.75rem)] uppercase mt-3 leading-tight">
+            Three views. <span className="text-[#C8F135]">One system.</span>
+          </h2>
+          <p className="text-white/40 font-inter text-base mt-3 max-w-lg mx-auto">
+            The client, the barber, and the owner each see exactly what they need — nothing more.
+          </p>
+          <div className="flex justify-center gap-4 mt-6 flex-wrap">
+            {[['#client', 'The client'], ['#barber', 'The barber'], ['#owner', 'The owner']].map(([href, label]) => (
+              <a key={href} href={href} className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30 hover:text-[#C8F135] transition-colors border border-white/10 hover:border-[#C8F135]/30 px-4 py-2 rounded-sm">
+                {label}
+              </a>
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="py-20 lg:py-28 bg-[#0f0f0f]">
+      {/* CLIENT JOURNEY */}
+      <section id="client" className="py-24 lg:py-32 bg-[#0A0A0A]">
         <div className="container mx-auto px-6 lg:px-12">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="mb-14">
-            <span className="badge-lime mb-4 inline-block">How it feels in the shop</span>
-            <h2 className="font-barlow font-black text-[clamp(2rem,4.5vw,3.25rem)] uppercase leading-tight">
-              No questions.
-              <br />
-              <span className="text-[#C8F135]">Just knowing.</span>
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-            {[
-              {
-                n: '01',
-                title: 'They check in from their phone',
-                body: 'The client scans the wall QR, joins the queue, and picks their service. You see their name and what they want before they reach the chair.',
-              },
-              {
-                n: '02',
-                title: 'You already know the cut',
-                body: 'Their Cut Passport is right there — last fade, guard sizes, beard notes, four photos. You walk over prepared. No first question needed.',
-              },
-              {
-                n: '03',
-                title: 'They leave. You\'re ready for the next one.',
-                body: 'Thirty seconds to save the new cut. Five weeks later, YourBarber sends the nudge. They come back. You already know what to do.',
-              },
-            ].map((step, i) => (
-              <motion.div
-                key={step.n}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: '-60px' }}
-                custom={i}
-                variants={fadeUp}
-                className="relative border-l border-white/8 pl-8 pr-6 py-8 first:border-l-0 first:pl-0"
-              >
-                <div className="font-barlow font-black text-5xl text-[#C8F135]/20 mb-4 leading-none">{step.n}</div>
-                <h3 className="font-barlow font-bold text-xl uppercase tracking-wide mb-3 text-white">{step.title}</h3>
-                <p className="text-white/52 text-base leading-relaxed font-inter">{step.body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="live-board" className="py-24 lg:py-32 bg-[#0A0A0A] overflow-hidden">
-        <div className="container mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp}>
-              <span className="badge-lime mb-4 inline-block">YourBarber Live-Board</span>
-              <h2 className="font-barlow font-black text-[clamp(2rem,4.5vw,3.25rem)] uppercase leading-tight mb-5">
-                Put your shop
-                <br />
-                on the map.
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={fadeUp}>
+              <span className="badge-lime inline-block mb-5">The client</span>
+              <h2 className="font-barlow font-black text-[clamp(2rem,4.5vw,3rem)] uppercase leading-tight mb-10">
+                From the door
+                <br /><span className="text-[#C8F135]">to the chair in seconds.</span>
               </h2>
-              <p className="text-white/62 text-base leading-relaxed mb-4 font-inter">
-                We send you a tiny device that plugs into your shop TV. It shows live wait times and photos of your best work to everyone in the shop, and everyone looking through the window.
-              </p>
-              <p className="text-white/45 text-base leading-relaxed mb-8 font-inter">
-                It makes the place feel organised, professional, and busy in the right way.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  'Live wait times visible from the street',
-                  'Best cuts shown on the big screen',
-                  'Customers stop asking how long is left',
-                  'The shop looks sharper before they even sit down',
-                ].map(item => (
-                  <li key={item} className="flex items-center gap-3 text-white/62 font-inter text-base">
-                    <Check size={15} className="text-[#C8F135] flex-shrink-0" /> {item}
-                  </li>
+              <div className="space-y-8">
+                {customerSteps.map((s, i) => (
+                  <motion.div key={s.n} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
+                    className="flex gap-5">
+                    <span className="font-barlow font-black text-3xl text-[#C8F135]/20 leading-none w-10 flex-shrink-0 pt-0.5">{s.n}</span>
+                    <div>
+                      <h3 className="font-barlow font-bold text-base uppercase tracking-wide text-white mb-1">{s.title}</h3>
+                      <p className="text-white/45 text-sm font-inter leading-relaxed">{s.body}</p>
+                    </div>
+                  </motion.div>
                 ))}
-              </ul>
+              </div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 48 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+            <motion.div initial={{ opacity: 0, x: 32 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
-              className="relative"
-            >
-              <div className="absolute -inset-8 bg-[#C8F135]/5 rounded-3xl blur-3xl pointer-events-none" />
-              <div className="relative bg-[#0a0a0a] border-4 border-[#1c1c1c] rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
-                <div className="bg-[#111] px-5 py-3 flex items-center justify-between border-b border-white/5">
-                  <div className="flex items-center gap-2">
-                    <Tv2 size={13} className="text-[#C8F135]" />
-                    <span className="font-barlow font-bold text-[10px] uppercase tracking-[0.18em] text-white/35">The Barber Room - Live Queue</span>
-                  </div>
-                  <span className="font-mono text-[10px] text-white/20">11:42</span>
-                </div>
-                <div className="flex">
-                  <div className="flex-1 p-4 space-y-2 border-r border-white/5">
-                    {[
-                      { pos: 1, name: 'Marcus T.', style: 'Skin Fade', wait: 'IN CHAIR', lime: true },
-                      { pos: 2, name: 'Jordan K.', style: 'Textured Crop', wait: "YOU'RE NEXT", next: true },
-                      { pos: 3, name: 'Theo + Jay', style: 'Standard Cut x2', wait: '~20 min' },
-                      { pos: 4, name: 'Ryan M.', style: 'Taper Fade', wait: '~40 min' },
-                    ].map(row => (
-                      <div
-                        key={row.name}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${
-                          row.lime
-                            ? 'bg-[#C8F135]/8 border border-[#C8F135]/20'
-                            : row.next
-                              ? 'bg-white/[0.04] border border-white/10'
-                              : 'bg-white/[0.02] border border-white/5'
-                        }`}
-                      >
-                        <span className={`font-barlow font-black text-base w-5 text-center flex-shrink-0 ${row.lime ? 'text-[#C8F135]' : 'text-white/15'}`}>{row.pos}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className={`font-barlow font-black text-xs uppercase truncate ${row.lime ? 'text-white' : 'text-white/65'}`}>{row.name}</div>
-                          <div className="text-[9px] font-barlow uppercase tracking-wide text-white/25 truncate">{row.style}</div>
-                        </div>
-                        <span className={`text-[9px] font-barlow font-bold uppercase tracking-widest flex-shrink-0 ${row.lime ? 'text-[#C8F135]' : row.next ? 'text-white/50' : 'text-white/20'}`}>{row.wait}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="w-28 p-3 flex flex-col gap-2">
-                    <div className="text-[8px] font-barlow font-bold uppercase tracking-widest text-white/20 mb-1">Our work</div>
-                    {[
-                      { color: 'bg-white/8', label: 'Skin Fade' },
-                      { color: 'bg-white/6', label: 'Crop' },
-                      { color: 'bg-white/5', label: 'Taper' },
-                    ].map(img => (
-                      <div key={img.label} className={`${img.color} rounded border border-white/5 aspect-square flex items-end p-1`}>
-                        <span className="text-[7px] font-barlow font-bold uppercase text-white/25">{img.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="px-5 py-2 border-t border-white/5 flex items-center justify-center">
-                  <span className="text-[8px] font-barlow font-bold uppercase tracking-[0.2em] text-white/10">yourbarber.uk</span>
-                </div>
+              className="flex justify-center lg:justify-end lg:sticky lg:top-28">
+              <div className="relative">
+                <div className="absolute -inset-8 bg-[#C8F135]/5 rounded-3xl blur-3xl pointer-events-none" />
+                <CustomerMockup />
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-[#0f0f0f]">
-        <div className="container mx-auto px-6 lg:px-12 max-w-4xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#111] border border-white/6 rounded-xl p-7">
-              <div className="text-[#C8F135] font-barlow font-black text-4xl mb-1">0%</div>
-              <div className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30 mb-3">Commission</div>
-              <p className="text-white/52 text-base font-inter leading-relaxed">You keep the money from every customer. One flat monthly price, no slice of the till.</p>
-            </div>
-            <div className="bg-[#111] border border-white/6 rounded-xl p-7">
-              <div className="text-[#C8F135] font-barlow font-black text-4xl mb-1">&lt;30s</div>
-              <div className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30 mb-3">After each cut</div>
-              <p className="text-white/52 text-base font-inter leading-relaxed">Four photos, a few taps, and the next visit is already easier.</p>
-            </div>
-            <div className="bg-[#111] border border-white/6 rounded-xl p-7">
-              <div className="text-[#C8F135] font-barlow font-black text-4xl mb-1">1</div>
-              <div className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30 mb-3">Return visit pays for it</div>
-              <p className="text-white/52 text-base font-inter leading-relaxed">Bring back one client who was about to forget and the month has already paid for itself.</p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="py-12 bg-[#0A0A0A]">
+      {/* BARBER VIEW */}
+      <section id="barber" className="py-24 lg:py-32 bg-[#0f0f0f]">
         <div className="container mx-auto px-6 lg:px-12">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="bg-[#111] border border-white/8 rounded-2xl p-10 lg:p-14 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-[#C8F135]/5 blur-3xl rounded-full pointer-events-none" />
-            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-              <div>
-                <span className="badge-lime mb-4 inline-block">Founding members</span>
-                <h2 className="font-barlow font-black text-[clamp(2rem,4vw,3rem)] uppercase leading-tight mb-4">
-                  &pound;20/month.
-                  <br />
-                  <span className="text-[#C8F135]">Locked in for life.</span>
-                </h2>
-                <p className="text-white/52 font-inter text-base leading-relaxed max-w-md">
-                  Founding shops get £20/month for as long as they use YourBarber — no matter what the price becomes at launch. No contracts. No hidden fees.
-                </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            <motion.div initial={{ opacity: 0, x: -32 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="flex justify-center lg:justify-start order-2 lg:order-1 lg:sticky lg:top-28">
+              <div className="relative">
+                <div className="absolute -inset-8 bg-[#C8F135]/5 rounded-3xl blur-3xl pointer-events-none" />
+                <BarberMockup />
               </div>
-              <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start sm:items-center gap-8">
-                <div>
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="font-barlow font-black text-[3.5rem] text-[#C8F135] leading-none">&pound;20</span>
-                    <span className="text-white/30 font-inter text-base">/month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white/20 line-through text-sm font-inter">&pound;29 at launch</span>
-                    <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-[#C8F135]/60">founding rate</span>
-                  </div>
-                  <ul className="mt-4 space-y-2">
-                    {['Cut Passports for every client', 'Fair-play walk-in queue', 'Return-visit nudges', 'Live-Board ready'].map(item => (
-                      <li key={item} className="flex items-center gap-2 text-white/62 text-sm font-inter">
-                        <Check size={12} className="text-[#C8F135] flex-shrink-0" /> {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="flex flex-col gap-3 flex-shrink-0">
-                  <Link href="/demo-hub">
-                    <button className="btn-lime px-8 py-3 text-sm whitespace-nowrap">Try the demo</button>
-                  </Link>
-                  <Link href="/pricing">
-                    <button className="text-white/30 hover:text-white text-xs font-barlow font-bold uppercase tracking-widest transition-colors text-center">
-                      See pricing
-                    </button>
-                  </Link>
-                </div>
+            </motion.div>
+
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={fadeUp}
+              className="order-1 lg:order-2">
+              <span className="badge-lime inline-block mb-5">The barber</span>
+              <h2 className="font-barlow font-black text-[clamp(2rem,4.5vw,3rem)] uppercase leading-tight mb-10">
+                Your queue.
+                <br /><span className="text-[#C8F135]">Every passport. Zero guesswork.</span>
+              </h2>
+              <div className="space-y-8">
+                {barberSteps.map((s, i) => (
+                  <motion.div key={s.n} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
+                    className="flex gap-5">
+                    <span className="font-barlow font-black text-3xl text-[#C8F135]/20 leading-none w-10 flex-shrink-0 pt-0.5">{s.n}</span>
+                    <div>
+                      <h3 className="font-barlow font-bold text-base uppercase tracking-wide text-white mb-1">{s.title}</h3>
+                      <p className="text-white/45 text-sm font-inter leading-relaxed">{s.body}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
+      {/* OWNER VIEW */}
+      <section id="owner" className="py-24 lg:py-32 bg-[#0A0A0A]">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={fadeUp}>
+              <span className="badge-lime inline-block mb-5">The owner</span>
+              <h2 className="font-barlow font-black text-[clamp(2rem,4.5vw,3rem)] uppercase leading-tight mb-10">
+                Your shop,
+                <br /><span className="text-[#C8F135]">at a glance. Any time.</span>
+              </h2>
+              <div className="space-y-8">
+                {ownerSteps.map((s, i) => (
+                  <motion.div key={s.n} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
+                    className="flex gap-5">
+                    <span className="font-barlow font-black text-3xl text-[#C8F135]/20 leading-none w-10 flex-shrink-0 pt-0.5">{s.n}</span>
+                    <div>
+                      <h3 className="font-barlow font-bold text-base uppercase tracking-wide text-white mb-1">{s.title}</h3>
+                      <p className="text-white/45 text-sm font-inter leading-relaxed">{s.body}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, x: 32 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="flex justify-center lg:justify-end lg:sticky lg:top-28">
+              <div className="relative">
+                <div className="absolute -inset-8 bg-[#C8F135]/5 rounded-3xl blur-3xl pointer-events-none" />
+                <OwnerMockup />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* BOTTOM CTA */}
       <section className="py-24 lg:py-32 bg-[#C8F135] relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: 'repeating-linear-gradient(45deg,#000 0,#000 1px,transparent 0,transparent 50%)', backgroundSize: '20px 20px' }}
-        />
+        <div className="absolute inset-0 opacity-[0.04]"
+          style={{ backgroundImage: 'repeating-linear-gradient(45deg,#000 0,#000 1px,transparent 0,transparent 50%)', backgroundSize: '20px 20px' }} />
         <div className="relative container mx-auto px-6 lg:px-12 text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp}>
             <div className="inline-flex items-center gap-2 bg-black/10 rounded-full px-4 py-1.5 mb-8">
               <Scissors size={12} className="text-[#0A0A0A]/50" />
-              <span className="text-[10px] font-barlow font-bold uppercase tracking-[0.2em] text-[#0A0A0A]/50">Built for the chair, the queue, and the till</span>
+              <span className="text-[10px] font-barlow font-bold uppercase tracking-[0.2em] text-[#0A0A0A]/50">First 50 shops only</span>
             </div>
-
             <h2 className="font-barlow font-black text-[clamp(2.5rem,6.5vw,5rem)] uppercase leading-[0.9] text-[#0A0A0A] mb-6">
               Know every client.
-              <br />
-              Every time.
+              <br />Every time.
             </h2>
             <p className="text-[#0A0A0A]/65 max-w-md mx-auto mb-10 font-inter text-lg">
-              Their grades, their photos, their preferences — in your hand before the cape goes on. That is what it feels like to be a professional with a proper system behind you.
+              Their grades, their photos, their preferences — in your hand before the cape goes on. £20/month, locked in for life.
             </p>
-
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
-              <Link href="#waitlist" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-                <button className="bg-[#0A0A0A] text-[#C8F135] px-10 py-5 text-base rounded-sm font-barlow font-black uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg">
-                  Claim my founding spot <ArrowRight size={17} />
-                </button>
-              </Link>
-              <Link href="/demo-hub">
-                <button className="border-2 border-[#0A0A0A]/25 text-[#0A0A0A] px-10 py-5 text-base rounded-sm font-barlow font-bold uppercase tracking-wide hover:border-[#0A0A0A]/50 transition-colors w-full sm:w-auto">
-                  Try the demo
-                </button>
-              </Link>
-            </div>
-
-            <p className="text-[#0A0A0A]/45 text-sm font-inter">
-              First 50 shops only. £20/month locked in for life. No contracts.
+            <Link href="#" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+              <button className="bg-[#0A0A0A] text-[#C8F135] px-10 py-5 text-base rounded-sm font-barlow font-black uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors inline-flex items-center gap-2 shadow-lg">
+                Claim my founding spot <ArrowRight size={17} />
+              </button>
+            </Link>
+            <p className="mt-5 text-[#0A0A0A]/40 text-sm font-inter">
+              We&apos;ll call you personally to walk through the system. No contracts.
             </p>
           </motion.div>
         </div>

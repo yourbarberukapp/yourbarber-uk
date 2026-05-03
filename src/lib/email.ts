@@ -3,13 +3,9 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendBetaSignupNotification({
-  name,
-  email,
-  shopName,
+  name, email, phone, shopName, challenge,
 }: {
-  name: string;
-  email: string;
-  shopName: string;
+  name: string; email: string; phone: string; shopName: string; challenge: string;
 }) {
   await resend.emails.send({
     from: 'noreply@yourbarber.uk',
@@ -23,10 +19,12 @@ export async function sendBetaSignupNotification({
         <table style="width: 100%; border-collapse: collapse;">
           <tr><td style="color: rgba(255,255,255,0.4); padding: 0.5rem 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; width: 80px;">Name</td><td style="color: white; padding: 0.5rem 0;">${name}</td></tr>
           <tr><td style="color: rgba(255,255,255,0.4); padding: 0.5rem 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;">Email</td><td style="color: #C8F135; padding: 0.5rem 0;">${email}</td></tr>
+          <tr><td style="color: rgba(255,255,255,0.4); padding: 0.5rem 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;">Phone</td><td style="color: #C8F135; padding: 0.5rem 0;">${phone}</td></tr>
           <tr><td style="color: rgba(255,255,255,0.4); padding: 0.5rem 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;">Shop</td><td style="color: white; padding: 0.5rem 0;">${shopName || '—'}</td></tr>
+          ${challenge ? `<tr><td style="color: rgba(255,255,255,0.4); padding: 0.5rem 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; vertical-align: top;">Challenge</td><td style="color: rgba(255,255,255,0.8); padding: 0.5rem 0; font-style: italic;">"${challenge}"</td></tr>` : ''}
         </table>
         <p style="color: rgba(255,255,255,0.3); font-size: 0.75rem; margin-top: 1.5rem;">
-          Claimed £20/month founding rate. Check admin leads: yourbarber.uk/admin/a3024f4c07e01ec4
+          Claimed £20/month founding rate. Admin: yourbarber.uk/admin/a3024f4c07e01ec4
         </p>
       </div>
     `,

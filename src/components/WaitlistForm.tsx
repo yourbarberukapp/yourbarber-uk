@@ -3,8 +3,21 @@
 import { useState } from 'react';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 
+const inputStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 6,
+  padding: '0.75rem 1rem',
+  color: 'white',
+  fontSize: '0.9rem',
+  fontFamily: 'var(--font-inter)',
+  outline: 'none',
+  width: '100%',
+  boxSizing: 'border-box',
+};
+
 export default function WaitlistForm() {
-  const [fields, setFields] = useState({ name: '', email: '', shopName: '' });
+  const [fields, setFields] = useState({ name: '', email: '', phone: '', shopName: '', challenge: '' });
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
 
   async function submit(e: React.FormEvent) {
@@ -45,7 +58,7 @@ export default function WaitlistForm() {
           </span>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', fontFamily: 'var(--font-inter)', lineHeight: 1.6, marginLeft: '2.5rem' }}>
-          We&apos;ll be in touch as we onboard the first 50 shops. Your £20/month rate is reserved.
+          We&apos;ll call you personally to walk through the system. Your £20/month rate is reserved.
         </p>
       </div>
     );
@@ -54,84 +67,31 @@ export default function WaitlistForm() {
   return (
     <form onSubmit={submit} style={{ maxWidth: 480 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', marginBottom: '0.875rem' }}>
-        <input
-          required
-          type="text"
-          placeholder="Your name"
-          value={fields.name}
-          onChange={e => setFields(f => ({ ...f, name: e.target.value }))}
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 6,
-            padding: '0.75rem 1rem',
-            color: 'white',
-            fontSize: '0.9rem',
-            fontFamily: 'var(--font-inter)',
-            outline: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}
-        />
-        <input
-          required
-          type="email"
-          placeholder="Email address"
-          value={fields.email}
-          onChange={e => setFields(f => ({ ...f, email: e.target.value }))}
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 6,
-            padding: '0.75rem 1rem',
-            color: 'white',
-            fontSize: '0.9rem',
-            fontFamily: 'var(--font-inter)',
-            outline: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}
-        />
-        <input
-          type="text"
-          placeholder="Shop name (optional)"
-          value={fields.shopName}
-          onChange={e => setFields(f => ({ ...f, shopName: e.target.value }))}
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 6,
-            padding: '0.75rem 1rem',
-            color: 'white',
-            fontSize: '0.9rem',
-            fontFamily: 'var(--font-inter)',
-            outline: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}
+        <input required type="text" placeholder="Your name"
+          value={fields.name} onChange={e => setFields(f => ({ ...f, name: e.target.value }))} style={inputStyle} />
+        <input required type="email" placeholder="Email address"
+          value={fields.email} onChange={e => setFields(f => ({ ...f, email: e.target.value }))} style={inputStyle} />
+        <input required type="tel" placeholder="Phone number"
+          value={fields.phone} onChange={e => setFields(f => ({ ...f, phone: e.target.value }))} style={inputStyle} />
+        <input type="text" placeholder="Shop name (optional)"
+          value={fields.shopName} onChange={e => setFields(f => ({ ...f, shopName: e.target.value }))} style={inputStyle} />
+        <textarea
+          placeholder="What's the biggest headache in your shop right now? (optional)"
+          value={fields.challenge}
+          onChange={e => setFields(f => ({ ...f, challenge: e.target.value }))}
+          rows={3}
+          style={{ ...inputStyle, resize: 'none', lineHeight: 1.5 }}
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={state === 'loading'}
-        className="btn-lime"
-        style={{
-          width: '100%',
-          padding: '0.875rem 1.5rem',
-          fontSize: '0.9rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem',
-          opacity: state === 'loading' ? 0.7 : 1,
-        }}
-      >
-        {state === 'loading' ? (
-          <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Claiming your spot…</>
-        ) : (
-          <>Claim my founding spot <ArrowRight size={16} /></>
-        )}
+      <button type="submit" disabled={state === 'loading'} className="btn-lime" style={{
+        width: '100%', padding: '0.875rem 1.5rem', fontSize: '0.9rem',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+        opacity: state === 'loading' ? 0.7 : 1,
+      }}>
+        {state === 'loading'
+          ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Claiming your spot…</>
+          : <>Claim my founding spot <ArrowRight size={16} /></>}
       </button>
 
       {state === 'error' && (

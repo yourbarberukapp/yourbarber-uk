@@ -3,10 +3,10 @@ import { db } from '@/lib/db';
 import { sendBetaSignupNotification } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
-  const { name, email, shopName } = await req.json();
+  const { name, email, phone, shopName, challenge } = await req.json();
 
-  if (!name || !email) {
-    return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
+  if (!name || !email || !phone) {
+    return NextResponse.json({ error: 'Name, email and phone are required' }, { status: 400 });
   }
 
   const existing = await db.demoLead.findFirst({ where: { email } });
@@ -15,10 +15,10 @@ export async function POST(req: NextRequest) {
   }
 
   await db.demoLead.create({
-    data: { name, email, shopName: shopName || '', phone: '' },
+    data: { name, email, phone, shopName: shopName || '' },
   });
 
-  await sendBetaSignupNotification({ name, email, shopName: shopName || '' }).catch(() => null);
+  await sendBetaSignupNotification({ name, email, phone, shopName: shopName || '', challenge: challenge || '' }).catch(() => null);
 
   return NextResponse.json({ ok: true });
 }
