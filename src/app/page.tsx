@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Camera, Check, MessageSquare, Scissors, ShieldCheck, Smartphone, Tv2, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import WaitlistForm from '@/components/WaitlistForm';
 
 const fadeUp = {
   hidden: { opacity: 1, y: 0 },
@@ -90,9 +91,9 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 container mx-auto px-6 lg:px-12 py-32 lg:py-44">
-          <div className="max-w-3xl">
+          <div className="max-w-2xl">
             <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="badge-lime inline-block mb-7">
-              Built for walk-ins, not just bookings
+              Founding member — £20/month, locked in for life
             </motion.div>
 
             <motion.h1
@@ -100,36 +101,32 @@ export default function Home() {
               animate="visible"
               custom={1}
               variants={fadeUp}
-              className="font-barlow font-black text-[clamp(3.25rem,9vw,7.25rem)] leading-[0.88] tracking-tight uppercase mb-7"
+              className="font-barlow font-black text-[clamp(3.25rem,9vw,7rem)] leading-[0.88] tracking-tight uppercase mb-7"
             >
-              The walk-in
+              Never explain
               <br />
-              queue system
+              your fade
               <br />
-              that remembers
-              <br />
-              <span className="text-[#C8F135]">every client.</span>
+              <span className="text-[#C8F135]">again.</span>
             </motion.h1>
 
-            <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp} className="text-lg text-white/62 max-w-2xl leading-relaxed mb-10 font-inter">
-              Customers scan your QR code, join the queue, and choose today&apos;s cut from their phone. Your barbers see who&apos;s waiting, what they want, and what they had last time.
+            <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp} className="text-lg text-white/62 max-w-xl leading-relaxed mb-4 font-inter">
+              Every grade, taper, and beard note saved against your client — and it travels with you, whatever shop you&apos;re in.
             </motion.p>
 
-            <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp} className="flex flex-wrap gap-4 mb-10">
-              <Link href="/demo-hub">
-                <button className="btn-lime px-8 py-4 text-base flex items-center gap-2 shadow-[0_0_28px_rgba(200,241,53,0.28)]">
-                  Try the demo <ArrowRight size={17} />
-                </button>
-              </Link>
-              <Link href="/pricing">
-                <button className="px-8 py-4 text-base border border-white/20 text-white hover:border-white/45 transition-colors font-barlow font-bold uppercase tracking-wide rounded-sm">
-                  See pricing
-                </button>
-              </Link>
+            <motion.p initial="hidden" animate="visible" custom={3} variants={fadeUp} className="text-sm text-white/38 max-w-xl leading-relaxed mb-8 font-inter">
+              Be one of the first 50 shops. Help us build it right, and pay £20/month for as long as you use YourBarber — no matter what the price becomes when we go live.
+            </motion.p>
+
+            <motion.div initial="hidden" animate="visible" custom={4} variants={fadeUp} className="mb-10">
+              <WaitlistForm />
             </motion.div>
 
-            <motion.div initial="hidden" animate="visible" custom={4} variants={fadeUp} className="flex flex-wrap items-center gap-5 text-sm text-white/35 font-inter">
-              {['No customer app needed', 'Built for walk-ins', 'Cut Passport included'].map(item => (
+            <motion.div initial="hidden" animate="visible" custom={5} variants={fadeUp} className="flex flex-wrap items-center gap-5 text-sm text-white/35 font-inter">
+              <Link href="/demo-hub" className="flex items-center gap-1.5 hover:text-white/60 transition-colors">
+                <ArrowRight size={13} className="text-[#C8F135]" /> Try the demo first
+              </Link>
+              {['No customer app needed', 'Your data, your clients'].map(item => (
                 <span key={item} className="flex items-center gap-1.5">
                   <ShieldCheck size={13} className="text-[#C8F135]" /> {item}
                 </span>
@@ -473,21 +470,21 @@ export default function Home() {
               Give every regular a history, every walk-in a clear place in line, and every quiet week a reason to fill up again.
             </p>
 
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/demo-hub">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
+              <Link href="#waitlist" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                 <button className="bg-[#0A0A0A] text-[#C8F135] px-10 py-5 text-base rounded-sm font-barlow font-black uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg">
-                  Try the demo <ArrowRight size={17} />
+                  Claim my founding spot <ArrowRight size={17} />
                 </button>
               </Link>
-              <Link href="/demo">
+              <Link href="/demo-hub">
                 <button className="border-2 border-[#0A0A0A]/25 text-[#0A0A0A] px-10 py-5 text-base rounded-sm font-barlow font-bold uppercase tracking-wide hover:border-[#0A0A0A]/50 transition-colors w-full sm:w-auto">
-                  Book setup call
+                  Try the demo
                 </button>
               </Link>
             </div>
 
-            <p className="mt-5 text-[#0A0A0A]/45 text-sm font-inter">
-              &pound;29/month for founding members. No contracts. Cancel any time.
+            <p className="text-[#0A0A0A]/45 text-sm font-inter">
+              First 50 shops only. £20/month locked in for life. No contracts.
             </p>
           </motion.div>
         </div>
