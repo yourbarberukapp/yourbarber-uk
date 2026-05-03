@@ -20,15 +20,15 @@ const fadeUp = {
 const pains = [
   {
     headline: 'The "same as last time" problem',
-    body: 'Your regulars expect you to remember the fade, the guard, the neckline, and the beard shape. When you forget, they feel it.',
+    body: 'They said it last time too. But which guard? Was the neckline squared or tapered? You cut from memory — and sometimes memory fails. They notice.',
   },
   {
     headline: 'The lobby loitering problem',
-    body: 'When the shop looks rammed, new customers keep walking. A messy queue can send good money straight back onto the street.',
+    body: 'When the shop looks rammed, new clients keep walking. A disorganised queue sends good money straight back out the door.',
   },
   {
-    headline: 'The staff exit problem',
-    body: 'When a barber leaves, their client knowledge usually leaves too. Your shop should not become a blank slate every time someone moves on.',
+    headline: 'The knowledge walk-out problem',
+    body: 'That barber built up two years of client knowledge. When they left, it went with them. The client has to explain themselves all over again. So do you.',
   },
 ];
 
@@ -36,9 +36,9 @@ const pillars = [
   {
     icon: Camera,
     label: 'The Cut Passport',
-    hook: 'Remember every fade.',
-    body: 'Snap four photos, tap in the grades, and keep the haircut history against the client. Next time they sit down, any barber can show them the last cut before the cape goes on.',
-    result: 'You cut faster. They feel like a VIP. Nobody has to guess.',
+    hook: 'Know the cut before you pick up the clippers.',
+    body: 'Four photos, the guard sizes, the taper, the beard shape — all saved in under 30 seconds after every cut. When they sit back down, you open the passport and you already know.',
+    result: 'No guessing. No awkward first question. Just confidence from the moment they hit the chair.',
     image: '/demo-barber.png',
     imageAlt: 'Barber checking a client\'s cut history on their phone before the cut begins',
     href: '/features/cut-passport',
@@ -47,9 +47,9 @@ const pillars = [
   {
     icon: Smartphone,
     label: 'The Fair-Play Queue',
-    hook: 'End the "who is next?" shuffle.',
-    body: 'Customers scan the wall QR, join from their own phone, and get a text when they are next. They can grab a coffee instead of crowding the door.',
-    result: 'A calmer shop, a clearer lobby, and fewer walkouts.',
+    hook: 'Know who\'s waiting and what they want.',
+    body: 'Clients scan the wall QR from their own phone. By the time they reach the chair, you know their name, their service, and whether they\'re a regular — before you\'ve said a word.',
+    result: 'A calmer shop, a clearer lobby, and no surprises.',
     image: '/demo-kiosk-luke.png',
     imageAlt: 'Wall check-in screen in a barbershop with a barber cutting hair in the background',
     href: '/features/live-walk-in-queue',
@@ -58,9 +58,9 @@ const pillars = [
   {
     icon: MessageSquare,
     label: 'The Automated Nudge',
-    hook: 'Bring regulars back before they drift.',
-    body: 'When someone has not been in for five weeks, YourBarber sends a polite "time for a trim?" message for you.',
-    result: 'You fill quiet mornings without stopping a haircut.',
+    hook: 'Know when a regular is about to drift.',
+    body: 'When someone has not been in for five weeks, YourBarber sends a quiet "time for a trim?" on your behalf. You do not have to think about it.',
+    result: 'You fill quiet mornings without stopping a haircut to chase anyone.',
     image: '/showcase-sms.png?v=2',
     imageAlt: 'Customer receiving a YourBarber reminder text inside a barbershop',
     href: '/features/automated-nudge',
@@ -103,15 +103,15 @@ export default function Home() {
               variants={fadeUp}
               className="font-barlow font-black text-[clamp(3.25rem,9vw,7rem)] leading-[0.88] tracking-tight uppercase mb-7"
             >
-              Never explain
+              Know every
               <br />
-              your fade
+              client before
               <br />
-              <span className="text-[#C8F135]">again.</span>
+              <span className="text-[#C8F135]">they sit down.</span>
             </motion.h1>
 
             <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp} className="text-lg text-white/62 max-w-xl leading-relaxed mb-4 font-inter">
-              Every grade, taper, and beard note saved against your client — and it travels with you, whatever shop you&apos;re in.
+              The Cut Passport puts every grade, taper, photo, and beard note in your hand before the cape goes on. Walk to the chair knowing — not guessing.
             </motion.p>
 
             <motion.p initial="hidden" animate="visible" custom={3} variants={fadeUp} className="text-sm text-white/38 max-w-xl leading-relaxed mb-8 font-inter">
@@ -141,12 +141,12 @@ export default function Home() {
           <div className="max-w-5xl mx-auto">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="mb-10">
               <h2 className="font-barlow font-black text-[clamp(2rem,5vw,3.25rem)] uppercase leading-tight mb-3">
-                Is your shop&apos;s memory
+                Every barber
                 <br />
-                <span className="text-[#C8F135]">walking out the door?</span>
+                <span className="text-[#C8F135]">knows the feeling.</span>
               </h2>
               <p className="text-white/45 font-inter text-base">
-                These are not tech problems. They are chair, queue, and till problems.
+                Three moments that cost you confidence — and clients.
               </p>
             </motion.div>
 
@@ -171,7 +171,7 @@ export default function Home() {
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }} variants={fadeUp} className="bg-[#C8F135]/5 border border-[#C8F135]/20 rounded-xl p-7 flex items-start gap-4">
               <Check size={20} className="text-[#C8F135] mt-0.5 flex-shrink-0" />
               <p className="text-white/72 text-base font-inter leading-relaxed">
-                <span className="text-white font-semibold">YourBarber gives the shop a memory.</span> The queue stays fair, the haircut history stays in the shop, and your regulars keep feeling recognised.
+                <span className="text-white font-semibold">YourBarber gives you certainty.</span> Before the cape goes on, you know the grade, the taper, the beard shape, and what it looked like last time. No guessing. No awkward questions. Just a great cut.
               </p>
             </motion.div>
           </div>
@@ -188,7 +188,7 @@ export default function Home() {
               <span className="text-[#C8F135]">is the star.</span>
             </h2>
             <p className="text-white/45 font-inter mt-4 max-w-lg text-base leading-relaxed">
-              The queue gets people in the chair. The history keeps them coming back.
+              The history is the product. The queue is how you earn the right to use it.
             </p>
           </motion.div>
 
@@ -240,9 +240,9 @@ export default function Home() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp} className="mb-14">
             <span className="badge-lime mb-4 inline-block">How it feels in the shop</span>
             <h2 className="font-barlow font-black text-[clamp(2rem,4.5vw,3.25rem)] uppercase leading-tight">
-              No clipboards.
+              No questions.
               <br />
-              <span className="text-[#C8F135]">No queue arguments.</span>
+              <span className="text-[#C8F135]">Just knowing.</span>
             </h2>
           </motion.div>
 
@@ -250,18 +250,18 @@ export default function Home() {
             {[
               {
                 n: '01',
-                title: 'They scan the wall',
-                body: 'The customer joins the queue from their own phone and tells you what they want before they sit down.',
+                title: 'They check in from their phone',
+                body: 'The client scans the wall QR, joins the queue, and picks their service. You see their name and what they want before they reach the chair.',
               },
               {
                 n: '02',
-                title: 'You open their history',
-                body: 'Their last cut, photos, guard lengths, beard notes, and preferences are right there when the chair is ready.',
+                title: 'You already know the cut',
+                body: 'Their Cut Passport is right there — last fade, guard sizes, beard notes, four photos. You walk over prepared. No first question needed.',
               },
               {
                 n: '03',
-                title: 'You send them back happy',
-                body: 'After the cut, the photos and notes are saved. Five weeks later, the nudge brings them back in.',
+                title: 'They leave. You\'re ready for the next one.',
+                body: 'Thirty seconds to save the new cut. Five weeks later, YourBarber sends the nudge. They come back. You already know what to do.',
               },
             ].map((step, i) => (
               <motion.div
@@ -407,23 +407,23 @@ export default function Home() {
               <div>
                 <span className="badge-lime mb-4 inline-block">Founding members</span>
                 <h2 className="font-barlow font-black text-[clamp(2rem,4vw,3rem)] uppercase leading-tight mb-4">
-                  &pound;29/month.
+                  &pound;20/month.
                   <br />
-                  <span className="text-[#C8F135]">That&apos;s it.</span>
+                  <span className="text-[#C8F135]">Locked in for life.</span>
                 </h2>
                 <p className="text-white/52 font-inter text-base leading-relaxed max-w-md">
-                  No contracts. No hidden fees. If the queue stops one walkout or the reminder brings one regular back, YourBarber has done its job for the month.
+                  Founding shops get £20/month for as long as they use YourBarber — no matter what the price becomes at launch. No contracts. No hidden fees.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start sm:items-center gap-8">
                 <div>
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className="font-barlow font-black text-[3.5rem] text-[#C8F135] leading-none">&pound;29</span>
+                    <span className="font-barlow font-black text-[3.5rem] text-[#C8F135] leading-none">&pound;20</span>
                     <span className="text-white/30 font-inter text-base">/month</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-white/20 line-through text-sm font-inter">&pound;49/month</span>
-                    <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-[#C8F135]/60">founding price</span>
+                    <span className="text-white/20 line-through text-sm font-inter">&pound;29 at launch</span>
+                    <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-[#C8F135]/60">founding rate</span>
                   </div>
                   <ul className="mt-4 space-y-2">
                     {['Cut Passports for every client', 'Fair-play walk-in queue', 'Return-visit nudges', 'Live-Board ready'].map(item => (
@@ -462,12 +462,12 @@ export default function Home() {
             </div>
 
             <h2 className="font-barlow font-black text-[clamp(2.5rem,6.5vw,5rem)] uppercase leading-[0.9] text-[#0A0A0A] mb-6">
-              Stop Guessing.
+              Know every client.
               <br />
-              Start Remembering.
+              Every time.
             </h2>
             <p className="text-[#0A0A0A]/65 max-w-md mx-auto mb-10 font-inter text-lg">
-              Give every regular a history, every walk-in a clear place in line, and every quiet week a reason to fill up again.
+              Their grades, their photos, their preferences — in your hand before the cape goes on. That is what it feels like to be a professional with a proper system behind you.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
