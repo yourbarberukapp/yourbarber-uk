@@ -103,8 +103,15 @@ function BarberMockup() {
               ))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              {[0,1,2,3].map(i => (
-                <div key={i} style={{ aspectRatio: '4/3', background: 'rgba(255,255,255,0.06)', borderRadius: 3, border: '1px solid rgba(255,255,255,0.05)' }} />
+              {[
+                { src: '/demo-barber.png', pos: 'center top' },
+                { src: '/showcase-record.png', pos: 'center center' },
+                { src: '/demo-kiosk-luke.png', pos: 'center 30%' },
+                { src: '/showcase-team.png', pos: 'center top' },
+              ].map(({ src, pos }, i) => (
+                <div key={i} style={{ aspectRatio: '4/3', borderRadius: 3, overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <Image src={src} alt="" fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.85 }} />
+                </div>
               ))}
             </div>
           </div>
@@ -319,8 +326,142 @@ export default function Home() {
         </div>
       </section>
 
+      {/* WALLET SECTION */}
+      <section className="py-24 lg:py-32 bg-[#0f0f0f]">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+            {/* Wallet card mockup */}
+            <motion.div initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="flex justify-center">
+              <div className="relative">
+                <div className="absolute -inset-10 bg-[#C8F135]/8 rounded-3xl blur-3xl pointer-events-none" />
+                {/* Apple Wallet card */}
+                <div style={{
+                  width: 300, borderRadius: 20,
+                  background: 'linear-gradient(160deg, #1a1a1a 0%, #0d0d0d 100%)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+                  overflow: 'hidden',
+                }}>
+                  {/* Top colour strip */}
+                  <div style={{ height: 6, background: 'linear-gradient(90deg, #C8F135, #a8d120)' }} />
+
+                  {/* Pass header */}
+                  <div style={{ padding: '1rem 1.25rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div>
+                      <div style={{ fontSize: 8, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', marginBottom: 2 }}>Cut Passport</div>
+                      <div style={{ fontSize: 13, fontFamily: 'var(--font-barlow)', fontWeight: 900, textTransform: 'uppercase', color: 'white', letterSpacing: '0.04em' }}>The Barber Room</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)' }}>Next visit</div>
+                      <div style={{ fontSize: 12, fontFamily: 'var(--font-barlow)', fontWeight: 900, color: '#C8F135' }}>In 2 weeks</div>
+                    </div>
+                  </div>
+
+                  {/* Client name */}
+                  <div style={{ padding: '1rem 1.25rem 0.5rem' }}>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>Member</div>
+                    <div style={{ fontSize: 22, fontFamily: 'var(--font-barlow)', fontWeight: 900, textTransform: 'uppercase', color: 'white', letterSpacing: '0.02em' }}>Marcus T.</div>
+                  </div>
+
+                  {/* Last cut details */}
+                  <div style={{ padding: '0 1.25rem 1rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    {[['Style', 'Skin Fade'], ['Top', '#2 Guard'], ['Sides', '#1 Guard']].map(([k, v]) => (
+                      <div key={k}>
+                        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>{k}</div>
+                        <div style={{ fontSize: 10, fontFamily: 'var(--font-barlow)', fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Photo strip */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 2, margin: '0 1.25rem 1rem' }}>
+                    {[
+                      { src: '/demo-barber.png', pos: 'center top' },
+                      { src: '/showcase-record.png', pos: 'center center' },
+                      { src: '/demo-kiosk-luke.png', pos: 'center 30%' },
+                      { src: '/showcase-team.png', pos: 'center top' },
+                    ].map(({ src, pos }, i) => (
+                      <div key={i} style={{ aspectRatio: '3/4', borderRadius: 4, overflow: 'hidden', position: 'relative', background: 'rgba(255,255,255,0.05)' }}>
+                        <Image src={src} alt="" fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.8 }} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Footer */}
+                  <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)' }}>Last cut: 3 weeks ago</div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)' }}>Add to</div>
+                      <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 4, padding: '2px 6px' }}>
+                        <span style={{ fontSize: 7, fontFamily: 'var(--font-inter)', fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Wallet</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lock screen notification below card */}
+                <div style={{
+                  marginTop: 16, width: 300,
+                  background: 'rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 14,
+                  padding: '0.625rem 0.875rem',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <div style={{ width: 28, height: 28, background: '#C8F135', borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 12 }}>✂️</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', color: 'white' }}>The Barber Room</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-inter)' }}>Marcus, time for a trim? You were last in 5 weeks ago.</div>
+                  </div>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)', flexShrink: 0 }}>now</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Copy */}
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={fadeUp}>
+              <span className="badge-lime inline-block mb-5">Coming with the beta</span>
+              <h2 className="font-barlow font-black text-[clamp(2rem,4.5vw,3rem)] uppercase leading-tight mb-6">
+                On their phone.
+                <br />On their lock screen.
+                <br /><span className="text-[#C8F135]">Free.</span>
+              </h2>
+              <p className="text-white/55 font-inter text-base leading-relaxed mb-4">
+                After the cut, their Cut Passport goes straight into Apple Wallet or Google Wallet — branded to your shop. Photos, grades, style notes, all of it.
+              </p>
+              <p className="text-white/40 font-inter text-base leading-relaxed mb-8">
+                When they&apos;re due back in, the reminder arrives on their lock screen for free. No SMS fees. No spam filters. No app to download. It just appears.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  'Free lock screen reminders — no SMS cost',
+                  'Branded to your shop, not a generic app',
+                  'Passport updates automatically after every cut',
+                  'Works natively on iPhone and Android',
+                  'Client adds it once — it stays in their Wallet forever',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-3 text-white/60 font-inter text-sm">
+                    <Check size={14} className="text-[#C8F135] flex-shrink-0 mt-0.5" /> {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-white/25 text-xs font-inter">
+                Beta shops help shape what this looks like. Your feedback decides the features that get built first.
+              </p>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
       {/* BARBER VIEW */}
-      <section id="barber" className="py-24 lg:py-32 bg-[#0f0f0f]">
+      <section id="barber" className="py-24 lg:py-32 bg-[#0A0A0A]">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             <motion.div initial={{ opacity: 0, x: -32 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
