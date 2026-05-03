@@ -13,7 +13,7 @@ export async function sendBetaSignupNotification({
 }) {
   await resend.emails.send({
     from: 'noreply@yourbarber.uk',
-    to: 'info@thornes.org.uk',
+    to: 'yourbarberukapp@gmail.com',
     subject: `New founding member: ${shopName || name}`,
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem; background: #0A0A0A; color: white; border-radius: 8px;">
