@@ -39,8 +39,8 @@ const plans = [
   },
   {
     name: "Shop",
-    price: "49",
-    foundingPrice: "29",
+    price: "29",
+    foundingPrice: "20",
     desc: "For multi-chair shops that run as one team.",
     features: [
       "Unlimited barbers",
@@ -54,7 +54,7 @@ const plans = [
     notIncluded: [
       "Multi-shop networks",
     ],
-    cta: "Get founding price",
+    cta: "Claim founding price",
     highlight: true,
   },
   {
@@ -103,9 +103,9 @@ export default function PricingPage() {
               Booking platforms take 20–30% of every new client. We don't. One flat monthly fee, you own your data forever.
             </p>
             <div className="inline-flex items-center gap-3 bg-[#C8F135]/8 border border-[#C8F135]/20 rounded-full px-5 py-2 mb-10">
-              <span className="text-[#C8F135] font-barlow font-black text-base">£29/mo</span>
+              <span className="text-[#C8F135] font-barlow font-black text-base">£20/mo</span>
               <span className="text-white/30 text-sm font-inter">founding price — locks in for life</span>
-              <span className="text-white/20 line-through text-sm font-inter">£49</span>
+              <span className="text-white/20 line-through text-sm font-inter">£29</span>
             </div>
           </motion.div>
 
@@ -151,10 +151,10 @@ export default function PricingPage() {
                 </div>
                 <p className="text-white/45 text-sm font-inter mb-8 h-10">{plan.desc}</p>
                 
-                <Link href="/demo">
+                <Link href={plan.highlight ? '/#waitlist' : plan.name === 'Network' ? '/demo-hub' : '/demo-hub'}>
                   <button className={`w-full py-3 text-sm font-bold uppercase tracking-widest rounded-sm mb-8 transition-all ${
-                    plan.highlight 
-                      ? "bg-[#C8F135] text-[#0A0A0A] hover:bg-white" 
+                    plan.highlight
+                      ? "bg-[#C8F135] text-[#0A0A0A] hover:bg-white"
                       : "border border-white/20 text-white hover:border-white/50"
                   }`}>
                     {plan.cta}
@@ -242,12 +242,20 @@ export default function PricingPage() {
       {/* CTA */}
       <section className="bg-[#C8F135] py-20 px-6">
         <div className="container mx-auto text-center">
-          <h2 className="font-barlow font-black text-4xl uppercase text-[#0A0A0A] mb-8">Give your shop a proper memory.</h2>
-          <Link href="/demo-hub">
-            <button className="bg-[#0A0A0A] text-white px-10 py-4 text-lg rounded-sm font-barlow font-bold uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 mx-auto">
-              Try the demo <ArrowRight size={18} />
-            </button>
-          </Link>
+          <h2 className="font-barlow font-black text-4xl uppercase text-[#0A0A0A] mb-4">Know every client. Every time.</h2>
+          <p className="text-[#0A0A0A]/60 font-inter mb-8">First 50 shops only. £20/month, locked in for life.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/">
+              <button className="bg-[#0A0A0A] text-[#C8F135] px-10 py-4 text-base rounded-sm font-barlow font-black uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 mx-auto">
+                Claim founding spot <ArrowRight size={18} />
+              </button>
+            </Link>
+            <Link href="/demo-hub">
+              <button className="border-2 border-[#0A0A0A]/25 text-[#0A0A0A] px-10 py-4 text-base rounded-sm font-barlow font-bold uppercase tracking-wide hover:border-[#0A0A0A]/50 transition-colors">
+                Try the demo
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
 
