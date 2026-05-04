@@ -313,10 +313,12 @@ model WalkIn {
 }
 
 model DemoLead {
-  id        String   @id @default(cuid())
-  name      String
-  shopName  String
-  phone     String
-  email     String
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  name       String
+  shopName   String
+  phone      String
+  email      String
+  approved   Boolean   @default(false)
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
 }

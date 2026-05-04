@@ -60,9 +60,9 @@ export default function Navbar() {
               Sign in
             </span>
           </Link>
-          <Link href="/demo">
+          <Link href="/signup">
             <button className="btn-lime px-5 py-2 text-sm">
-              Book a demo
+              Get beta access
             </button>
           </Link>
         </div>
@@ -95,9 +95,9 @@ export default function Navbar() {
                 Sign in
               </span>
             </Link>
-            <Link href="/demo">
+            <Link href="/signup">
               <button className="btn-lime px-5 py-3 text-sm w-full" onClick={() => setMobileOpen(false)}>
-                Book a demo
+                Get beta access
               </button>
             </Link>
           </div>

@@ -22,11 +22,24 @@ export const authConfig = {
         (session.user as any).role = token.role;
         (session.user as any).shopName = token.shopName;
         (session.user as any).shopSlug = token.shopSlug;
+        (session.user as any).needsSetup = token.needsSetup ?? false;
       }
       return session;
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const needsSetup = (auth?.user as any)?.needsSetup;
+
+      // Approved beta user who hasn't set up their shop yet
+      if (isLoggedIn && needsSetup) {
+        const isOnSetup = nextUrl.pathname.startsWith('/setup');
+        const isOnApi = nextUrl.pathname.startsWith('/api');
+        if (!isOnSetup && !isOnApi) {
+          return Response.redirect(new URL('/setup', nextUrl));
+        }
+        return true;
+      }
+
       const isCustomerPortal = nextUrl.pathname.startsWith('/customer') ||
                                nextUrl.pathname.startsWith('/c') ||
                                nextUrl.pathname.startsWith('/shop');
@@ -39,12 +52,13 @@ export const authConfig = {
                             nextUrl.pathname.startsWith('/settings') ||
                             nextUrl.pathname.startsWith('/team');
       const isOnLoginPage = nextUrl.pathname.startsWith('/login');
+      const isOnSignup = nextUrl.pathname.startsWith('/signup');
 
       if (isOnDashboard) {
         if (isLoggedIn) return true;
-        return false; // Redirect unauthenticated users to login page
-      } else if (isOnLoginPage) {
-        if (isLoggedIn) {
+        return false;
+      } else if (isOnLoginPage || isOnSignup) {
+        if (isLoggedIn && !needsSetup) {
           return Response.redirect(new URL('/dashboard', nextUrl));
         }
         return true;
