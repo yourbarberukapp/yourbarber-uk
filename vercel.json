@@ -3,5 +3,6 @@
     {
       "path": "/api/reminders/scheduled",
       "schedule": "0 9 * * *"
+    }
   ]
 }
