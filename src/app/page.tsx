@@ -234,7 +234,7 @@ export default function Home() {
         <div className="relative z-10 container mx-auto px-6 lg:px-12 py-32 lg:py-44">
           <div className="max-w-xl">
             <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="badge-lime inline-block mb-7">
-              Founding member — £20/month, locked in for life
+              Free beta — first 50 barbershops
             </motion.div>
 
             <motion.h1 initial="hidden" animate="visible" custom={1} variants={fadeUp}
@@ -251,7 +251,7 @@ export default function Home() {
 
             <motion.p initial="hidden" animate="visible" custom={3} variants={fadeUp}
               className="text-sm text-white/35 max-w-md leading-relaxed mb-8 font-inter">
-              Be one of the first 50 shops. Help us build it right, and pay £20/month for as long as you use YourBarber — no matter what the price becomes when we go live.
+              Get free access to the beta. Help us build it right — your feedback decides what gets built first. No credit card. No contracts.
             </motion.p>
 
             <motion.div initial="hidden" animate="visible" custom={4} variants={fadeUp} className="mb-8">
@@ -260,7 +260,7 @@ export default function Home() {
 
             <motion.div initial="hidden" animate="visible" custom={5} variants={fadeUp}
               className="flex flex-wrap items-center gap-5 text-sm text-white/30 font-inter">
-              {['No customer app needed', 'Your data, your clients', 'We call you personally'].map(item => (
+              {['No credit card', 'No contracts', 'Your feedback shapes the product'].map(item => (
                 <span key={item} className="flex items-center gap-1.5">
                   <ShieldCheck size={13} className="text-[#C8F135]" /> {item}
                 </span>
@@ -541,22 +541,22 @@ export default function Home() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={fadeUp}>
             <div className="inline-flex items-center gap-2 bg-black/10 rounded-full px-4 py-1.5 mb-8">
               <Scissors size={12} className="text-[#0A0A0A]/50" />
-              <span className="text-[10px] font-barlow font-bold uppercase tracking-[0.2em] text-[#0A0A0A]/50">First 50 shops only</span>
+              <span className="text-[10px] font-barlow font-bold uppercase tracking-[0.2em] text-[#0A0A0A]/50">Free beta — first 50 shops</span>
             </div>
             <h2 className="font-barlow font-black text-[clamp(2.5rem,6.5vw,5rem)] uppercase leading-[0.9] text-[#0A0A0A] mb-6">
-              Know every client.
-              <br />Every time.
+              Help us build it.
+              <br />Use it free.
             </h2>
             <p className="text-[#0A0A0A]/65 max-w-md mx-auto mb-10 font-inter text-lg">
-              Their grades, their photos, their preferences — in your hand before the cape goes on. £20/month, locked in for life.
+              First 50 barbershops get free access. Your feedback decides what gets built first. After the beta: £20/month, locked in for life if you want to stay.
             </p>
             <Link href="#" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
               <button className="bg-[#0A0A0A] text-[#C8F135] px-10 py-5 text-base rounded-sm font-barlow font-black uppercase tracking-wide hover:bg-[#1a1a1a] transition-colors inline-flex items-center gap-2 shadow-lg">
-                Claim my founding spot <ArrowRight size={17} />
+                Apply for free beta access <ArrowRight size={17} />
               </button>
             </Link>
             <p className="mt-5 text-[#0A0A0A]/40 text-sm font-inter">
-              We&apos;ll call you personally to walk through the system. No contracts.
+              No credit card. No contracts. We&apos;ll call you personally to walk through the system.
             </p>
           </motion.div>
         </div>

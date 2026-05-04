@@ -54,11 +54,14 @@ export default function WaitlistForm() {
             <Check size={14} color="#0A0A0A" strokeWidth={3} />
           </div>
           <span style={{ fontFamily: 'var(--font-barlow)', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'white' }}>
-            You&apos;re on the list
+            You&apos;re in
           </span>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', fontFamily: 'var(--font-inter)', lineHeight: 1.6, marginLeft: '2.5rem' }}>
-          We&apos;ll call you personally to walk through the system. Your £20/month rate is reserved.
+          We&apos;ll call you personally to walk through the system. No credit card, no contracts — just free access and your honest feedback.
+        </p>
+        <p style={{ color: 'rgba(200,241,53,0.4)', fontSize: '0.75rem', fontFamily: 'var(--font-inter)', lineHeight: 1.5, marginLeft: '2.5rem', marginTop: '0.5rem' }}>
+          After the beta: £20/month locked in for life if you want to stay.
         </p>
       </div>
     );
@@ -90,9 +93,13 @@ export default function WaitlistForm() {
         opacity: state === 'loading' ? 0.7 : 1,
       }}>
         {state === 'loading'
-          ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Claiming your spot…</>
-          : <>Claim my founding spot <ArrowRight size={16} /></>}
+          ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Applying…</>
+          : <>Apply for free beta access <ArrowRight size={16} /></>}
       </button>
+
+      <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', marginTop: '0.5rem', fontFamily: 'var(--font-inter)', textAlign: 'center' }}>
+        No credit card. No contracts. After beta: £20/month locked in for life.
+      </p>
 
       {state === 'error' && (
         <p style={{ color: 'rgba(255,100,100,0.8)', fontSize: '0.8rem', marginTop: '0.5rem', fontFamily: 'var(--font-inter)' }}>
