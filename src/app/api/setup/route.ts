@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { randomBytes } from 'crypto';
+import { sendSetupCompleteEmail } from '@/lib/email';
 
 function generateSlug(name: string): string {
   return name.toLowerCase()
@@ -51,6 +52,8 @@ export async function POST(req: NextRequest) {
       role: 'owner',
     },
   });
+
+  sendSetupCompleteEmail({ name: yourName.trim(), email, shopName: shopName.trim(), shopSlug: slug }).catch(() => null);
 
   return NextResponse.json({ ok: true, shopSlug: slug, shopName: shopName.trim() });
 }

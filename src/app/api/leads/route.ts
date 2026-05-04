@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendBetaSignupNotification } from '@/lib/email';
+import { sendBetaSignupNotification, sendBetaConfirmationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const { name, email, phone, shopName, challenge } = await req.json();
@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
     data: { name, email, phone, shopName: shopName || '', approved: true, approvedAt: new Date() },
   });
 
-  await sendBetaSignupNotification({ name, email, phone, shopName: shopName || '', challenge: challenge || '' }).catch(() => null);
+  await Promise.allSettled([
+    sendBetaSignupNotification({ name, email, phone, shopName: shopName || '', challenge: challenge || '' }),
+    sendBetaConfirmationEmail({ name, email }),
+  ]);
 
   return NextResponse.json({ ok: true });
 }
