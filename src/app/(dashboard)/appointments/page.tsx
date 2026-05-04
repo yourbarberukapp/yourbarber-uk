@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import AppointmentGrid from './AppointmentGrid';
+import WhatsAppMyDayButton from './WhatsAppMyDayButton';
 
 function startOfWeek(date: Date) {
   const next = new Date(date);
@@ -57,6 +58,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
           </h1>
           <p className="text-muted-foreground text-sm font-inter">Manage your shop's upcoming appointments</p>
         </div>
+        <WhatsAppMyDayButton />
       </header>
 
       <AppointmentGrid 

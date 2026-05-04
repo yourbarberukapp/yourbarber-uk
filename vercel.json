@@ -3,6 +3,10 @@
     {
       "path": "/api/reminders/scheduled",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/daily-brief",
+      "schedule": "0 4 * * *"
     }
   ]
 }

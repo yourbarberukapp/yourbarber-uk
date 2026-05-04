@@ -116,6 +116,85 @@ export async function sendSetupCompleteEmail({
   });
 }
 
+// ─── Barber: 4 AM daily brief ─────────────────────────────────────────────
+
+type DailyAppointment = {
+  scheduledAt: Date;
+  duration: number;
+  notes: string | null;
+  status: string;
+  customer: { name: string | null; phone: string };
+  service: { name: string } | null;
+  lastCut: {
+    visitedAt: Date;
+    cutDetails: unknown;
+    notes: string | null;
+  } | null;
+};
+
+export async function sendDailyBriefEmail({
+  barberName, barberEmail, shopName, appointments,
+}: {
+  barberName: string;
+  barberEmail: string;
+  shopName: string;
+  appointments: DailyAppointment[];
+}) {
+  const firstName = barberName.split(' ')[0];
+  const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const rows = appointments.map(a => {
+    const time = new Date(a.scheduledAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const clientName = a.customer.name || 'Unknown';
+    const service = a.service?.name || '—';
+    const passport = a.lastCut
+      ? (() => {
+          const details = a.lastCut.cutDetails as Record<string, string> | null;
+          const parts: string[] = [];
+          if (details?.style) parts.push(details.style);
+          if (details?.top) parts.push(`Top: ${details.top}`);
+          if (details?.sides) parts.push(`Sides: ${details.sides}`);
+          if (a.lastCut.notes) parts.push(a.lastCut.notes);
+          return parts.length ? parts.join(' · ') : 'No notes';
+        })()
+      : 'First visit';
+
+    return `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:0.75rem 0;color:#C8F135;font-family:sans-serif;font-size:0.85rem;font-weight:700;white-space:nowrap;vertical-align:top;">${time}</td>
+        <td style="padding:0.75rem 0 0.75rem 1rem;vertical-align:top;">
+          <div style="color:white;font-size:0.9rem;font-weight:700;font-family:sans-serif;">${clientName}</div>
+          <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;font-family:sans-serif;margin-top:2px;">${service} · ${a.duration} min</div>
+          <div style="color:rgba(255,255,255,0.5);font-size:0.75rem;font-family:sans-serif;margin-top:4px;font-style:italic;">${passport}</div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  await resend.emails.send({
+    from: FROM,
+    to: barberEmail,
+    subject: `Your day at ${shopName} — ${today}`,
+    html: wrap(`
+      <p style="color:rgba(255,255,255,0.8);font-size:1rem;line-height:1.6;margin-bottom:0.5rem;">
+        Morning ${firstName},
+      </p>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:1.5rem;">
+        You have <strong style="color:white;">${appointments.length} appointment${appointments.length !== 1 ? 's' : ''}</strong> today at ${shopName}.
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;">
+        ${rows}
+      </table>
+      <a href="${BASE_URL}/dashboard/appointments"
+        style="display:inline-block;background:#C8F135;color:#0A0A0A;padding:0.65rem 1.25rem;border-radius:4px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;font-size:0.8rem;">
+        Open schedule →
+      </a>
+      <p style="color:rgba(255,255,255,0.2);font-size:0.7rem;margin-top:1.5rem;">
+        Sent at 4 AM so you have it before you leave the house.
+      </p>
+    `),
+  });
+}
+
 // ─── Barber: password reset ────────────────────────────────────────────────
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
