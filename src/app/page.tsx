@@ -138,66 +138,6 @@ function BarberMockup() {
   );
 }
 
-function OwnerMockup() {
-  const bars = [6, 8, 12, 9, 7];
-  const days = ['M', 'T', 'W', 'T', 'F'];
-  const max = Math.max(...bars);
-  return (
-    <div style={{
-      width: 300, flexShrink: 0,
-      background: '#111', border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: 16, overflow: 'hidden',
-      boxShadow: '0 32px 64px rgba(0,0,0,0.6)',
-    }}>
-      <div style={{ background: '#0d0d0d', padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 9, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)' }}>Owner Dashboard</span>
-        <span style={{ fontSize: 9, color: '#C8F135', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>The Barber Room</span>
-      </div>
-      <div style={{ padding: '1rem' }}>
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 14 }}>
-          {[['47', 'Cuts this week'], ['£1,127', 'Revenue'], ['89%', 'Retention']].map(([v, l]) => (
-            <div key={l} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 6, padding: '0.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: 14, fontFamily: 'var(--font-barlow)', fontWeight: 900, color: '#C8F135' }}>{v}</div>
-              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase', lineHeight: 1.3 }}>{l}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Bar chart */}
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 7, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>Cuts per day</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 36 }}>
-            {bars.map((b, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                <div style={{ width: '100%', height: (b / max) * 28, background: i === 2 ? '#C8F135' : 'rgba(255,255,255,0.12)', borderRadius: '2px 2px 0 0' }} />
-                <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>{days[i]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Reminders */}
-        <div style={{ background: 'rgba(200,241,53,0.05)', border: '1px solid rgba(200,241,53,0.15)', borderRadius: 6, padding: '0.5rem 0.625rem', marginBottom: 8 }}>
-          <div style={{ fontSize: 8, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#C8F135', marginBottom: 4 }}>3 clients due a reminder</div>
-          {['Marcus T. — 5 weeks', 'Zara H. — 6 weeks', 'Ryan M. — 5 weeks'].map(n => (
-            <div key={n} style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-inter)', padding: '1px 0' }}>{n}</div>
-          ))}
-        </div>
-
-        {/* Popular */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.375rem 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>Most popular</span>
-          <span style={{ fontSize: 8, color: 'white', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>Skin Fade · 38%</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.375rem 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase' }}>Busiest slot</span>
-          <span style={{ fontSize: 8, color: 'white', fontFamily: 'var(--font-barlow)', fontWeight: 700 }}>Wed 2–4pm</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const customerSteps = [
   { n: '01', title: 'Scan the wall QR', body: 'The client scans the QR code on your wall or desk from their own phone. No app to download.' },
@@ -228,8 +168,8 @@ export default function Home() {
 
       {/* HERO */}
       <section id="waitlist" className="relative min-h-screen flex items-center overflow-hidden">
-        <Image src="/hero-ipad.png" alt="YourBarber in a barbershop" fill priority sizes="100vw"
-          className="object-cover object-center opacity-45 z-0" />
+        <Image src="/hero-barber.webp" alt="YourBarber in a barbershop" fill priority sizes="100vw"
+          className="object-cover object-right opacity-60 z-0" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/85 to-[#0A0A0A]/20 pointer-events-none z-[1]" />
 
         <div className="relative z-10 container mx-auto px-6 lg:px-12 py-32 lg:py-44">
@@ -404,24 +344,9 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Lock screen notification below card */}
-                <div style={{
-                  marginTop: 16, width: 300,
-                  background: 'rgba(255,255,255,0.06)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 14,
-                  padding: '0.625rem 0.875rem',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}>
-                  <div style={{ width: 28, height: 28, background: '#C8F135', borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 12 }}>✂️</span>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', color: 'white' }}>The Barber Room</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-inter)' }}>Marcus, time for a trim? You were last in 5 weeks ago.</div>
-                  </div>
-                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)', flexShrink: 0 }}>now</div>
+                {/* SMS reminder photo */}
+                <div style={{ marginTop: 16, width: 300, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                  <Image src="/sms-reminder.webp" alt="SMS reminder on phone lock screen" width={300} height={375} style={{ display: 'block', width: '100%', height: 'auto' }} />
                 </div>
               </div>
             </motion.div>
@@ -471,7 +396,9 @@ export default function Home() {
               className="flex justify-center lg:justify-start order-2 lg:order-1 lg:sticky lg:top-28">
               <div className="relative">
                 <div className="absolute -inset-8 bg-[#C8F135]/5 rounded-3xl blur-3xl pointer-events-none" />
-                <BarberMockup />
+                <div style={{ position: 'relative', width: 340, borderRadius: 16, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.7)' }}>
+                  <Image src="/passport-ipad.webp" alt="Cut Passport on iPad" width={340} height={460} style={{ display: 'block', width: '100%', height: 'auto' }} />
+                </div>
               </div>
             </motion.div>
 
@@ -528,7 +455,9 @@ export default function Home() {
               className="flex justify-center lg:justify-end lg:sticky lg:top-28">
               <div className="relative">
                 <div className="absolute -inset-8 bg-[#C8F135]/5 rounded-3xl blur-3xl pointer-events-none" />
-                <OwnerMockup />
+                <div style={{ position: 'relative', width: '100%', maxWidth: 540, borderRadius: 16, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.7)' }}>
+                  <Image src="/barbers-team.webp" alt="Professional barbers" width={540} height={360} style={{ display: 'block', width: '100%', height: 'auto' }} />
+                </div>
               </div>
             </motion.div>
           </div>
