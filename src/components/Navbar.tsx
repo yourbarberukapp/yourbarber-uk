@@ -60,7 +60,7 @@ export default function Navbar() {
               Sign in
             </span>
           </Link>
-          <Link href="/signup">
+          <Link href="/#waitlist">
             <button className="btn-lime px-5 py-2 text-sm">
               Get beta access
             </button>
@@ -95,7 +95,7 @@ export default function Navbar() {
                 Sign in
               </span>
             </Link>
-            <Link href="/signup">
+            <Link href="/#waitlist">
               <button className="btn-lime px-5 py-3 text-sm w-full" onClick={() => setMobileOpen(false)}>
                 Get beta access
               </button>

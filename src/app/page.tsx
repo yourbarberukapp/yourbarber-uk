@@ -227,7 +227,7 @@ export default function Home() {
       <Navbar />
 
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section id="waitlist" className="relative min-h-screen flex items-center overflow-hidden">
         <Image src="/hero-ipad.png" alt="YourBarber in a barbershop" fill priority sizes="100vw"
           className="object-cover object-center opacity-45 z-0" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/85 to-[#0A0A0A]/20 pointer-events-none z-[1]" />
