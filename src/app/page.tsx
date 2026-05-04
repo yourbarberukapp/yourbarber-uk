@@ -278,70 +278,9 @@ export default function Home() {
               className="flex justify-center">
               <div className="relative">
                 <div className="absolute -inset-10 bg-[#C8F135]/8 rounded-3xl blur-3xl pointer-events-none" />
-                {/* Apple Wallet card */}
-                <div style={{
-                  width: 300, borderRadius: 20,
-                  background: 'linear-gradient(160deg, #1a1a1a 0%, #0d0d0d 100%)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
-                  overflow: 'hidden',
-                }}>
-                  {/* Top colour strip */}
-                  <div style={{ height: 6, background: 'linear-gradient(90deg, #C8F135, #a8d120)' }} />
-
-                  {/* Pass header */}
-                  <div style={{ padding: '1rem 1.25rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div>
-                      <div style={{ fontSize: 8, fontFamily: 'var(--font-barlow)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', marginBottom: 2 }}>Cut Passport</div>
-                      <div style={{ fontSize: 13, fontFamily: 'var(--font-barlow)', fontWeight: 900, textTransform: 'uppercase', color: 'white', letterSpacing: '0.04em' }}>The Barber Room</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)' }}>Next visit</div>
-                      <div style={{ fontSize: 12, fontFamily: 'var(--font-barlow)', fontWeight: 900, color: '#C8F135' }}>In 2 weeks</div>
-                    </div>
-                  </div>
-
-                  {/* Client name */}
-                  <div style={{ padding: '1rem 1.25rem 0.5rem' }}>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>Member</div>
-                    <div style={{ fontSize: 22, fontFamily: 'var(--font-barlow)', fontWeight: 900, textTransform: 'uppercase', color: 'white', letterSpacing: '0.02em' }}>Marcus T.</div>
-                  </div>
-
-                  {/* Last cut details */}
-                  <div style={{ padding: '0 1.25rem 1rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                    {[['Style', 'Skin Fade'], ['Top', '#2 Guard'], ['Sides', '#1 Guard']].map(([k, v]) => (
-                      <div key={k}>
-                        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-barlow)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>{k}</div>
-                        <div style={{ fontSize: 10, fontFamily: 'var(--font-barlow)', fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{v}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Photo strip */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 2, margin: '0 1.25rem 1rem' }}>
-                    {[
-                      { src: '/trends/skin-fade.png', pos: 'center 15%', label: 'Front' },
-                      { src: '/trends/skin-fade.png', pos: 'right 10%', label: 'Left' },
-                      { src: '/trends/skin-fade.png', pos: 'left 10%', label: 'Right' },
-                      { src: '/trends/classic-taper.png', pos: 'center 5%', label: 'Back' },
-                    ].map(({ src, pos, label }, i) => (
-                      <div key={i} style={{ aspectRatio: '3/4', borderRadius: 4, overflow: 'hidden', position: 'relative', background: 'rgba(255,255,255,0.05)' }}>
-                        <Image src={src} alt={label} fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.8 }} />
-                        <span style={{ position: 'absolute', bottom: 3, left: 3, fontSize: '6px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.7)', padding: '1px 3px', borderRadius: 2, fontFamily: 'var(--font-barlow)' }}>{label}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Footer */}
-                  <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)' }}>Last cut: 3 weeks ago</div>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-inter)' }}>Add to</div>
-                      <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 4, padding: '2px 6px' }}>
-                        <span style={{ fontSize: 7, fontFamily: 'var(--font-inter)', fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Wallet</span>
-                      </div>
-                    </div>
-                  </div>
+                {/* Cut Passport photo — Dylan Mitchell */}
+                <div style={{ width: 300, borderRadius: 16, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.7)' }}>
+                  <Image src="/passport-ipad.webp" alt="Cut Passport on iPad" width={300} height={407} style={{ display: 'block', width: '100%', height: 'auto' }} />
                 </div>
 
                 {/* SMS reminder photo */}
@@ -396,9 +335,7 @@ export default function Home() {
               className="flex justify-center lg:justify-start order-2 lg:order-1 lg:sticky lg:top-28">
               <div className="relative">
                 <div className="absolute -inset-8 bg-[#C8F135]/5 rounded-3xl blur-3xl pointer-events-none" />
-                <div style={{ position: 'relative', width: 340, borderRadius: 16, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.7)' }}>
-                  <Image src="/passport-ipad.webp" alt="Cut Passport on iPad" width={340} height={460} style={{ display: 'block', width: '100%', height: 'auto' }} />
-                </div>
+                <BarberMockup />
               </div>
             </motion.div>
 
