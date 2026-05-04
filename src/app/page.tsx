@@ -104,10 +104,10 @@ function BarberMockup() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               {[
-                { src: '/demo-barber.png', pos: 'center top' },
-                { src: '/showcase-record.png', pos: 'center center' },
-                { src: '/demo-kiosk-luke.png', pos: 'center 30%' },
-                { src: '/showcase-team.png', pos: 'center top' },
+                { src: '/trends/skin-fade.png', pos: 'center 20%' },
+                { src: '/trends/classic-taper.png', pos: 'left 40%' },
+                { src: '/trends/textured-crop.png', pos: 'center top' },
+                { src: '/trends/skin-fade.png', pos: 'right 30%' },
               ].map(({ src, pos }, i) => (
                 <div key={i} style={{ aspectRatio: '4/3', borderRadius: 3, overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <Image src={src} alt="" fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.85 }} />
@@ -379,10 +379,10 @@ export default function Home() {
                   {/* Photo strip */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 2, margin: '0 1.25rem 1rem' }}>
                     {[
-                      { src: '/demo-barber.png', pos: 'center top' },
-                      { src: '/showcase-record.png', pos: 'center center' },
-                      { src: '/demo-kiosk-luke.png', pos: 'center 30%' },
-                      { src: '/showcase-team.png', pos: 'center top' },
+                      { src: '/trends/skin-fade.png', pos: 'center 20%' },
+                      { src: '/trends/classic-taper.png', pos: 'left 40%' },
+                      { src: '/trends/textured-crop.png', pos: 'center top' },
+                      { src: '/trends/skin-fade.png', pos: 'right 30%' },
                     ].map(({ src, pos }, i) => (
                       <div key={i} style={{ aspectRatio: '3/4', borderRadius: 4, overflow: 'hidden', position: 'relative', background: 'rgba(255,255,255,0.05)' }}>
                         <Image src={src} alt="" fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.8 }} />
