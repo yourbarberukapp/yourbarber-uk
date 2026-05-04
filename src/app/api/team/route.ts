@@ -7,7 +7,6 @@ import bcrypt from 'bcryptjs';
 const inviteSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
-  role: z.enum(['barber', 'owner']).default('barber'),
   password: z.string().min(8),
 });
 
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const barber = await db.barber.create({
-    data: { shopId, name: parsed.data.name, email: parsed.data.email, passwordHash, role: parsed.data.role },
+    data: { shopId, name: parsed.data.name, email: parsed.data.email, passwordHash, role: 'barber' },
   });
   return NextResponse.json({ id: barber.id }, { status: 201 });
 }

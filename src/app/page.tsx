@@ -104,13 +104,14 @@ function BarberMockup() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               {[
-                { src: '/trends/skin-fade.png', pos: 'center 20%' },
-                { src: '/trends/classic-taper.png', pos: 'left 40%' },
-                { src: '/trends/textured-crop.png', pos: 'center top' },
-                { src: '/trends/skin-fade.png', pos: 'right 30%' },
-              ].map(({ src, pos }, i) => (
+                { src: '/trends/skin-fade.png', pos: 'center 15%', label: 'Front' },
+                { src: '/trends/skin-fade.png', pos: 'right 10%', label: 'Left' },
+                { src: '/trends/skin-fade.png', pos: 'left 10%', label: 'Right' },
+                { src: '/trends/classic-taper.png', pos: 'center 5%', label: 'Back' },
+              ].map(({ src, pos, label }, i) => (
                 <div key={i} style={{ aspectRatio: '4/3', borderRadius: 3, overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <Image src={src} alt="" fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.85 }} />
+                  <Image src={src} alt={label} fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.85 }} />
+                  <span style={{ position: 'absolute', bottom: 2, left: 2, fontSize: '5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.7)', padding: '1px 3px', borderRadius: 1, fontFamily: 'var(--font-barlow)' }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -379,13 +380,14 @@ export default function Home() {
                   {/* Photo strip */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 2, margin: '0 1.25rem 1rem' }}>
                     {[
-                      { src: '/trends/skin-fade.png', pos: 'center 20%' },
-                      { src: '/trends/classic-taper.png', pos: 'left 40%' },
-                      { src: '/trends/textured-crop.png', pos: 'center top' },
-                      { src: '/trends/skin-fade.png', pos: 'right 30%' },
-                    ].map(({ src, pos }, i) => (
+                      { src: '/trends/skin-fade.png', pos: 'center 15%', label: 'Front' },
+                      { src: '/trends/skin-fade.png', pos: 'right 10%', label: 'Left' },
+                      { src: '/trends/skin-fade.png', pos: 'left 10%', label: 'Right' },
+                      { src: '/trends/classic-taper.png', pos: 'center 5%', label: 'Back' },
+                    ].map(({ src, pos, label }, i) => (
                       <div key={i} style={{ aspectRatio: '3/4', borderRadius: 4, overflow: 'hidden', position: 'relative', background: 'rgba(255,255,255,0.05)' }}>
-                        <Image src={src} alt="" fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.8 }} />
+                        <Image src={src} alt={label} fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.8 }} />
+                        <span style={{ position: 'absolute', bottom: 3, left: 3, fontSize: '6px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.7)', padding: '1px 3px', borderRadius: 2, fontFamily: 'var(--font-barlow)' }}>{label}</span>
                       </div>
                     ))}
                   </div>

@@ -1,11 +1,32 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
+function isGoogleMapsUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === 'https:' &&
+      (parsed.hostname === 'www.google.com' || parsed.hostname === 'google.com' || parsed.hostname === 'maps.google.com' || parsed.hostname === 'maps.app.goo.gl') &&
+      (parsed.pathname.startsWith('/maps') || parsed.hostname === 'maps.app.goo.gl')
+    );
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(req: Request) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const { url } = await req.json();
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    }
+
+    if (!isGoogleMapsUrl(url)) {
+      return NextResponse.json({ error: 'Only Google Maps URLs are supported' }, { status: 400 });
     }
 
     const response = await fetch(url, {
