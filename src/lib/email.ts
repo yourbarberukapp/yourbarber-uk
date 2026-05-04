@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 const BASE_URL = process.env.NEXTAUTH_URL || process.env.APP_URL || 'https://yourbarber.uk';
 const ADMIN_EMAIL = 'info@thornes.org.uk';
-const FROM = 'YourBarber <noreply@yourbarber.uk>';
+const FROM = 'YourBarber <onboarding@resend.dev>';
 
 // ─── Internal helper ───────────────────────────────────────────────────────
 
