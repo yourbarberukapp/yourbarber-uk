@@ -39,7 +39,7 @@ export async function GET() {
 
   if (!barber) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const customerIds = [...new Set(appointments.map(a => a.customer.id))];
+  const customerIds = Array.from(new Set(appointments.map(a => a.customer.id)));
   const lastVisits = await db.visit.findMany({
     where: { customerId: { in: customerIds }, barberId },
     orderBy: { visitedAt: 'desc' },

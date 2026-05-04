@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
   // For each barber, fetch last cut passport per customer
   const results = await Promise.allSettled(
     barbers.map(async (barber) => {
-      const customerIds = [...new Set(barber.appointments.map(a => a.customer.id))];
+      const customerIds = Array.from(new Set(barber.appointments.map(a => a.customer.id)));
 
       const lastVisits = await db.visit.findMany({
         where: {
