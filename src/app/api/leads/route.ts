@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   await db.demoLead.create({
-    data: { name, email, phone, shopName: shopName || '' },
+    data: { name, email, phone, shopName: shopName || '', approved: true, approvedAt: new Date() },
   });
 
   await sendBetaSignupNotification({ name, email, phone, shopName: shopName || '', challenge: challenge || '' }).catch(() => null);
