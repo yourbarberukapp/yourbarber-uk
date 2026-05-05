@@ -16,6 +16,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const isResetSuccess = searchParams.get('reset') === 'success';
+  const isNotApproved = searchParams.get('error') === 'not_approved';
   const callbackUrl = searchParams.get('callbackUrl') || null;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -73,6 +74,11 @@ function LoginForm() {
           {isResetSuccess && (
             <div style={{ padding: '0.75rem', background: 'rgba(200,241,53,0.1)', border: '1px solid rgba(200,241,53,0.2)', borderRadius: 4, color: '#C8F135', fontSize: '0.875rem', marginBottom: '1.5rem', textAlign: 'center' }}>
               Password reset successfully. You can now sign in with your new password.
+            </div>
+          )}
+          {isNotApproved && (
+            <div style={{ padding: '0.75rem', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 4, color: '#f87171', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              That Google account isn&apos;t on the beta list. Make sure you sign in with the same email address you used to register.
             </div>
           )}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

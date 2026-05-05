@@ -53,7 +53,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         if (barber) return true;
         // New user → must be on the approved beta list
         const lead = await db.demoLead.findFirst({ where: { email, approved: true } });
-        if (!lead) return '/signup?error=not_approved';
+        if (!lead) return '/login?error=not_approved';
         return true;
       }
       return true;
