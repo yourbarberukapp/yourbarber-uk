@@ -317,6 +317,9 @@ export default function DemoBarbersPage() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <a href="/demo-hub" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', textDecoration: 'none', fontFamily: 'var(--font-barlow, sans-serif)', marginRight: 4 }}>
+            <ChevronLeft size={11} /> Demo
+          </a>
           <div style={{
             width: 32, height: 32, borderRadius: 6,
             background: 'rgba(200,241,53,0.12)',

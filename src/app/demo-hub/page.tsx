@@ -49,8 +49,8 @@ const screens = [
     subtitle: 'Steps 2 to 4 - Queue to Cut Passport',
     desc: 'The barber sees the live queue, opens the next client, checks what they had last time, and records the new cut before they leave the chair.',
     icon: Monitor,
-    link: '/login?callbackUrl=%2Fbarber',
-    login: 'james@thebarbershop.com / barber123',
+    link: '/demo/barber',
+    login: null,
     image: '/demo-barber.png',
     imageAlt: 'Barber mode showing the live queue and client cut history on a phone in a barbershop',
     features: ['Live queue in the pocket', 'Mark in chair and done', 'Open the Cut Passport', 'Save grades, notes, and photos'],
@@ -62,7 +62,7 @@ const screens = [
     desc: 'The owner sees the whole shop in one place: the queue, the team, the regulars, reminders, feedback, and the tools that bring clients back.',
     icon: Layout,
     link: '/login?callbackUrl=%2Fdashboard',
-    login: 'ben@thebarbershop.com / owner123',
+    login: null,
     image: '/demo-dashboard.png',
     imageAlt: 'Owner dashboard on a laptop in a barbershop',
     features: ['Live shop view', 'Customer history', 'Return-visit reminders', 'Feedback and settings'],
@@ -246,22 +246,13 @@ export default function DemoHubPage() {
                       </button>
                     </>
                   ) : (
-                    <>
-                      <button
-                        onClick={() => quickLogin(screen.id as 'barber' | 'owner')}
-                        disabled={!!loadingRole}
-                        className="w-full py-4 bg-[#C8F135] hover:bg-[#d4f84d] text-[#0A0A0A] font-barlow font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm border-none mb-3"
-                      >
-                        {loadingRole === screen.id ? '⏳ Signing in…' : `⚡ One-Click ${screen.id === 'barber' ? 'Barber' : 'Owner'} Login`}
-                      </button>
-                      <Link
-                        href={screen.link}
-                        className="w-full py-3 bg-white/5 hover:bg-white/10 text-white/60 font-barlow font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 rounded-sm border border-white/10"
-                      >
-                        Manual login instead
-                        <ExternalLink size={14} />
-                      </Link>
-                    </>
+                    <Link
+                      href={screen.link}
+                      className="w-full py-4 bg-[#C8F135] hover:bg-[#d4f84d] text-[#0A0A0A] font-barlow font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm"
+                    >
+                      Open {screen.title}
+                      <ExternalLink size={16} />
+                    </Link>
                   )}
                 </div>
               </motion.div>
@@ -370,8 +361,8 @@ export default function DemoHubPage() {
                   <div className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30">Commission</div>
                 </div>
                 <div>
-                  <div className="text-[#C8F135] font-barlow font-black text-3xl mb-1">&pound;29</div>
-                  <div className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30">Founding price</div>
+                  <div className="text-[#C8F135] font-barlow font-black text-3xl mb-1">&pound;20</div>
+                  <div className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30">Per month</div>
                 </div>
                 <div>
                   <div className="text-[#C8F135] font-barlow font-black text-3xl mb-1">&lt;30s</div>
