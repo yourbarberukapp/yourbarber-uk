@@ -83,9 +83,11 @@ function formatCutSummary(cutDetails: LastVisit['cutDetails']): string | null {
 export default function BarberClient({
   initialWalkIns,
   initialIsBusy,
+  shopSlug,
 }: {
   initialWalkIns: WalkIn[];
   initialIsBusy: boolean;
+  shopSlug: string;
 }) {
   const [tab, setTab] = useState<Tab>('queue');
   const [walkIns, setWalkIns] = useState<WalkIn[]>(initialWalkIns);
@@ -251,13 +253,34 @@ export default function BarberClient({
           {active.length === 0 ? (
             <div style={{
               background: '#111', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 12, padding: '3rem 1.5rem', textAlign: 'center',
+              borderRadius: 12, padding: '2rem 1.5rem', textAlign: 'center',
             }}>
-              <Clock size={32} color="rgba(255,255,255,0.1)" style={{ marginBottom: '0.75rem' }} />
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.95rem', margin: 0 }}>Queue is empty</p>
-              <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.8rem', margin: '0.375rem 0 0' }}>
-                Clients check in on their phone
+              <Clock size={28} color="rgba(255,255,255,0.08)" style={{ marginBottom: '0.75rem' }} />
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.95rem', margin: '0 0 0.25rem', fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue is empty</p>
+              <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.8rem', margin: '0 0 1.5rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
+                Point your next client at the wall QR or share the link below
               </p>
+              {shopSlug && (
+                <a
+                  href={`/arrive/${shopSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    background: 'rgba(200,241,53,0.08)',
+                    border: '1px solid rgba(200,241,53,0.2)',
+                    borderRadius: 8,
+                    padding: '0.75rem 1.25rem',
+                    color: '#C8F135',
+                    fontSize: '0.8rem',
+                    fontFamily: 'var(--font-inter, sans-serif)',
+                    textDecoration: 'none',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  yourbarber.uk/arrive/{shopSlug}
+                </a>
+              )}
             </div>
           ) : (
             <>
