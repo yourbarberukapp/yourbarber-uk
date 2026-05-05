@@ -67,12 +67,15 @@ export async function sendBetaConfirmationEmail({
       <p style="color:rgba(255,255,255,0.8);font-size:1rem;line-height:1.6;margin-bottom:1.25rem;">
         Hi ${firstName},
       </p>
-      <p style="color:rgba(255,255,255,0.8);font-size:1rem;line-height:1.6;margin-bottom:1.5rem;">
-        Your beta spot is confirmed. Sign in with Google to set up your shop — takes about 30 seconds.
+      <p style="color:rgba(255,255,255,0.8);font-size:1rem;line-height:1.6;margin-bottom:1rem;">
+        You&apos;re in. Sign in with Google to set up your shop — takes about 30 seconds.
       </p>
-      <a href="${BASE_URL}/signup"
+      <p style="color:rgba(255,200,50,0.85);font-size:0.85rem;line-height:1.6;margin-bottom:1.5rem;padding:0.75rem 1rem;background:rgba(255,200,50,0.08);border-left:3px solid rgba(255,200,50,0.4);border-radius:0 4px 4px 0;">
+        <strong>Important:</strong> sign in with the Google account for this email address — <strong>${firstName.length > 0 ? '' : ''}</strong> the same address this email arrived at. Using a different Google account won&apos;t work.
+      </p>
+      <a href="${BASE_URL}/login"
         style="display:inline-block;background:#C8F135;color:#0A0A0A;padding:0.75rem 1.5rem;border-radius:4px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;font-size:0.9rem;margin-bottom:1.5rem;">
-        Set up my shop →
+        Sign in and set up my shop →
       </a>
       <p style="color:rgba(255,255,255,0.4);font-size:0.85rem;line-height:1.6;">
         After the beta: £20/month, locked in for life if you stay on.

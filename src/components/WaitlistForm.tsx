@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { ArrowRight, Check, Loader2 } from 'lucide-react';
+import { ArrowRight, Check, Loader2, ChevronDown } from 'lucide-react';
 
 const inputStyle: React.CSSProperties = {
   background: 'rgba(255,255,255,0.05)',
@@ -17,9 +16,65 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 };
 
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  backgroundImage: 'none',
+  cursor: 'pointer',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '0.7rem',
+  fontWeight: 700,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.1em',
+  color: 'rgba(255,255,255,0.35)',
+  marginBottom: '0.35rem',
+  fontFamily: 'var(--font-barlow)',
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options, placeholder }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder: string;
+}) {
+  return (
+    <Field label={label}>
+      <div style={{ position: 'relative' }}>
+        <select value={value} onChange={e => onChange(e.target.value)} style={selectStyle}>
+          <option value="" disabled>{placeholder}</option>
+          {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }} />
+      </div>
+    </Field>
+  );
+}
+
 export default function WaitlistForm() {
-  const [fields, setFields] = useState({ name: '', email: '', phone: '', shopName: '', challenge: '' });
+  const [fields, setFields] = useState({
+    name: '', email: '', phone: '', shopName: '',
+    chairs: '', barberCount: '', employmentType: '',
+    postcode: '', commsPreference: '', challenge: '',
+  });
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  function set(key: string, value: string) {
+    setFields(f => ({ ...f, [key]: value }));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,38 +104,19 @@ export default function WaitlistForm() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
           <div style={{
             width: 28, height: 28, borderRadius: '50%',
-            background: '#C8F135', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
+            background: '#C8F135', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
             <Check size={14} color="#0A0A0A" strokeWidth={3} />
           </div>
           <span style={{ fontFamily: 'var(--font-barlow)', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'white' }}>
-            You&apos;re in the beta
+            Application received
           </span>
         </div>
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', fontFamily: 'var(--font-inter)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-          Your spot is confirmed. Sign in with Google to set up your shop — takes 30 seconds.
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem', fontFamily: 'var(--font-inter)', lineHeight: 1.6, marginBottom: '0.75rem' }}>
+          We&apos;ll review your application and be in touch within 24 hours — by WhatsApp or email, whichever you selected.
         </p>
-        <button
-          onClick={() => signIn('google')}
-          style={{
-            width: '100%', padding: '0.75rem 1rem',
-            background: 'white', border: 'none', borderRadius: 4,
-            color: '#111', fontSize: '0.9rem', cursor: 'pointer',
-            fontFamily: 'var(--font-inter)', fontWeight: 600,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Sign in with Google
-        </button>
-        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.7rem', fontFamily: 'var(--font-inter)', marginTop: '0.75rem', textAlign: 'center' }}>
-          After beta: £20/month locked in for life.
+        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', fontFamily: 'var(--font-inter)', lineHeight: 1.6 }}>
+          When approved, you&apos;ll get an email with a sign-in link. <strong style={{ color: 'rgba(255,255,255,0.55)' }}>Sign in with Google using this exact email address</strong> — {fields.email}
         </p>
       </div>
     );
@@ -88,22 +124,100 @@ export default function WaitlistForm() {
 
   return (
     <form onSubmit={submit} style={{ maxWidth: 480 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', marginBottom: '0.875rem' }}>
-        <input required type="text" placeholder="Your name"
-          value={fields.name} onChange={e => setFields(f => ({ ...f, name: e.target.value }))} style={inputStyle} />
-        <input required type="email" placeholder="Email address"
-          value={fields.email} onChange={e => setFields(f => ({ ...f, email: e.target.value }))} style={inputStyle} />
-        <input required type="tel" placeholder="Phone number"
-          value={fields.phone} onChange={e => setFields(f => ({ ...f, phone: e.target.value }))} style={inputStyle} />
-        <input type="text" placeholder="Shop name (optional)"
-          value={fields.shopName} onChange={e => setFields(f => ({ ...f, shopName: e.target.value }))} style={inputStyle} />
-        <textarea
-          placeholder="What's the biggest headache in your shop right now? (optional)"
-          value={fields.challenge}
-          onChange={e => setFields(f => ({ ...f, challenge: e.target.value }))}
-          rows={3}
-          style={{ ...inputStyle, resize: 'none', lineHeight: 1.5 }}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '0.875rem' }}>
+
+        {/* Contact */}
+        <Field label="Your name">
+          <input required type="text" placeholder="First and last name"
+            value={fields.name} onChange={e => set('name', e.target.value)} style={inputStyle} />
+        </Field>
+
+        <Field label="Email address">
+          <input required type="email" placeholder="The Google account you'll sign in with"
+            value={fields.email} onChange={e => set('email', e.target.value)} style={inputStyle} />
+          <p style={{ color: 'rgba(200,241,53,0.6)', fontSize: '0.7rem', marginTop: '0.3rem', fontFamily: 'var(--font-inter)' }}>
+            Use your Google email — this is the account you&apos;ll log in with.
+          </p>
+        </Field>
+
+        <Field label="Mobile number">
+          <input required type="tel" placeholder="07700 000000"
+            value={fields.phone} onChange={e => set('phone', e.target.value)} style={inputStyle} />
+        </Field>
+
+        <Field label="Shop name">
+          <input type="text" placeholder="The Barber Room"
+            value={fields.shopName} onChange={e => set('shopName', e.target.value)} style={inputStyle} />
+        </Field>
+
+        <Field label="Postcode">
+          <input type="text" placeholder="e.g. SW1A 1AA"
+            value={fields.postcode} onChange={e => set('postcode', e.target.value)} style={inputStyle} />
+        </Field>
+
+        {/* Shop details */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <SelectField
+            label="Number of chairs"
+            value={fields.chairs}
+            onChange={v => set('chairs', v)}
+            placeholder="Select…"
+            options={[
+              { value: '1', label: '1 chair' },
+              { value: '2', label: '2 chairs' },
+              { value: '3', label: '3 chairs' },
+              { value: '4', label: '4 chairs' },
+              { value: '5', label: '5+ chairs' },
+            ]}
+          />
+          <SelectField
+            label="Number of barbers"
+            value={fields.barberCount}
+            onChange={v => set('barberCount', v)}
+            placeholder="Select…"
+            options={[
+              { value: '1', label: 'Just me' },
+              { value: '2', label: '2 barbers' },
+              { value: '3', label: '3 barbers' },
+              { value: '4', label: '4 barbers' },
+              { value: '5', label: '5+ barbers' },
+            ]}
+          />
+        </div>
+
+        <SelectField
+          label="Your barbers are…"
+          value={fields.employmentType}
+          onChange={v => set('employmentType', v)}
+          placeholder="Select…"
+          options={[
+            { value: 'employed', label: 'Employed (on payroll)' },
+            { value: 'self-employed', label: 'Self-employed (chair rental)' },
+            { value: 'mixed', label: 'Mix of both' },
+            { value: 'solo', label: 'Just me — no staff' },
+          ]}
         />
+
+        <SelectField
+          label="How would you prefer updates?"
+          value={fields.commsPreference}
+          onChange={v => set('commsPreference', v)}
+          placeholder="Select…"
+          options={[
+            { value: 'whatsapp', label: 'WhatsApp group (recommended)' },
+            { value: 'email', label: 'Email only' },
+          ]}
+        />
+
+        <Field label="Biggest headache in your shop right now? (optional)">
+          <textarea
+            placeholder="No-shows, keeping track of regulars, slow days…"
+            value={fields.challenge}
+            onChange={e => set('challenge', e.target.value)}
+            rows={2}
+            style={{ ...inputStyle, resize: 'none', lineHeight: 1.5 }}
+          />
+        </Field>
       </div>
 
       <button type="submit" disabled={state === 'loading'} className="btn-lime" style={{
@@ -112,7 +226,7 @@ export default function WaitlistForm() {
         opacity: state === 'loading' ? 0.7 : 1,
       }}>
         {state === 'loading'
-          ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Applying…</>
+          ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Sending…</>
           : <>Apply for free beta access <ArrowRight size={16} /></>}
       </button>
 
