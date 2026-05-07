@@ -31,9 +31,9 @@ export default function SetupPage() {
     }
   }, [session?.user?.name]);
 
-  // If already set up, go to dashboard
+  // If already set up and haven't just completed setup, go to dashboard
   useEffect(() => {
-    if (status === 'authenticated' && !(session?.user as any)?.needsSetup) {
+    if (status === 'authenticated' && !(session?.user as any)?.needsSetup && state === 'idle') {
       router.replace('/dashboard');
     }
   }, [status, session]);
@@ -92,7 +92,7 @@ export default function SetupPage() {
               Clients scan this on their phone → join your queue → you see them instantly on your barber screen.
             </p>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => { window.location.href = '/dashboard'; }}
               className="btn-lime"
               style={{ padding: '0.875rem', borderRadius: 4, fontSize: '1rem', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer', width: '100%' }}
             >
