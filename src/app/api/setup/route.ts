@@ -28,9 +28,12 @@ export async function POST(req: NextRequest) {
 
   const email = session.user.email;
 
-  const existing = await db.barber.findFirst({ where: { email } });
+  const existing = await db.barber.findFirst({
+    where: { email },
+    include: { shop: { select: { slug: true, name: true } } },
+  });
   if (existing) {
-    return NextResponse.json({ error: 'Account already exists' }, { status: 409 });
+    return NextResponse.json({ ok: true, shopSlug: existing.shop.slug, shopName: existing.shop.name });
   }
 
   let slug = generateSlug(shopName);

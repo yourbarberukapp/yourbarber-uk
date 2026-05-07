@@ -93,6 +93,22 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         }
         return token;
       }
+      // If needsSetup is true but barber now exists (e.g. setup done in another tab, or update() missed)
+      if (token.needsSetup && token.email) {
+        const barber = await db.barber.findFirst({
+          where: { email: token.email as string, isActive: true },
+          include: { shop: { select: { name: true, slug: true } } },
+        });
+        if (barber) {
+          token.id = barber.id;
+          token.shopId = barber.shopId;
+          token.role = barber.role;
+          token.shopName = barber.shop.name;
+          token.shopSlug = barber.shop.slug;
+          token.needsSetup = false;
+        }
+        return token;
+      }
       // Credentials sign-in
       if (user) {
         token.id = user.id;
