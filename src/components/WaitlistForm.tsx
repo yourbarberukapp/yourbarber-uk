@@ -70,7 +70,7 @@ export default function WaitlistForm() {
     chairs: '', barberCount: '', employmentType: '',
     postcode: '', commsPreference: '', challenge: '',
   });
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'already' | 'error'>('idle');
 
   function set(key: string, value: string) {
     setFields(f => ({ ...f, [key]: value }));
@@ -86,10 +86,31 @@ export default function WaitlistForm() {
         body: JSON.stringify(fields),
       });
       if (!res.ok) throw new Error();
-      setState('done');
+      const data = await res.json();
+      setState(data.alreadyRegistered ? 'already' : 'done');
+      document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
       setState('error');
     }
+  }
+
+  if (state === 'already') {
+    return (
+      <div style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        borderRadius: 8,
+        padding: '1.5rem 2rem',
+        maxWidth: 480,
+      }}>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontFamily: 'var(--font-inter)', lineHeight: 1.6, marginBottom: '0.5rem' }}>
+          <strong style={{ color: 'white' }}>You&apos;re already registered.</strong>
+        </p>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', fontFamily: 'var(--font-inter)', lineHeight: 1.6 }}>
+          We have your application on file for <strong style={{ color: 'rgba(255,255,255,0.65)' }}>{fields.email}</strong>. We&apos;ll be in touch when you&apos;re approved.
+        </p>
+      </div>
+    );
   }
 
   if (state === 'done') {
