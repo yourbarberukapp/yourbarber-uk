@@ -1,17 +1,13 @@
-import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 export default defineConfig({
   schema: './prisma/schema.prisma',
-  datasource: {
-    url: env('DATABASE_URL'),
-  },
   migrate: {
     async adapter(env) {
-      return new PrismaPg({ connectionString: env.DIRECT_URL ?? env.DATABASE_URL });
+      const url = env.DATABASE_URL ?? process.env.DATABASE_URL;
+      if (!url) throw new Error('DATABASE_URL is not set');
+      return new PrismaPg({ connectionString: url });
     },
   },
-  seed: 'node node_modules/ts-node/dist/bin.js --compiler-options "{\\"module\\":\\"CommonJS\\"}" prisma/seed.ts',
 });
