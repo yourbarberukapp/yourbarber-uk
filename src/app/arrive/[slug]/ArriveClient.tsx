@@ -79,6 +79,9 @@ export default function ArriveClient({
   const [holdRequested, setHoldRequested] = useState(false);
   const [leftQueue, setLeftQueue] = useState(false);
   const [leavingQueue, setLeavingQueue] = useState(false);
+  const [walletPlatform, setWalletPlatform] = useState<'ios' | 'android' | 'other' | null>(null);
+  const [googleWalletLoading, setGoogleWalletLoading] = useState(false);
+  const [googleWalletDone, setGoogleWalletDone] = useState(false);
   const [returningUser, setReturningUser] = useState<{ name: string; familyMembers: FamilyMember[] } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [waitingCount, setWaitingCount] = useState(initialWaitingCount);
@@ -92,6 +95,13 @@ export default function ArriveClient({
       setNotifySupported(true);
       setNotifyPermission(Notification.permission);
     }
+  }, []);
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad|iPod/.test(ua)) setWalletPlatform('ios');
+    else if (/Android/.test(ua)) setWalletPlatform('android');
+    else setWalletPlatform('other');
   }, []);
 
   // Poll queue status while watching from standby
@@ -167,6 +177,22 @@ export default function ArriveClient({
       }, 3000);
     }
     return perm;
+  }
+
+  async function addToGoogleWallet() {
+    if (googleWalletLoading || googleWalletDone) return;
+    setGoogleWalletLoading(true);
+    try {
+      const res = await fetch('/api/customer/wallet/google');
+      if (!res.ok) throw new Error('failed');
+      const { saveUrl } = await res.json();
+      window.open(saveUrl, '_blank', 'noopener');
+      setGoogleWalletDone(true);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setGoogleWalletLoading(false);
+    }
   }
 
   async function leaveQueue() {
@@ -925,6 +951,81 @@ export default function ArriveClient({
                   </>
                 )}
               </div>
+
+              {/* ── Wallet download ── */}
+              {walletPlatform && (
+                <div style={{
+                  width: '100%', borderRadius: 14,
+                  border: '1px solid rgba(200,241,53,0.18)',
+                  background: 'rgba(200,241,53,0.04)',
+                  padding: '1.25rem',
+                  display: 'flex', flexDirection: 'column', gap: '0.875rem',
+                }}>
+                  <div>
+                    <p style={{
+                      color: 'white', fontSize: '0.8rem', fontWeight: 800, margin: 0,
+                      fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em',
+                    }}>
+                      Save your loyalty card
+                    </p>
+                    <p style={{
+                      color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', margin: '0.3rem 0 0',
+                      fontFamily: 'var(--font-inter, sans-serif)', lineHeight: 1.5,
+                    }}>
+                      Check in next time by showing your pass — no need to type your number again.
+                    </p>
+                  </div>
+
+                  {(walletPlatform === 'ios' || walletPlatform === 'other') && (
+                    <a
+                      href="/api/customer/wallet/apple"
+                      style={{ display: 'block', lineHeight: 0 }}
+                      aria-label="Add to Apple Wallet"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/apple-wallet-badge.svg"
+                        alt="Add to Apple Wallet"
+                        style={{ height: 44, width: 'auto' }}
+                      />
+                    </a>
+                  )}
+
+                  {(walletPlatform === 'android' || walletPlatform === 'other') && (
+                    <button
+                      onClick={addToGoogleWallet}
+                      disabled={googleWalletLoading || googleWalletDone}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        padding: '0.75rem 1.25rem', borderRadius: 8, cursor: googleWalletDone ? 'default' : 'pointer',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        background: googleWalletDone ? 'rgba(200,241,53,0.08)' : 'rgba(255,255,255,0.06)',
+                        color: googleWalletDone ? '#C8F135' : 'white',
+                        fontSize: '0.8rem', fontWeight: 700,
+                        fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.06em',
+                        opacity: googleWalletLoading ? 0.6 : 1, transition: 'all 0.2s',
+                      }}
+                    >
+                      {googleWalletDone ? (
+                        <><Check size={15} color="#C8F135" /> Saved to Google Wallet</>
+                      ) : googleWalletLoading ? (
+                        <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Opening…</>
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#4285F4"/>
+                            <path d="M12 6.5c1.47 0 2.79.55 3.79 1.44l2.83-2.83C16.9 3.4 14.6 2.5 12 2.5 8.24 2.5 4.96 4.64 3.27 7.77l3.3 2.56C7.35 8.2 9.5 6.5 12 6.5z" fill="#EA4335"/>
+                            <path d="M5.64 14.09A6.5 6.5 0 0 1 5.5 12c0-.71.12-1.4.33-2.05L2.53 7.39A10 10 0 0 0 2 12c0 1.61.39 3.14 1.07 4.49l2.57-2.4z" fill="#FBBC05"/>
+                            <path d="M12 17.5c-2.5 0-4.65-1.5-5.64-3.67l-3.3 2.56C4.96 19.36 8.24 21.5 12 21.5c2.5 0 4.76-.94 6.48-2.48l-3.07-2.38A5.96 5.96 0 0 1 12 17.5z" fill="#34A853"/>
+                            <path d="M21.5 12c0-.69-.07-1.35-.19-2H12v3.77h5.35a4.56 4.56 0 0 1-1.97 2.97l3.07 2.38C20.7 17.18 21.5 14.74 21.5 12z" fill="#4285F4"/>
+                          </svg>
+                          Add to Google Wallet
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Notification prompt if not yet granted */}
               {notifySupported && notifyPermission !== 'granted' && notifyPermission !== 'denied' && (

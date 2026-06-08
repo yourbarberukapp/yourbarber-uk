@@ -23,14 +23,35 @@ export default function QRScanner() {
       .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
+        async (decodedText) => {
+          // Legacy check-in token QR: yourbarber.uk/checkin/[token]
           if (decodedText.includes('/checkin/')) {
             const token = decodedText.split('/checkin/').pop();
             scanner.stop().catch(() => {});
             router.push(`/checkin/${token}`);
-          } else {
-            setError('Invalid QR Code. Please scan a YourBarber customer QR.');
+            return;
           }
+
+          // Wallet pass QR: yourbarber.uk/arrive/[slug]?code=[accessCode]
+          try {
+            const url = new URL(decodedText);
+            const code = url.searchParams.get('code');
+            if (code) {
+              scanner.stop().catch(() => {});
+              const res = await fetch(`/api/barber/scan?code=${encodeURIComponent(code)}`);
+              if (res.ok) {
+                const { customerId } = await res.json();
+                router.push(`/customers/${customerId}`);
+              } else {
+                setError('Customer not found. Make sure they are registered at this shop.');
+              }
+              return;
+            }
+          } catch {
+            // decodedText is not a URL — fall through to error
+          }
+
+          setError('Invalid QR Code. Please scan a YourBarber customer QR or wallet pass.');
         },
         () => {}
       )

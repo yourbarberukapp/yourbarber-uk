@@ -92,6 +92,8 @@ model Customer {
   primaryBarberId        String?
   otpCode                String?
   otpExpiry              DateTime?
+  applePassSerial        String?
+  googleObjectId         String?
   appointments           Appointment[]
   checkIns               CheckIn[]
   primaryBarber          Barber?       @relation("PrimaryBarber", fields: [primaryBarberId], references: [id])

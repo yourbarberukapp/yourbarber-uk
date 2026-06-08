@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { normalizePhone } from '@/lib/customerHelpers';
 import { generateUniqueAccessCode } from '@/lib/accessCode';
+import { signCustomerToken, customerCookieOptions } from '@/lib/customerAuth';
 
 const schema = z.object({
   shopSlug: z.string(),
@@ -110,7 +111,10 @@ export async function POST(req: NextRequest) {
         arrivedAt: { lte: existing.arrivedAt },
       },
     });
-    return NextResponse.json({ customerName: customer.name, position, waitMinutes: calcWait(position), alreadyWaiting: true });
+    const token = await signCustomerToken(customer.id);
+    const res = NextResponse.json({ customerName: customer.name, position, waitMinutes: calcWait(position), alreadyWaiting: true });
+    res.cookies.set(customerCookieOptions(token));
+    return res;
   }
 
   // If no familyMemberIds provided, just check in the customer
@@ -145,10 +149,13 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ 
-    customerName: customer.name, 
-    position, 
+  const token = await signCustomerToken(customer.id);
+  const res = NextResponse.json({
+    customerName: customer.name,
+    position,
     waitMinutes: calcWait(position + walkIns.length - 1),
-    groupSize: walkIns.length 
+    groupSize: walkIns.length,
   });
+  res.cookies.set(customerCookieOptions(token));
+  return res;
 }

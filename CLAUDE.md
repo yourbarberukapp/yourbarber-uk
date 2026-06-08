@@ -193,6 +193,72 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 
 ---
 
+## Apple Wallet & Google Wallet Passes
+
+Digital loyalty cards are live for customers. Each customer gets a combined loyalty + record pass that lives in Apple Wallet or Google Wallet.
+
+### How it works
+
+The QR code on the pass = the customer's permanent `accessCode`. When staff scan it, it opens `yourbarber.uk/arrive/[shop-slug]?code=[accessCode]` — the same arrive flow, but pre-filled. No separate check-in QR needed.
+
+The pass shows:
+- Customer name + visit count (stamp progress toward free cut)
+- Next upcoming appointment on the card face
+- Preferred barber name
+- Back: full appointment detail, shop phone, Google review link, booking URL
+
+The loyalty milestone defaults to 10 visits = free cut. Change `loyaltyStamp: 10` in the route files to adjust per-shop.
+
+### Files
+
+| File | Purpose |
+|---|---|
+| `src/lib/walletGenerator.ts` | Core generation — `generateBarberApplePass()` and `generateBarberGooglePass()` |
+| `src/app/api/customer/wallet/apple/route.ts` | `GET /api/customer/wallet/apple` → streams `.pkpass` file download |
+| `src/app/api/customer/wallet/google/route.ts` | `GET /api/customer/wallet/google` → returns `{ saveUrl }` for Google Pay |
+
+Both routes require a valid customer session cookie (`yb-customer-session`).
+
+### UI wiring (add to customer-facing page)
+
+```tsx
+// Apple Wallet button
+<a href="/api/customer/wallet/apple">
+  <img src="/apple-wallet-badge.svg" alt="Add to Apple Wallet" />
+</a>
+
+// Google Wallet button
+async function addToGoogle() {
+  const { saveUrl } = await fetch("/api/customer/wallet/google").then(r => r.json());
+  window.open(saveUrl, "_blank");
+}
+```
+
+### Environment variables required
+
+```
+APPLE_PASS_TYPE_ID=pass.uk.yourbarber.loyalty
+APPLE_TEAM_ID=<your Apple Developer Team ID>
+APPLE_PASS_CERT_PEM=<PassKit certificate PEM>
+APPLE_PASS_KEY_PEM=<private key PEM>
+APPLE_WWDR_PEM=<Apple WWDR G4 PEM>
+APPLE_PASS_WEB_SERVICE_URL=<optional — enables live pass updates>
+GOOGLE_WALLET_ISSUER_ID=<from Google Pay & Wallet console>
+GOOGLE_WALLET_SERVICE_ACCOUNT_KEY=<JSON string of service account key>
+NEXT_PUBLIC_APP_URL=https://yourbarber.uk
+```
+
+Without the Apple certs, passes are generated but unsigned (valid structure, not installable). Without the Google service account, a demo JWT is returned. Both fall back gracefully — no crashes.
+
+### Future: forking for other business types
+
+The wallet generator is intentionally generic. `WalletPassInput` takes a shop, a customer, a visit count, and an optional next appointment — nothing barber-specific. When you fork yourbarber for other appointment-based businesses (nail salon, physio, PT), copy `walletGenerator.ts` unchanged and adjust:
+- `loyaltyStamp` milestone value
+- `APPLE_PASS_TYPE_ID` (needs its own PassKit cert per app)
+- The QR value URL prefix (swap `yourbarber.uk` for the new domain)
+
+---
+
 ## Environment Variables (set in Vercel + `.env.local`)
 
 ```
@@ -205,4 +271,13 @@ AWS_S3_BUCKET
 TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN
 TWILIO_FROM_NUMBER
+APPLE_PASS_TYPE_ID
+APPLE_TEAM_ID
+APPLE_PASS_CERT_PEM
+APPLE_PASS_KEY_PEM
+APPLE_WWDR_PEM
+APPLE_PASS_WEB_SERVICE_URL
+GOOGLE_WALLET_ISSUER_ID
+GOOGLE_WALLET_SERVICE_ACCOUNT_KEY
+NEXT_PUBLIC_APP_URL
 ```
