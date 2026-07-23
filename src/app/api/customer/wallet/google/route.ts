@@ -42,13 +42,6 @@ export async function GET() {
       loyaltyStamp: 10,
     });
 
-    // Persist objectId so Google Wallet API PATCH calls can update the pass later
-    const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID ?? "demo_issuer";
-    await db.customer.update({
-      where: { id: customer.id },
-      data: { googleObjectId: `${issuerId}.yb_card_${customer.id}` },
-    });
-
     return NextResponse.json({ saveUrl });
   } catch (err) {
     console.error("[Wallet/Google]", err);

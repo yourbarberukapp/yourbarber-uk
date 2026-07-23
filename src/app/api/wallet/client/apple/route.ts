@@ -1,38 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getCustomerSession } from '@/lib/customerAuth';
 import { generateClientApplePass } from '@/lib/wallet/passGenerator';
+import { getQueueStatusForCustomer } from '@/lib/wallet/queueStatus';
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const shopSlug = searchParams.get('shop');
-  const phone = searchParams.get('phone');
-
-  if (!shopSlug || !phone) {
-    return NextResponse.json({ error: 'Missing shop or phone parameter' }, { status: 400 });
-  }
-
-  const shop = await db.shop.findUnique({ where: { slug: shopSlug } });
-  if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+export async function GET() {
+  const session = await getCustomerSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const customer = await db.customer.findUnique({
-    where: { phone_shopId: { phone, shopId: shop.id } },
+    where: { id: session.customerId },
+    include: { shop: true },
   });
+  if (!customer || !customer.accessCode) {
+    return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+  }
 
-  if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+  const { shop } = customer;
+  const queue = await getQueueStatusForCustomer(shop.id, customer.id);
 
-  const accessCode = customer.accessCode || customer.id.slice(-6);
-
-  const { pkpassBuffer, serialNumber } = await generateClientApplePass({
+  const { pkpassBuffer } = await generateClientApplePass({
     shopName: shop.name,
     shopSlug: shop.slug,
     accentColor: shop.passAccentColor || '#111111',
     customerName: customer.name || 'Valued Client',
     phone: customer.phone,
-    accessCode,
+    accessCode: customer.accessCode,
     loyaltyStamps: customer.loyaltyStamps || 0,
     loyaltyTarget: shop.loyaltyTarget || 5,
     loyaltyReward: shop.loyaltyReward || '50% Off 5th Cut',
     promoMessage: shop.promoMessage,
+    queuePosition: queue?.position ?? null,
+    waitMinutes: queue?.waitMinutes ?? null,
   });
 
   return new NextResponse(new Uint8Array(pkpassBuffer), {

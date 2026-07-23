@@ -45,7 +45,7 @@ export async function GET() {
     // Persist serial so APNs push updates can target this pass later
     await db.customer.update({
       where: { id: customer.id },
-      data: { applePassSerial: serialNumber },
+      data: { applePassSerialNumber: serialNumber },
     });
 
     const buf = Buffer.from(pkpassBase64, "base64");
