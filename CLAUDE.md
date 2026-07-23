@@ -133,16 +133,21 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - [x] Shop microsite at `[slug].yourbarber.uk`
 - [x] Subdomain middleware routing
 - [x] SMS opt-in tracking (not sending yet)
+- [x] **Apple & Google Wallet Pass Generator Engine** (`src/lib/wallet/passGenerator.ts`)
+- [x] **Shop Pass Design Studio & Live Previews** (`/settings/pass-studio`)
+- [x] **1-Tap Wallet Pass Issuance on Arrive Page** (`/arrive/[slug]`)
+- [x] **Wallet Pass QR Barcode Scanner & Auto Loyalty Stamp Awarding** (`/scan` & `/api/scan`)
 
 ## What's Next (priority order)
 
 1. **Walk-in waitlist** — `WalkIn` table, live barber view, claim/complete flow
 2. **`/arrive/[shop-slug]`** — client-facing arrival page (the wall QR destination)
-3. **Barber mode** — `/barber` scoped view, 30-day session, PWA manifest
-4. **Customer portal** — `/me` — client views their own cut history, photos, preferences
-5. **SMS reminders** — Twilio integration, triggered manually by barber
-6. **QR code download** — shop settings page, generate printable QR for `/arrive/[slug]`
-7. **Analytics** — visits per week, retention, busiest days
+3. **Barber Staff Wallet Pass** — digital business card for team members
+4. **Barber mode** — `/barber` scoped view, 30-day session, PWA manifest
+5. **Customer portal** — `/me` — client views their own cut history, photos, preferences
+6. **SMS reminders** — Twilio integration, triggered manually by barber
+7. **QR code download** — shop settings page, generate printable QR for `/arrive/[slug]`
+8. **Analytics** — visits per week, retention, busiest days
 
 ---
 
