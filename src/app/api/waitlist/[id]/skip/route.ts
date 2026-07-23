@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/vonage';
+import { notifyCustomer } from '@/lib/wallet/notify';
 
 const schema = z.object({
   groupIds: z.array(z.string()).optional(),
@@ -13,7 +13,7 @@ async function maybeSendPosition2Nudge(shopId: string, shopName: string) {
   today.setHours(0, 0, 0, 0);
   const queue = await db.walkIn.findMany({
     where: { shopId, status: 'waiting', presenceStatus: 'IN_SHOP', arrivedAt: { gte: today } },
-    include: { customer: { select: { name: true, phone: true } } },
+    include: { customer: { select: { id: true, name: true } } },
     orderBy: { arrivedAt: 'asc' },
     take: 3,
   });
@@ -21,7 +21,7 @@ async function maybeSendPosition2Nudge(shopId: string, shopName: string) {
   if (target && !target.nudgeSentAt) {
     try {
       const name = target.customer.name ?? 'Hi';
-      await sendSms(target.customer.phone, `${name}, you're next up at ${shopName} — get ready!`);
+      await notifyCustomer(target.customer.id, `${name}, you're next up at ${shopName} — get ready!`);
       await db.walkIn.update({ where: { id: target.id }, data: { nudgeSentAt: new Date() } });
     } catch {}
   }
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const walkIn = await db.walkIn.findFirst({
     where: { id: params.id, shopId },
     include: {
-      customer: { select: { name: true, phone: true } },
+      customer: { select: { id: true, name: true } },
       shop: { select: { name: true } },
     },
   });
@@ -63,8 +63,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   try {
     const name = walkIn.customer.name ?? 'Hi';
-    await sendSms(
-      walkIn.customer.phone,
+    await notifyCustomer(
+      walkIn.customer.id,
       `${name}, you were skipped at ${shopName}. Re-scan the QR code on the wall when you're ready to rejoin the queue.`
     );
   } catch {}

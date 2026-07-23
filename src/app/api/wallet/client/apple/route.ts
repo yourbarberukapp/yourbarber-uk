@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { db } from '@/lib/db';
 import { getCustomerSession } from '@/lib/customerAuth';
 import { generateClientApplePass } from '@/lib/wallet/passGenerator';
@@ -8,12 +9,25 @@ export async function GET() {
   const session = await getCustomerSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const customer = await db.customer.findUnique({
+  let customer = await db.customer.findUnique({
     where: { id: session.customerId },
     include: { shop: true },
   });
   if (!customer || !customer.accessCode) {
     return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+  }
+  const accessCode = customer.accessCode;
+
+  const serialNumber = `yb-client-${accessCode}`;
+  if (!customer.passAuthToken || customer.applePassSerialNumber !== serialNumber) {
+    customer = await db.customer.update({
+      where: { id: customer.id },
+      data: {
+        passAuthToken: customer.passAuthToken ?? randomUUID(),
+        applePassSerialNumber: serialNumber,
+      },
+      include: { shop: true },
+    });
   }
 
   const { shop } = customer;
@@ -25,13 +39,14 @@ export async function GET() {
     accentColor: shop.passAccentColor || '#111111',
     customerName: customer.name || 'Valued Client',
     phone: customer.phone,
-    accessCode: customer.accessCode,
+    accessCode,
     loyaltyStamps: customer.loyaltyStamps || 0,
     loyaltyTarget: shop.loyaltyTarget || 5,
     loyaltyReward: shop.loyaltyReward || '50% Off 5th Cut',
-    promoMessage: shop.promoMessage,
+    promoMessage: customer.passMessage || shop.promoMessage,
     queuePosition: queue?.position ?? null,
     waitMinutes: queue?.waitMinutes ?? null,
+    passAuthToken: customer.passAuthToken,
   });
 
   return new NextResponse(new Uint8Array(pkpassBuffer), {

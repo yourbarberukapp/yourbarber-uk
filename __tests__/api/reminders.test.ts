@@ -1,4 +1,4 @@
-import { isDueForReminder, buildSmsMessage } from '@/lib/reminders';
+import { isDueForReminder, buildReminderMessage } from '@/lib/reminders';
 
 describe('isDueForReminder', () => {
   it('returns true when 43 days ago and opted in', () => {
@@ -18,16 +18,20 @@ describe('isDueForReminder', () => {
   });
 });
 
-describe('buildSmsMessage', () => {
+describe('buildReminderMessage', () => {
   it('includes name when provided', () => {
-    const msg = buildSmsMessage({ name: 'Jake', shopName: "Benjie's", barberName: 'Benjie' });
+    const msg = buildReminderMessage({ name: 'Jake', shopName: "Benjie's", barberName: 'Benjie' });
     expect(msg).toContain('Jake');
     expect(msg).toContain("Benjie's");
-    expect(msg).toContain('STOP');
   });
   it('works without name', () => {
-    const msg = buildSmsMessage({ name: null, shopName: "Benjie's", barberName: 'Benjie' });
+    const msg = buildReminderMessage({ name: null, shopName: "Benjie's", barberName: 'Benjie' });
     expect(msg).not.toContain('null');
-    expect(msg).toContain('STOP');
+    expect(msg).toContain('Hi,');
+  });
+  it('varies copy by reminder type', () => {
+    const predictor = buildReminderMessage({ name: 'Sam', shopName: 'Shop', barberName: 'Jake', reminderType: 'predictor' });
+    const winback = buildReminderMessage({ name: 'Sam', shopName: 'Shop', barberName: 'Jake', reminderType: 'winback' });
+    expect(predictor).not.toBe(winback);
   });
 });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
+import { notifyCustomer } from '@/lib/wallet/notify';
 
 const RESOLUTIONS = ['same_barber_fix', 'different_barber', 'book_return', 'owner_contact', 'log_only'] as const;
 
@@ -14,7 +14,7 @@ const resolveSchema = z.object({
   followUpDate: z.string().datetime().optional(),
 });
 
-function buildResolutionSms(params: {
+function buildResolutionMessage(params: {
   resolution: (typeof RESOLUTIONS)[number];
   barberName?: string;
   shopName: string;
@@ -99,29 +99,19 @@ export async function PATCH(
     },
   });
 
-  // SMS to customer
-  const customerSms = buildResolutionSms({
+  const customerMessage = buildResolutionMessage({
     resolution,
     barberName: assignedBarberName,
     shopName: feedback.shop.name,
     preferredDate,
   });
-  if (customerSms && feedback.customer.phone) {
+  if (customerMessage) {
     try {
-      const { messageId, status: smsStatus } = await sendSms(feedback.customer.phone, customerSms);
-      await db.smsLog.create({
-        data: {
-          shopId,
-          customerId: feedback.customer.id,
-          message: customerSms,
-          twilioSid: messageId,
-          status: smsStatus,
-        },
-      });
+      await notifyCustomer(feedback.customer.id, customerMessage);
     } catch {
       // Log failure but don't block response
     }
   }
 
-  return NextResponse.json({ ticket, smsSent: !!customerSms });
+  return NextResponse.json({ ticket, notified: !!customerMessage });
 }

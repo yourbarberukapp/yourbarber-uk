@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { buildSmsMessage } from '@/lib/reminders';
+import { buildReminderMessage } from '@/lib/reminders';
 
 const previewSchema = z.object({
   customerId: z.string(),
@@ -32,9 +32,9 @@ export async function POST(req: NextRequest) {
     where: { id: parsed.data.customerId, shopId },
     select: {
       id: true,
-      phone: true,
       name: true,
-      accessCode: true,
+      walletDevices: { select: { id: true }, take: 1 },
+      googlePassId: true,
       visits: {
         orderBy: { visitedAt: 'desc' },
         take: 1,
@@ -46,21 +46,15 @@ export async function POST(req: NextRequest) {
   if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
 
   const barberName = customer.visits[0]?.barber?.name ?? sessionBarberName ?? shop.name;
-  const message = buildSmsMessage({
+  const message = buildReminderMessage({
     name: customer.name,
     shopName: shop.name,
     barberName,
-    accessCode: customer.accessCode,
     reminderType: parsed.data.reminderType,
   });
 
-  const previewUrl = customer.accessCode
-    ? `${req.nextUrl.origin}/c?code=${customer.accessCode}`
-    : null;
-
   return NextResponse.json({
     message,
-    wouldSendToPhone: customer.phone,
-    previewUrl,
+    hasWalletPass: customer.walletDevices.length > 0 || !!customer.googlePassId,
   });
 }

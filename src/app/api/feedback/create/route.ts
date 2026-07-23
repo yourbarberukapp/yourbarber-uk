@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCustomerSession } from '@/lib/customerAuth';
-import { sendSms } from '@/lib/twilio';
 
 const createSchema = z.object({
   customerId: z.string(),
@@ -70,23 +69,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  let alertSent = false;
-  if (rating === 'negative' && visit.shop.phone) {
-    const customer = await db.customer.findUnique({
-      where: { id: customerId },
-      select: { name: true },
-    });
-    const alertMsg = `New negative feedback at ${visit.shop.name}: ${customer?.name ?? 'A customer'} said "${issue ?? 'no detail given'}". Check your dashboard to resolve.`;
-    try {
-      await sendSms(visit.shop.phone, alertMsg);
-      alertSent = true;
-    } catch {
-      // Don't fail the request if the alert SMS fails
-    }
-  }
+  // Negative feedback shows up on the owner's Feedback dashboard immediately — no SMS alert needed.
 
   return NextResponse.json(
-    { feedbackId: feedback.id, ticketId: ticket?.id ?? null, status: ticket?.status ?? null, alertSent },
+    { feedbackId: feedback.id, ticketId: ticket?.id ?? null, status: ticket?.status ?? null },
     { status: 201 }
   );
 }

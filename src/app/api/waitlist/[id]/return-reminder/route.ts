@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
+import { notifyCustomer } from '@/lib/wallet/notify';
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
@@ -18,17 +18,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   if (walkIn.queueReminderSentAt) return NextResponse.json({ error: 'Reminder already sent' }, { status: 400 });
 
   const message = `You're nearly up at ${walkIn.shop.name}. Please head back now so we can keep your place in the queue.`;
-  const { messageId, status } = await sendSms(walkIn.customer.phone, message);
-
-  await db.smsLog.create({
-    data: {
-      shopId,
-      customerId: walkIn.customerId,
-      message,
-      twilioSid: messageId,
-      status,
-    },
-  });
+  await notifyCustomer(walkIn.customerId, message);
 
   const updated = await db.walkIn.update({
     where: { id: walkIn.id },

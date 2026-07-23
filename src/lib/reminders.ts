@@ -37,30 +37,21 @@ export function isDueForReminder(lastVisitAt: Date | null, smsOptIn: string): bo
   return daysSince(lastVisitAt) >= DEFAULT_AVI;
 }
 
-export function buildSmsMessage(params: {
+export function buildReminderMessage(params: {
   name: string | null;
   shopName: string;
   barberName: string;
-  accessCode?: string | null;
   reminderType?: ReminderType;
 }): string {
   const greeting = params.name ? `Hi ${params.name}` : 'Hi';
-  let base: string;
   switch (params.reminderType) {
     case 'predictor':
-      base = `${greeting}, you're about due for your next cut at ${params.shopName}. Ready to book in with ${params.barberName}?`;
-      break;
+      return `${greeting}, you're about due for your next cut at ${params.shopName}. Ready to book in with ${params.barberName}?`;
     case 'winback':
-      base = `${greeting}, it's been a while since your last cut at ${params.shopName}. We'd love to see you back — ${params.barberName} is ready for you.`;
-      break;
+      return `${greeting}, it's been a while since your last cut at ${params.shopName}. We'd love to see you back — ${params.barberName} is ready for you.`;
     case 'upcoming':
-      base = `${greeting}, your next trim at ${params.shopName} is coming up soon. Ready to book back in with ${params.barberName}?`;
-      break;
+      return `${greeting}, your next trim at ${params.shopName} is coming up soon. Ready to book back in with ${params.barberName}?`;
     default:
-      base = `${greeting}, it's been 6 weeks since your cut at ${params.shopName}. Time to book in with ${params.barberName}?`;
+      return `${greeting}, it's been 6 weeks since your cut at ${params.shopName}. Time to book in with ${params.barberName}?`;
   }
-  const portal = params.accessCode
-    ? ` View your cut: yourbarber.uk/c?code=${params.accessCode}`
-    : '';
-  return `${base}${portal} Reply STOP to opt out.`;
 }

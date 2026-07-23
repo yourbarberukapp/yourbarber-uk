@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getCustomerSession } from '@/lib/customerAuth';
-import { sendSms } from '@/lib/twilio';
+import { notifyCustomer } from '@/lib/wallet/notify';
 
 const createSchema = z.object({
   shopId: z.string(),
@@ -84,27 +84,16 @@ export async function POST(req: NextRequest) {
     }
   });
 
-  // Send confirmation SMS
-  if (appointment.customer.phone) {
-    const dateStr = start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-    const timeStr = start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    const barberStr = appointment.barber ? ` with ${appointment.barber.name}` : '';
-    const message = `Confirmed: Your appointment at ${appointment.shop.name}${barberStr} is booked for ${dateStr} at ${timeStr}. See you then!`;
-    
-    try {
-      const { messageId, status } = await sendSms(appointment.customer.phone, message);
-      await db.smsLog.create({
-        data: {
-          shopId: appointment.shopId,
-          customerId: appointment.customerId,
-          message,
-          twilioSid: messageId,
-          status,
-        },
-      });
-    } catch (err) {
-      console.error('Failed to send confirmation SMS', err);
-    }
+  // Update the customer's Wallet pass with the confirmed appointment (free push, no SMS)
+  const dateStr = start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  const timeStr = start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const barberStr = appointment.barber ? ` with ${appointment.barber.name}` : '';
+  const message = `Confirmed: your appointment at ${appointment.shop.name}${barberStr} is booked for ${dateStr} at ${timeStr}.`;
+
+  try {
+    await notifyCustomer(appointment.customerId, message);
+  } catch (err) {
+    console.error('Failed to push appointment confirmation', err);
   }
 
   return NextResponse.json({ appointment }, { status: 201 });

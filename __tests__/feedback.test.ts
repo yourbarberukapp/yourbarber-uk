@@ -24,13 +24,12 @@ const mockDb = {
   barber: {
     findFirst: jest.fn(),
   },
-  smsLog: {
-    create: jest.fn(),
-  },
 };
 
+const mockNotifyCustomer = jest.fn();
+
 jest.mock('@/lib/db', () => ({ db: mockDb }));
-jest.mock('@/lib/twilio', () => ({ sendSms: jest.fn() }));
+jest.mock('@/lib/wallet/notify', () => ({ notifyCustomer: mockNotifyCustomer }));
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 jest.mock('@/lib/customerAuth', () => ({ getCustomerSession: jest.fn() }));
 
@@ -38,7 +37,6 @@ import { POST as createFeedback } from '@/app/api/feedback/create/route';
 import { PATCH as resolveFeedback } from '@/app/api/feedback/[feedbackId]/resolve/route';
 import { POST as completeFeedback } from '@/app/api/feedback/[feedbackId]/complete/route';
 import { GET as getFeedback } from '@/app/api/feedback/route';
-import { sendSms } from '@/lib/twilio';
 import { auth } from '@/lib/auth';
 import { getCustomerSession } from '@/lib/customerAuth';
 
@@ -123,43 +121,17 @@ describe('POST /api/feedback/create', () => {
     });
   });
 
-  it('sends SMS alert to shop phone on negative feedback', async () => {
+  it('creates a ticket for negative rating without sending any owner alert (no SMS provider)', async () => {
     mockDb.visit.findFirst.mockResolvedValue({ id: 'v1', shopId: 'shop1', shop: { name: 'Ben J', phone: '+447700123456' } });
     mockDb.feedback.create.mockResolvedValue({ id: 'fb3' });
     mockDb.feedbackTicket.create.mockResolvedValue({ id: 'tk2', status: 'unresolved' });
-    mockDb.customer.findUnique.mockResolvedValue({ name: 'Ahmed' });
-    (sendSms as jest.Mock).mockResolvedValue({ sid: 'SM123', status: 'queued' });
 
     const res = await createFeedback(makeRequest({ customerId: 'c1', visitId: 'v1', rating: 'negative', issue: 'Left side shorter', sourceType: 'in_shop' }));
     const body = await res.json();
 
     expect(res.status).toBe(201);
-    expect(body.alertSent).toBe(true);
-    expect(sendSms).toHaveBeenCalledWith('+447700123456', expect.stringContaining('Ahmed'));
-    expect(sendSms).toHaveBeenCalledWith('+447700123456', expect.stringContaining('Left side shorter'));
-  });
-
-  it('does not send alert when shop has no phone', async () => {
-    mockDb.visit.findFirst.mockResolvedValue({ id: 'v1', shopId: 'shop1', shop: { name: 'Ben J', phone: null } });
-    mockDb.feedback.create.mockResolvedValue({ id: 'fb4' });
-    mockDb.feedbackTicket.create.mockResolvedValue({ id: 'tk3', status: 'unresolved' });
-
-    const res = await createFeedback(makeRequest({ customerId: 'c1', visitId: 'v1', rating: 'negative', sourceType: 'in_shop' }));
-    const body = await res.json();
-
-    expect(body.alertSent).toBe(false);
-    expect(sendSms).not.toHaveBeenCalled();
-  });
-
-  it('still returns 201 even if alert SMS throws', async () => {
-    mockDb.visit.findFirst.mockResolvedValue({ id: 'v1', shopId: 'shop1', shop: { name: 'Ben J', phone: '+447700123456' } });
-    mockDb.feedback.create.mockResolvedValue({ id: 'fb5' });
-    mockDb.feedbackTicket.create.mockResolvedValue({ id: 'tk4', status: 'unresolved' });
-    mockDb.customer.findUnique.mockResolvedValue({ name: 'Sam' });
-    (sendSms as jest.Mock).mockRejectedValue(new Error('Twilio down'));
-
-    const res = await createFeedback(makeRequest({ customerId: 'c1', visitId: 'v1', rating: 'negative', sourceType: 'web' }));
-    expect(res.status).toBe(201);
+    expect(body.ticketId).toBe('tk2');
+    expect(mockNotifyCustomer).not.toHaveBeenCalled();
   });
 
   it('blocks cross-shop access for barber session', async () => {
@@ -206,6 +178,7 @@ describe('PATCH /api/feedback/[feedbackId]/resolve', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (auth as jest.Mock).mockResolvedValue(OWNER_SESSION);
+    mockNotifyCustomer.mockResolvedValue({ notified: true });
   });
 
   it('returns 403 for non-owner barber', async () => {
@@ -240,7 +213,7 @@ describe('PATCH /api/feedback/[feedbackId]/resolve', () => {
     expect(res.status).toBe(409);
   });
 
-  it('resolves with log_only — no SMS sent, status = resolved', async () => {
+  it('resolves with log_only — no push sent, status = resolved', async () => {
     mockDb.feedback.findFirst.mockResolvedValue({
       id: 'fb1', issue: null, shop: { name: 'Ben J' },
       customer: { id: 'c1', name: 'Sam', phone: '+447700000001' },
@@ -250,21 +223,19 @@ describe('PATCH /api/feedback/[feedbackId]/resolve', () => {
 
     const res = await resolveFeedback(makeResolveRequest({ resolution: 'log_only' }), routeParams);
     expect(res.status).toBe(200);
-    expect(sendSms).not.toHaveBeenCalled();
+    expect(mockNotifyCustomer).not.toHaveBeenCalled();
     expect(mockDb.feedbackTicket.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: 'resolved' }) })
     );
   });
 
-  it('resolves with book_return — SMS sent to customer, status = in_progress', async () => {
+  it('resolves with book_return — pushes a wallet notification, status = in_progress', async () => {
     mockDb.feedback.findFirst.mockResolvedValue({
       id: 'fb1', issue: 'Too short', shop: { name: 'Ben J' },
       customer: { id: 'c1', name: 'Ahmed', phone: '+447700000002' },
       ticket: { id: 'tk1', status: 'unresolved' },
     });
     mockDb.feedbackTicket.update.mockResolvedValue({ id: 'tk1', status: 'in_progress' });
-    mockDb.smsLog.create.mockResolvedValue({});
-    (sendSms as jest.Mock).mockResolvedValue({ sid: 'SM999', status: 'queued' });
 
     const res = await resolveFeedback(
       makeResolveRequest({ resolution: 'book_return', preferredDate: '2026-05-07T10:00:00.000Z' }),
@@ -273,9 +244,9 @@ describe('PATCH /api/feedback/[feedbackId]/resolve', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.smsSent).toBe(true);
-    expect(sendSms).toHaveBeenCalledWith('+447700000002', expect.stringContaining('Ben J'));
-    expect(sendSms).toHaveBeenCalledWith('+447700000002', expect.stringContaining('Thursday'));
+    expect(body.notified).toBe(true);
+    expect(mockNotifyCustomer).toHaveBeenCalledWith('c1', expect.stringContaining('Ben J'));
+    expect(mockNotifyCustomer).toHaveBeenCalledWith('c1', expect.stringContaining('Thursday'));
   });
 
   it('resolves with same_barber_fix — looks up barber name', async () => {
@@ -286,15 +257,13 @@ describe('PATCH /api/feedback/[feedbackId]/resolve', () => {
     });
     mockDb.barber.findFirst.mockResolvedValue({ name: 'Jake' });
     mockDb.feedbackTicket.update.mockResolvedValue({ id: 'tk1', status: 'in_progress' });
-    mockDb.smsLog.create.mockResolvedValue({});
-    (sendSms as jest.Mock).mockResolvedValue({ sid: 'SM888', status: 'queued' });
 
     const res = await resolveFeedback(
       makeResolveRequest({ resolution: 'same_barber_fix', assignedBarberId: 'barber1' }),
       routeParams
     );
     expect(res.status).toBe(200);
-    expect(sendSms).toHaveBeenCalledWith('+447700000003', expect.stringContaining('Jake'));
+    expect(mockNotifyCustomer).toHaveBeenCalledWith('c1', expect.stringContaining('Jake'));
   });
 });
 
@@ -315,6 +284,7 @@ describe('POST /api/feedback/[feedbackId]/complete', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (auth as jest.Mock).mockResolvedValue(OWNER_SESSION);
+    mockNotifyCustomer.mockResolvedValue({ notified: true });
   });
 
   it('returns 404 when feedback is missing', async () => {
@@ -340,7 +310,7 @@ describe('POST /api/feedback/[feedbackId]/complete', () => {
     expect(res.status).toBe(403);
   });
 
-  it('resolves the ticket, updates reminder schedule, and sends customer SMS', async () => {
+  it('resolves the ticket, updates reminder schedule, and pushes a wallet notification', async () => {
     mockDb.feedback.findFirst.mockResolvedValue({
       id: 'fb1',
       customerId: 'c1',
@@ -358,8 +328,6 @@ describe('POST /api/feedback/[feedbackId]/complete', () => {
       assignedBarberId: 'barber1',
     });
     mockDb.visit.update.mockResolvedValue({});
-    mockDb.smsLog.create.mockResolvedValue({});
-    (sendSms as jest.Mock).mockResolvedValue({ sid: 'SMCOMPLETE', status: 'queued' });
 
     const res = await completeFeedback(
       makeCompleteRequest({ notes: 'Leveled both sides', customerHappy: true }),
@@ -375,7 +343,7 @@ describe('POST /api/feedback/[feedbackId]/complete', () => {
         data: expect.objectContaining({ reminderScheduledAt: expect.any(Date), cutRating: 'positive' }),
       })
     );
-    expect(sendSms).toHaveBeenCalledWith('+447700000011', expect.stringContaining('All sorted'));
+    expect(mockNotifyCustomer).toHaveBeenCalledWith('c1', expect.stringContaining('All sorted'));
   });
 });
 

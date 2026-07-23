@@ -13,8 +13,10 @@ YourBarber is a barbershop management platform. It is **not** a booking system �
 Core value props:
 - Walk-in waitlist managed digitally with zero friction
 - Per-client cut history with photos (a "cut passport" that travels across shops)
-- SMS reminders sent by the barber, not automated spam
+- Apple/Google Wallet pass as the client's loyalty card, identity, and reminder channel — free push notifications, no SMS cost
 - Physical QR materials that make the product tangible in the shop
+
+**No SMS. No Twilio. No Vonage.** SMS was removed entirely (2026-07-23) — it's an ongoing per-message cost the founder does not want, ever. All client-facing notifications (reminders, queue nudges, appointment confirmations, feedback follow-ups) go through the Wallet pass push channel (`src/lib/wallet/notify.ts`) instead. Do not reintroduce an SMS/text-messaging provider or dependency under any circumstance, even as a "fallback" — ask first if a use case seems to need it.
 
 ---
 
@@ -116,7 +118,7 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 | Database | PostgreSQL via Prisma ORM |
 | Auth | Iron Session (cookie-based) |
 | Photo storage | AWS S3 (private bucket, presigned URLs) |
-| SMS | Twilio (credentials set up, not yet live) |
+| Client notifications | Apple/Google Wallet push (`src/lib/wallet/notify.ts`) — no SMS provider |
 | Hosting | Vercel (Hobby, main branch auto-deploys) |
 | Domain | yourbarber.uk — Vercel nameservers |
 | Subdomains | `*.yourbarber.uk` → `/shop/[slug]` via middleware |
@@ -132,11 +134,12 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - [x] QR code per customer (for barber-scans-client flow)
 - [x] Shop microsite at `[slug].yourbarber.uk`
 - [x] Subdomain middleware routing
-- [x] SMS opt-in tracking (not sending yet)
 - [x] **Apple & Google Wallet Pass Generator Engine** (`src/lib/wallet/passGenerator.ts`)
 - [x] **Shop Pass Design Studio & Live Previews** (`/settings/pass-studio`)
 - [x] **1-Tap Wallet Pass Issuance on Arrive Page** (`/arrive/[slug]`)
 - [x] **Wallet Pass QR Barcode Scanner & Auto Loyalty Stamp Awarding** (`/scan` & `/api/scan`)
+- [x] **Apple Wallet push notifications** — PassKit web service (`/api/wallet/v1/*`), APNs sender (`src/lib/wallet/apnsPush.ts`), Google Wallet object PATCH (`src/lib/wallet/googlePush.ts`). Free at any volume, no SMS.
+- [x] **Customer login via Wallet pass access code** — `/me/login`, no OTP/SMS step
 
 ## What's Next (priority order)
 
@@ -145,9 +148,8 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 3. **Barber Staff Wallet Pass** — digital business card for team members
 4. **Barber mode** — `/barber` scoped view, 30-day session, PWA manifest
 5. **Customer portal** — `/me` — client views their own cut history, photos, preferences
-6. **SMS reminders** — Twilio integration, triggered manually by barber
-7. **QR code download** — shop settings page, generate printable QR for `/arrive/[slug]`
-8. **Analytics** — visits per week, retention, busiest days
+6. **QR code download** — shop settings page, generate printable QR for `/arrive/[slug]`
+7. **Analytics** — visits per week, retention, busiest days
 
 ---
 
@@ -273,9 +275,6 @@ AWS_REGION
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 AWS_S3_BUCKET
-TWILIO_ACCOUNT_SID
-TWILIO_AUTH_TOKEN
-TWILIO_FROM_NUMBER
 APPLE_PASS_TYPE_ID
 APPLE_TEAM_ID
 APPLE_PASS_CERT_PEM

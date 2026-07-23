@@ -22,7 +22,7 @@ export function BulkReminderPanel({ customers: initial, reminderType }: Props) {
   const [sending, setSending] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
-  const [preview, setPreview] = useState<{ message: string; wouldSendToPhone: string; previewUrl: string | null } | null>(null);
+  const [preview, setPreview] = useState<{ message: string; hasWalletPass: boolean } | null>(null);
 
   function toggle(id: string) {
     setSelected(prev => {
@@ -106,7 +106,7 @@ export function BulkReminderPanel({ customers: initial, reminderType }: Props) {
             disabled={previewing || !selected.size}
             className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 rounded-lg bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all font-barlow disabled:opacity-50"
           >
-            {previewing ? 'Previewing...' : 'Preview SMS'}
+            {previewing ? 'Previewing...' : 'Preview reminder'}
           </button>
         </div>
       </div>
@@ -115,7 +115,7 @@ export function BulkReminderPanel({ customers: initial, reminderType }: Props) {
         <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
           <div className="flex items-center justify-between gap-3 mb-3">
             <p className="font-barlow font-bold text-xs uppercase tracking-widest text-white/35">
-              SMS preview
+              Wallet pass preview
             </p>
             <button
               onClick={() => setPreview(null)}
@@ -125,17 +125,9 @@ export function BulkReminderPanel({ customers: initial, reminderType }: Props) {
             </button>
           </div>
           <p className="text-white text-sm leading-6">{preview.message}</p>
-          <p className="text-white/35 text-xs mt-3 font-mono">{preview.wouldSendToPhone}</p>
-          {preview.previewUrl && (
-            <a
-              href={preview.previewUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-block mt-3 text-primary text-xs font-bold uppercase tracking-widest"
-            >
-              Open customer link
-            </a>
-          )}
+          <p className="text-white/35 text-xs mt-3">
+            {preview.hasWalletPass ? 'This customer has a Wallet pass installed — they\'ll get a push notification.' : 'No Wallet pass installed yet — they won\'t see this until they add one.'}
+          </p>
         </div>
       )}
 
@@ -184,7 +176,7 @@ export function BulkReminderPanel({ customers: initial, reminderType }: Props) {
         className="btn-lime w-full py-4 rounded-xl flex items-center justify-center gap-2 text-base font-bold shadow-xl shadow-primary/10 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98]"
       >
         <Send size={18} className={sending ? 'animate-pulse' : ''} />
-        {sending ? 'Sending…' : `Send SMS to ${selected.size} customer${selected.size !== 1 ? 's' : ''}`}
+        {sending ? 'Sending…' : `Send reminder to ${selected.size} customer${selected.size !== 1 ? 's' : ''}`}
       </button>
     </div>
   );

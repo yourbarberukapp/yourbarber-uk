@@ -47,6 +47,7 @@ export interface ClientPassInput {
   queuePosition?: number | null;
   waitMinutes?: number | null;
   promoMessage?: string | null;
+  passAuthToken?: string | null;
 }
 
 export async function generateClientApplePass(input: ClientPassInput): Promise<{ pkpassBuffer: Buffer; serialNumber: string }> {
@@ -101,7 +102,7 @@ export async function generateClientApplePass(input: ClientPassInput): Promise<{
     },
   ];
 
-  const passJson = {
+  const passJson: Record<string, unknown> = {
     formatVersion: 1,
     passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.uk.yourbarber.client',
     serialNumber,
@@ -126,6 +127,11 @@ export async function generateClientApplePass(input: ClientPassInput): Promise<{
       },
     ],
   };
+
+  if (input.passAuthToken) {
+    passJson.authenticationToken = input.passAuthToken;
+    passJson.webServiceURL = `${appUrl}/api/wallet/v1`;
+  }
 
   const zip = new JSZip();
   const passJsonStr = JSON.stringify(passJson, null, 2);

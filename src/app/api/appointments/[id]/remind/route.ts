@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
+import { notifyCustomer } from '@/lib/wallet/notify';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   // Normally we would secure this with an API key if called from cron,
@@ -43,33 +43,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     minute: '2-digit',
   });
 
-  const message = `Reminder: You have an appointment at ${appointment.shop.name} with ${appointment.barber?.name || 'us'} tomorrow (${dateStr}) at ${timeStr}. Reply to cancel.`;
+  const message = `Reminder: your appointment at ${appointment.shop.name} with ${appointment.barber?.name || 'us'} is tomorrow (${dateStr}) at ${timeStr}.`;
 
-  let smsSent = false;
-  if (appointment.customer.phone) {
-    try {
-      const { messageId, status } = await sendSms(appointment.customer.phone, message);
-      await db.smsLog.create({
-        data: {
-          shopId: appointment.shopId,
-          customerId: appointment.customerId,
-          message,
-          twilioSid: messageId,
-          status,
-        },
-      });
-      smsSent = true;
+  let notified = false;
+  try {
+    const result = await notifyCustomer(appointment.customerId, message);
+    notified = result.notified;
 
-      // Update appointment
-      await db.appointment.update({
-        where: { id: appointment.id },
-        data: { reminderSentAt: new Date() },
-      });
-    } catch (error) {
-      console.error('Failed to send reminder SMS', error);
-      return NextResponse.json({ error: 'Failed to send SMS' }, { status: 500 });
-    }
+    await db.appointment.update({
+      where: { id: appointment.id },
+      data: { reminderSentAt: new Date() },
+    });
+  } catch (error) {
+    console.error('Failed to send reminder push', error);
+    return NextResponse.json({ error: 'Failed to send reminder' }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, smsSent });
+  return NextResponse.json({ success: true, notified });
 }

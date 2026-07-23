@@ -114,35 +114,35 @@ export default function PreferencesPage() {
               <div className="w-8 h-8 rounded-full bg-[#C8F135]/10 flex items-center justify-center">
                 <Smartphone size={14} className="text-[#C8F135]" />
               </div>
-              <h2 className="text-white font-barlow font-bold uppercase tracking-wider text-sm">SMS Communications</h2>
+              <h2 className="text-white font-barlow font-bold uppercase tracking-wider text-sm">Reminders</h2>
             </div>
-            
+
             <p className="text-white/40 text-[13px] font-inter mb-4 leading-relaxed">
-              We send SMS messages for reminders and check-in links. We never send marketing spam.
+              We send reminders and check-in updates to your Apple/Google Wallet pass. We never send marketing spam.
             </p>
 
             <div className="space-y-2">
               <label className="flex items-center gap-3 p-3 rounded border border-white/5 bg-black/20 cursor-pointer hover:bg-white/5 transition-colors">
-                <input 
-                  type="radio" 
-                  name="smsOptIn" 
-                  value="opt_in" 
-                  checked={smsOptIn === 'opt_in'} 
+                <input
+                  type="radio"
+                  name="smsOptIn"
+                  value="opt_in"
+                  checked={smsOptIn === 'opt_in'}
                   onChange={() => setSmsOptIn('opt_in')}
                   className="accent-[#C8F135] w-4 h-4"
                 />
-                <span className="text-white/80 font-inter text-sm">Send me SMS updates</span>
+                <span className="text-white/80 font-inter text-sm">Send me reminders</span>
               </label>
               <label className="flex items-center gap-3 p-3 rounded border border-white/5 bg-black/20 cursor-pointer hover:bg-white/5 transition-colors">
-                <input 
-                  type="radio" 
-                  name="smsOptIn" 
-                  value="opt_out" 
-                  checked={smsOptIn === 'opt_out'} 
+                <input
+                  type="radio"
+                  name="smsOptIn"
+                  value="opt_out"
+                  checked={smsOptIn === 'opt_out'}
                   onChange={() => setSmsOptIn('opt_out')}
                   className="accent-[#C8F135] w-4 h-4"
                 />
-                <span className="text-white/80 font-inter text-sm">Do not send me any SMS</span>
+                <span className="text-white/80 font-inter text-sm">Do not send me reminders</span>
               </label>
             </div>
           </div>

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
-import { buildSmsMessage } from '@/lib/reminders';
+import { notifyCustomer } from '@/lib/wallet/notify';
+import { buildReminderMessage } from '@/lib/reminders';
 
 const sendSchema = z.object({
   customerIds: z.array(z.string()).min(1).max(200),
@@ -29,9 +29,7 @@ export async function POST(req: NextRequest) {
     where: { id: { in: parsed.data.customerIds }, shopId, smsOptIn: 'yes' },
     select: {
       id: true,
-      phone: true,
       name: true,
-      accessCode: true,
       visits: {
         orderBy: { visitedAt: 'desc' },
         take: 1,
@@ -43,16 +41,12 @@ export async function POST(req: NextRequest) {
   const results = await Promise.allSettled(
     customers.map(async customer => {
       const recentBarberName = customer.visits[0]?.barber?.name ?? barberName;
-      const message = buildSmsMessage({
+      const message = buildReminderMessage({
         name: customer.name,
         shopName: shop.name,
         barberName: recentBarberName,
-        accessCode: customer.accessCode,
       });
-      const { messageId, status } = await sendSms(customer.phone, message);
-      await db.smsLog.create({
-        data: { shopId, customerId: customer.id, message, twilioSid: messageId, status },
-      });
+      await notifyCustomer(customer.id, message);
       return { customerId: customer.id };
     })
   );

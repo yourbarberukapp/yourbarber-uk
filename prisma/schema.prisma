@@ -39,7 +39,6 @@ model Shop {
   photos               ShopPhoto[]
   services             ShopService[]
   styles               ShopStyle[]
-  smsLogs              SmsLog[]
   visits               Visit[]
   walkIns              WalkIn[]
 }
@@ -107,9 +106,10 @@ model Customer {
   accessCode             String?       @unique
   preferredReminderWeeks Int?
   primaryBarberId        String?
-  otpCode                String?
-  otpExpiry              DateTime?
   applePassSerialNumber  String?       @unique
+  passAuthToken          String?
+  passUpdatedAt          DateTime?
+  passMessage            String?
   googlePassId           String?       @unique
   loyaltyStamps          Int           @default(0)
   appointments           Appointment[]
@@ -118,7 +118,6 @@ model Customer {
   primaryBarber          Barber?       @relation("PrimaryBarber", fields: [primaryBarberId], references: [id])
   shop                   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
   feedbacks              Feedback[]
-  smsLogs                SmsLog[]
   visits                 Visit[]
   walkIns                WalkIn[]
   familyMembers          FamilyMember[]
@@ -202,18 +201,6 @@ model VisitPhoto {
   angle     String
   createdAt DateTime @default(now())
   visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
-}
-
-model SmsLog {
-  id         String   @id @default(cuid())
-  shopId     String
-  customerId String
-  message    String
-  twilioSid  String?
-  status     String   @default("sent")
-  sentAt     DateTime @default(now())
-  customer   Customer @relation(fields: [customerId], references: [id])
-  shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 }
 
 model ShopPhoto {

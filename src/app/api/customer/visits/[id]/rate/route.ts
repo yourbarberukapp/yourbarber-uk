@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getCustomerSession } from '@/lib/customerAuth';
-import { sendSms } from '@/lib/vonage';
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const session = await getCustomerSession();
@@ -25,10 +24,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const existing = await db.feedback.findFirst({ where: { visitId } });
   if (existing) return NextResponse.json({ error: 'Already rated' }, { status: 400 });
 
-  const { shopPhone, googleReviewUrl } = await db.$transaction(async (tx) => {
+  const { googleReviewUrl } = await db.$transaction(async (tx) => {
     const shop = await tx.shop.findUnique({
       where: { id: visit.shopId },
-      select: { phone: true, googleReviewUrl: true },
+      select: { googleReviewUrl: true },
     });
 
     const fb = await tx.feedback.create({
@@ -52,16 +51,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       data: { cutRating: finalRating, stars },
     });
 
-    return { shopPhone: shop?.phone ?? null, googleReviewUrl: shop?.googleReviewUrl ?? null };
+    return { googleReviewUrl: shop?.googleReviewUrl ?? null };
   });
 
-  if (finalRating === 'negative' && shopPhone) {
-    try {
-      await sendSms(shopPhone, `New feedback: a customer rated their cut ${stars} star${stars !== 1 ? 's' : ''}. Check the feedback dashboard.`);
-    } catch (err) {
-      console.error('Failed to notify owner', err);
-    }
-  }
+  // Negative feedback shows up on the owner's Feedback dashboard immediately — no SMS alert needed.
 
   return NextResponse.json({
     success: true,

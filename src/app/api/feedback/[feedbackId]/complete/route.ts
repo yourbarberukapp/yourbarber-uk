@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendSms } from '@/lib/twilio';
+import { notifyCustomer } from '@/lib/wallet/notify';
 
 const completeSchema = z.object({
   barberId: z.string().optional(),
@@ -106,30 +106,10 @@ export async function POST(
     },
   });
 
-  const customerSms = `All sorted at ${feedback.shop.name}. Thanks for giving us the chance to fix it.`;
-  if (feedback.customer.phone) {
-    try {
-      const { messageId, status } = await sendSms(feedback.customer.phone, customerSms);
-      await db.smsLog.create({
-        data: {
-          shopId: feedback.shopId,
-          customerId: feedback.customer.id,
-          message: customerSms,
-          twilioSid: messageId,
-          status,
-        },
-      });
-    } catch {
-      // Keep completion resilient if SMS is unavailable in dev or temporarily failing.
-    }
-  }
-
-  if (feedback.shop.phone) {
-    try {
-      await sendSms(feedback.shop.phone, `Feedback ticket resolved for customer ${feedback.customer.id}.`);
-    } catch {
-      // Owner confirmation is best-effort only.
-    }
+  try {
+    await notifyCustomer(feedback.customer.id, `All sorted at ${feedback.shop.name}. Thanks for giving us the chance to fix it.`);
+  } catch {
+    // Keep completion resilient if the push fails.
   }
 
   return NextResponse.json({ ticket });
