@@ -49,3 +49,4 @@ manus/
 *.tsbuildinfo
 next-env.d.ts
 .env.vercel*
+certificates/
