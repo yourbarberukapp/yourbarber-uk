@@ -1,0 +1,273 @@
+/**
+ * Apple Wallet PKPass & Google Wallet JWT Generators for YourBarber.uk
+ */
+import { createHash, createSign } from 'crypto';
+import JSZip from 'jszip';
+import forge from 'node-forge';
+import { generateApplePassArtwork, generateGoogleHeroArtwork } from './artwork';
+
+function getAppUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://yourbarber.uk';
+}
+
+function rgbString(hexColour?: string): string {
+  const safe = /^#[0-9a-f]{6}$/i.test(hexColour || '') ? (hexColour || '').slice(1) : '111111';
+  const r = parseInt(safe.slice(0, 2), 16);
+  const g = parseInt(safe.slice(2, 4), 16);
+  const b = parseInt(safe.slice(4, 6), 16);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function computeLabelColour(hexColour?: string): string {
+  const safe = /^#[0-9a-f]{6}$/i.test(hexColour || '') ? (hexColour || '').slice(1) : '111111';
+  const r = parseInt(safe.slice(0, 2), 16);
+  const g = parseInt(safe.slice(2, 4), 16);
+  const b = parseInt(safe.slice(4, 6), 16);
+  return `rgb(${Math.round(r + (255 - r) * 0.65)}, ${Math.round(g + (255 - g) * 0.65)}, ${Math.round(b + (255 - b) * 0.65)})`;
+}
+
+function buildStampDisplay(stampCount: number, target: number): string {
+  const filled = Math.min(stampCount, target);
+  if (target <= 10) {
+    return '●'.repeat(filled) + '○'.repeat(target - filled);
+  }
+  return `${filled} of ${target}`;
+}
+
+export interface ClientPassInput {
+  shopName: string;
+  shopSlug: string;
+  accentColor: string;
+  customerName: string;
+  phone: string;
+  accessCode: string;
+  loyaltyStamps: number;
+  loyaltyTarget: number;
+  loyaltyReward: string;
+  queuePosition?: number | null;
+  waitMinutes?: number | null;
+  promoMessage?: string | null;
+}
+
+export async function generateClientApplePass(input: ClientPassInput): Promise<{ pkpassBuffer: Buffer; serialNumber: string }> {
+  const serialNumber = `yb-client-${input.accessCode}`;
+  const stampDisplay = buildStampDisplay(input.loyaltyStamps, input.loyaltyTarget);
+  const appUrl = getAppUrl();
+
+  const primaryFields = [
+    {
+      key: 'stamps',
+      label: input.loyaltyStamps >= input.loyaltyTarget ? '🎉 REWARD READY' : 'LOYALTY STAMPS',
+      value: stampDisplay,
+      textAlignment: 'PKTextAlignmentLeft',
+    },
+  ];
+
+  const secondaryFields = [
+    {
+      key: 'reward',
+      label: 'REWARD',
+      value: input.loyaltyReward,
+      textAlignment: 'PKTextAlignmentLeft',
+    },
+    {
+      key: 'queue',
+      label: 'QUEUE STATUS',
+      value: input.queuePosition ? `Position #${input.queuePosition} (~${input.waitMinutes || 0}m)` : 'Not in queue',
+      textAlignment: 'PKTextAlignmentRight',
+    },
+  ];
+
+  const backFields = [
+    { key: 'holder', label: 'CLIENT NAME', value: input.customerName },
+    { key: 'phone', label: 'MOBILE NUMBER', value: input.phone },
+    {
+      key: 'passport',
+      label: 'CUT PASSPORT & HISTORY',
+      value: 'View your cut history & photos',
+      attributedValue: `<a href='${appUrl}/me'>Open My Cut Passport</a>`,
+    },
+    {
+      key: 'microsite',
+      label: 'SHOP MICROSITE',
+      value: `${input.shopSlug}.yourbarber.uk`,
+      attributedValue: `<a href='${appUrl}/shop/${input.shopSlug}'>View Shop Hours & Prices</a>`,
+    },
+    ...(input.promoMessage ? [{ key: 'promo', label: 'SPECIAL OFFER', value: input.promoMessage }] : []),
+    {
+      key: 'powered_by',
+      label: 'POWERED BY',
+      value: 'YourBarber.uk — Barbershop Management Platform',
+    },
+  ];
+
+  const passJson = {
+    formatVersion: 1,
+    passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.uk.yourbarber.client',
+    serialNumber,
+    teamIdentifier: process.env.APPLE_TEAM_ID || 'XXXXXXXXXX',
+    organizationName: input.shopName,
+    description: `${input.shopName} Digital Card`,
+    logoText: input.shopName,
+    backgroundColor: rgbString(input.accentColor),
+    foregroundColor: 'rgb(255, 255, 255)',
+    labelColor: computeLabelColour(input.accentColor),
+    storeCard: {
+      primaryFields,
+      secondaryFields,
+      backFields,
+    },
+    barcodes: [
+      {
+        message: input.accessCode,
+        format: 'PKBarcodeFormatQR',
+        messageEncoding: 'iso-8859-1',
+        altText: 'Present barcode to barber',
+      },
+    ],
+  };
+
+  const zip = new JSZip();
+  const passJsonStr = JSON.stringify(passJson, null, 2);
+  const artwork = await generateApplePassArtwork({ accentColour: input.accentColor });
+
+  zip.file('pass.json', passJsonStr);
+  zip.file('icon.png', artwork.icon);
+  zip.file('icon@2x.png', artwork.icon2x);
+  zip.file('logo.png', artwork.logo);
+  zip.file('logo@2x.png', artwork.logo2x);
+  zip.file('strip.png', artwork.strip);
+  zip.file('strip@2x.png', artwork.strip2x);
+
+  const manifest: Record<string, string> = {
+    'pass.json': createHash('sha1').update(passJsonStr).digest('hex'),
+    'icon.png': createHash('sha1').update(artwork.icon).digest('hex'),
+    'icon@2x.png': createHash('sha1').update(artwork.icon2x).digest('hex'),
+    'logo.png': createHash('sha1').update(artwork.logo).digest('hex'),
+    'logo@2x.png': createHash('sha1').update(artwork.logo2x).digest('hex'),
+    'strip.png': createHash('sha1').update(artwork.strip).digest('hex'),
+    'strip@2x.png': createHash('sha1').update(artwork.strip2x).digest('hex'),
+  };
+  const manifestStr = JSON.stringify(manifest);
+  zip.file('manifest.json', manifestStr);
+
+  const certPem = process.env.APPLE_PASS_CERT_PEM;
+  const keyPem = process.env.APPLE_PASS_KEY_PEM;
+  const wwdrPem = process.env.APPLE_WWDR_PEM;
+
+  if (certPem && keyPem && wwdrPem) {
+    try {
+      const cert = forge.pki.certificateFromPem(certPem.replace(/\\n/g, '\n'));
+      const key = forge.pki.privateKeyFromPem(keyPem.replace(/\\n/g, '\n'));
+      const wwdr = forge.pki.certificateFromPem(wwdrPem.replace(/\\n/g, '\n'));
+
+      const p7 = forge.pkcs7.createSignedData();
+      p7.content = forge.util.createBuffer(manifestStr, 'utf8');
+      p7.addCertificate(cert);
+      p7.addCertificate(wwdr);
+      p7.addSigner({
+        key,
+        certificate: cert,
+        digestAlgorithm: forge.pki.oids.sha1,
+        authenticatedAttributes: [
+          { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
+          { type: forge.pki.oids.messageDigest },
+          { type: forge.pki.oids.signingTime, value: new Date().toISOString() },
+        ],
+      });
+      p7.sign({ detached: true });
+      const derBuffer = Buffer.from(forge.asn1.toDer(p7.toAsn1()).getBytes(), 'binary');
+      zip.file('signature', derBuffer);
+    } catch {
+      zip.file('signature', Buffer.alloc(0));
+    }
+  } else {
+    zip.file('signature', Buffer.alloc(0));
+  }
+
+  const pkpassBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+  return { pkpassBuffer, serialNumber };
+}
+
+export async function generateClientGooglePass(input: ClientPassInput): Promise<{ saveUrl: string }> {
+  const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID || 'demo_issuer';
+  const classId = `${issuerId}.yb_client_${input.shopSlug}`;
+  const objectId = `${issuerId}.card_${input.accessCode}`;
+  const appUrl = getAppUrl();
+
+  const loyaltyClass = {
+    id: classId,
+    issuerName: input.shopName,
+    programName: `${input.shopName} Card`,
+    hexBackgroundColor: input.accentColor || '#111111',
+    reviewStatus: 'APPROVED',
+  };
+
+  const loyaltyObject = {
+    id: objectId,
+    classId,
+    state: 'active',
+    accountName: input.customerName,
+    loyaltyPoints: {
+      balance: { int: input.loyaltyStamps },
+      label: 'Stamps',
+    },
+    textModulesData: [
+      { header: 'Reward', body: input.loyaltyReward, id: 'reward' },
+      { header: 'Queue Status', body: input.queuePosition ? `Position #${input.queuePosition}` : 'Not in queue', id: 'queue' },
+      ...(input.promoMessage ? [{ header: 'Special Offer', body: input.promoMessage, id: 'promo' }] : []),
+    ],
+    barcode: {
+      type: 'QR_CODE',
+      value: input.accessCode,
+      alternateText: 'Present barcode to barber',
+    },
+    linksModuleData: {
+      uris: [
+        { uri: `${appUrl}/me`, description: 'Open My Cut Passport' },
+        { uri: `${appUrl}/shop/${input.shopSlug}`, description: 'Shop Information' },
+      ],
+    },
+  };
+
+  const serviceAccountKey = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_KEY;
+  let serviceAccountEmail = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL || 'demo@example.iam.gserviceaccount.com';
+  let privateKey = process.env.GOOGLE_WALLET_PRIVATE_KEY;
+
+  if (serviceAccountKey) {
+    try {
+      const parsed = JSON.parse(serviceAccountKey);
+      serviceAccountEmail = parsed.client_email || serviceAccountEmail;
+      privateKey = parsed.private_key || privateKey;
+    } catch {}
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: serviceAccountEmail,
+    aud: 'google',
+    typ: 'savetowallet',
+    iat: now,
+    payload: {
+      loyaltyClasses: [loyaltyClass],
+      loyaltyObjects: [loyaltyObject],
+    },
+  };
+
+  let jwt: string;
+  if (privateKey) {
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const signer = createSign('RSA-SHA256');
+    signer.update(`${header}.${body}`);
+    const signature = signer.sign(privateKey, 'base64url');
+    jwt = `${header}.${body}.${signature}`;
+  } else {
+    const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    jwt = `${header}.${body}.DEMO_SIGNATURE`;
+  }
+
+  return { saveUrl: `https://pay.google.com/gp/v/save/${jwt}` };
+}

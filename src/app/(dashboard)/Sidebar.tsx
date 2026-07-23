@@ -14,6 +14,7 @@ const ownerNav = [
   { href: '/dashboard', label: 'Dashboard', icon: Globe },
   { href: '/waitlist', label: 'Walk-ins', icon: ListOrdered },
   { href: '/arrival-qr', label: 'Arrival QR', icon: QrCode },
+  { href: '/settings/pass-studio', label: 'Pass Studio', icon: Scissors },
   { href: '/appointments', label: 'Appointments', icon: Calendar },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/reminders', label: 'Reminders', icon: Bell },

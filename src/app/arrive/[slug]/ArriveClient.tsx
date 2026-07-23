@@ -1108,8 +1108,23 @@ export default function ArriveClient({
                 </div>
               )}
 
-              <button
-                style={{ ...btnLime, background: 'white', color: '#0A0A0A' }}
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <a
+                  href={`/api/wallet/client/apple?shop=${shopSlug}&phone=${encodeURIComponent(phone)}`}
+                  className="flex-1 bg-black text-white border border-white/20 rounded-xl py-3 px-4 font-barlow font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-white/10 transition-colors text-center no-underline"
+                >
+                   Add to Apple Wallet
+                </a>
+                <a
+                  href={`/api/wallet/client/google?shop=${shopSlug}&phone=${encodeURIComponent(phone)}`}
+                  className="flex-1 bg-white text-black border border-black/10 rounded-xl py-3 px-4 font-barlow font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors text-center no-underline"
+                >
+                  G Save to Google Wallet
+                </a>
+              </div>
+
+              <button 
+                style={{ ...btnStyle, background: 'white', color: '#0A0A0A' }}
                 onClick={() => {
                   const params = new URLSearchParams({
                     shop: shopSlug,

@@ -24,7 +24,7 @@ export default function QRScanner() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          // Legacy check-in token QR: yourbarber.uk/checkin/[token]
+          // 1. Legacy check-in token QR: yourbarber.uk/checkin/[token]
           if (decodedText.includes('/checkin/')) {
             const token = decodedText.split('/checkin/').pop();
             scanner.stop().catch(() => {});
@@ -32,24 +32,43 @@ export default function QRScanner() {
             return;
           }
 
-          // Wallet pass QR: yourbarber.uk/arrive/[slug]?code=[accessCode]
+          // 2. Wallet pass URL QR: yourbarber.uk/arrive/[slug]?code=[accessCode]
           try {
             const url = new URL(decodedText);
             const code = url.searchParams.get('code');
             if (code) {
               scanner.stop().catch(() => {});
-              const res = await fetch(`/api/barber/scan?code=${encodeURIComponent(code)}`);
-              if (res.ok) {
-                const { customerId } = await res.json();
-                router.push(`/customers/${customerId}`);
+              const res = await fetch(`/api/scan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code }),
+              });
+              const data = await res.json();
+              if (data.redirectUrl) {
+                router.push(data.redirectUrl);
               } else {
                 setError('Customer not found. Make sure they are registered at this shop.');
               }
               return;
             }
           } catch {
-            // decodedText is not a URL — fall through to error
+            // decodedText is not a URL — fall through to direct code lookup
           }
+
+          // 3. Direct Wallet Pass AccessCode barcode scan
+          try {
+            const res = await fetch('/api/scan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: decodedText }),
+            });
+            const data = await res.json();
+            if (data.redirectUrl) {
+              scanner.stop().catch(() => {});
+              router.push(data.redirectUrl);
+              return;
+            }
+          } catch {}
 
           setError('Invalid QR Code. Please scan a YourBarber customer QR or wallet pass.');
         },

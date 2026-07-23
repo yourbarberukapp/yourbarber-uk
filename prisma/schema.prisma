@@ -25,6 +25,13 @@ model Shop {
   allowBarberReminders Boolean       @default(false)
   defaultCutTime       Int           @default(20)
   googleReviewUrl      String?
+  passAccentColor      String?       @default("#111111")
+  passLabelColor       String?       @default("#C8F135")
+  passStripUrl         String?
+  loyaltyEnabled       Boolean       @default(true)
+  loyaltyTarget        Int           @default(5)
+  loyaltyReward        String        @default("50% Off 5th Cut")
+  promoMessage         String?
   appointments         Appointment[]
   barbers              Barber[]
   customers            Customer[]
@@ -70,6 +77,7 @@ model Barber {
   workingHours     Json?
   isBusy           Boolean          @default(false)
   appointments     Appointment[]
+  barberPass       BarberPass?
   shop             Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
   primaryCustomers Customer[]       @relation("PrimaryBarber")
   feedbackTickets  FeedbackTicket[]
@@ -77,6 +85,15 @@ model Barber {
 
   @@unique([email, shopId])
   @@index([shopId])
+}
+
+model BarberPass {
+  id           String   @id @default(cuid())
+  barberId     String   @unique
+  serialNumber String   @unique
+  qrToken      String   @unique @default(uuid())
+  createdAt    DateTime @default(now())
+  barber       Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
 }
 
 model Customer {
@@ -92,10 +109,12 @@ model Customer {
   primaryBarberId        String?
   otpCode                String?
   otpExpiry              DateTime?
-  applePassSerial        String?
-  googleObjectId         String?
+  applePassSerialNumber  String?       @unique
+  googlePassId           String?       @unique
+  loyaltyStamps          Int           @default(0)
   appointments           Appointment[]
   checkIns               CheckIn[]
+  walletDevices          WalletDevice[]
   primaryBarber          Barber?       @relation("PrimaryBarber", fields: [primaryBarberId], references: [id])
   shop                   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
   feedbacks              Feedback[]
@@ -108,6 +127,21 @@ model Customer {
   @@unique([phone, shopId])
   @@index([shopId, phone])
   @@index([shopId, name])
+}
+
+model WalletDevice {
+  id                      String   @id @default(cuid())
+  deviceLibraryIdentifier String
+  pushToken               String
+  passTypeIdentifier      String
+  serialNumber            String
+  customerId              String
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  customer                Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceLibraryIdentifier, serialNumber])
+  @@index([serialNumber])
 }
 
 model FamilySharing {
