@@ -154,6 +154,10 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 4. **Real logo reaching the Wallet pass artwork** — `src/lib/wallet/artwork.ts` still returns a placeholder; now that logo upload works, wire the real `shop.logoUrl` into pass artwork generation.
 5. **Retail product checkout** — the new product catalogue is display-only by design (no payment/cart); revisit only if there's real demand.
 
+**Blocked on the founder, not on more coding:**
+- Wallet push certs and AWS S3 credentials — the code is real and correct, but `.env.local` has a literal placeholder (`AWS_ACCESS_KEY_ID=your-access-key`), and the Apple/Google Wallet cert vars are unconfirmed. No AI assistant has access to the Apple Developer or AWS/Google Cloud accounts — only the founder can set real values in Vercel.
+- **Practical next step:** check Vercel's production environment variables have real AWS and Apple/Google Wallet credentials. If production has the same placeholders as this dev `.env.local`, uploads and installable passes are silently broken in the live app right now.
+
 ---
 
 ## Key File Locations
