@@ -61,7 +61,7 @@ Full access. Runs in a browser on any device.
 - Analytics (visits, revenue, retention — future)
 - Shop settings, barber management, QR code download
 
-**Access:** Email + password login. Long session.
+**Access:** 6-digit passcode (from the owner's Wallet business card). No email, no password, no Google OAuth, no beta-approval gate. Long session.
 
 ---
 
@@ -78,7 +78,7 @@ Simplified, scoped to their work only. Designed for a personal phone.
 
 **Staying logged in:** 30-day session cookie. Barber adds the app to their phone home screen (PWA). One tap → straight to their queue. Re-login once a month at most.
 
-**Access:** Email + password, or barber PIN (TBD).
+**Access:** 6-digit passcode, same mechanism as the owner. Staff get their own passcode (shown once by the owner in Team) — no email, no password.
 
 ---
 
@@ -116,7 +116,7 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 |---|---|
 | Framework | Next.js 15 (App Router) |
 | Database | PostgreSQL via Prisma ORM |
-| Auth | Iron Session (cookie-based) |
+| Auth | NextAuth v5, passcode-only (no email/password/Google) — see [Owner & Staff Passcode Login](#owner--staff-passcode-login) |
 | Photo storage | AWS S3 (private bucket, presigned URLs) |
 | Client notifications | Apple/Google Wallet push (`src/lib/wallet/notify.ts`) — no SMS provider |
 | Hosting | Vercel (Hobby, main branch auto-deploys) |
@@ -127,7 +127,7 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 
 ## What's Built
 
-- [x] Barber/shop auth (register, login, session)
+- [x] **Owner/staff passcode auth** (2026-07-24) — no email, password, Google OAuth, or beta-approval gate. See [Owner & Staff Passcode Login](#owner--staff-passcode-login) below.
 - [x] Customer database (create, search, view)
 - [x] Visit recording with photos (multi-angle, S3 upload)
 - [x] Customer detail page with visit history + photos
@@ -140,16 +140,18 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - [x] **Wallet Pass QR Barcode Scanner & Auto Loyalty Stamp Awarding** (`/scan` & `/api/scan`)
 - [x] **Apple Wallet push notifications** — PassKit web service (`/api/wallet/v1/*`), APNs sender (`src/lib/wallet/apnsPush.ts`), Google Wallet object PATCH (`src/lib/wallet/googlePush.ts`). Free at any volume, no SMS.
 - [x] **Customer login via Wallet pass access code** — `/me/login`, no OTP/SMS step
+- [x] **Owner Wallet business card** — `/api/wallet/owner/apple`, carries the sign-in passcode as its QR/barcode
 
 ## What's Next (priority order)
 
 1. **Walk-in waitlist** — `WalkIn` table, live barber view, claim/complete flow
 2. **`/arrive/[shop-slug]`** — client-facing arrival page (the wall QR destination)
-3. **Barber Staff Wallet Pass** — digital business card for team members
-4. **Barber mode** — `/barber` scoped view, 30-day session, PWA manifest
-5. **Customer portal** — `/me` — client views their own cut history, photos, preferences
-6. **QR code download** — shop settings page, generate printable QR for `/arrive/[slug]`
-7. **Analytics** — visits per week, retention, busiest days
+3. **Barber mode** — `/barber` scoped view, 30-day session, PWA manifest
+4. **Customer portal** — `/me` — client views their own cut history, photos, preferences
+5. **QR code download** — shop settings page, generate printable QR for `/arrive/[slug]`
+6. **Analytics** — visits per week, retention, busiest days
+7. **Real logo on the Wallet pass** — `src/lib/wallet/artwork.ts` currently returns a 1×1 placeholder PNG; shop logo never reaches the card. Logo upload in settings is also URL-paste only, no file upload.
+8. **Google Wallet owner card** — only Apple is built (`generateOwnerApplePass`); no Google equivalent yet.
 
 ---
 
@@ -197,6 +199,31 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - Session gives `{ shopId, barberId, name, role }` — always scope DB queries to `shopId`
 - Phone numbers are stored as-entered — normalise on input (strip spaces, ensure +44 etc.)
 - All inline styles for layout/theming (Tailwind for utilities only)
+
+---
+
+## Owner & Staff Passcode Login
+
+Barbers (owners and staff) sign in with a **6-digit numeric passcode** — no email, no password, no Google OAuth, no beta-approval waitlist. Signup is fully open: `/signup` just asks for shop name + owner's name.
+
+**Why:** the founder wants zero login friction — the same principle behind the customer-side Wallet pass access code. A passcode on a Wallet card mirrors how customers already sign in (see below), and removes the entire "annoying" OAuth/password/beta-gate stack that previously blocked new shops from onboarding themselves.
+
+### How it works
+
+- `POST /api/signup` — creates the `Shop` + owner `Barber` row and calls `generateUniqueOwnerPasscode()` (`src/lib/ownerPasscode.ts`) in one step. Returns the passcode directly in the response so the signup page can show it immediately.
+- Login is a NextAuth `Credentials` provider named `'passcode'` (`src/lib/auth.ts`) — looks up `Barber.ownerPasscode`, rate-limited via `checkRateLimit()` (`src/lib/rateLimit.ts`, DB-backed fixed-window, 5 attempts / 15 min per passcode value — in-memory limiters don't survive Vercel serverless cold starts).
+- The **session shape is unchanged** (`{ shopId, barberId, name, role, shopName, shopSlug }`) — every existing `auth()`/`getSession()` call across the dashboard (45 files) works untouched. Only the credential-verification step changed.
+- `/owner/login` is the sign-in page (`/login` redirects there for old links). `/setup`, `/api/setup`, and `/api/auth/register` (the old beta-gated password signup) are deleted.
+- **Staff barbers** get the same mechanism — `POST /api/team` (owner-only) generates a passcode for a new staff member and returns it once in the response; the Team page shows it in a dismissable banner. Passcodes are never re-displayed on the persisted team list (security: don't leak every staff member's login credential to anyone who opens `/team`).
+
+### The owner's Wallet business card
+
+The owner also gets their own Wallet pass — `GET /api/wallet/owner/apple` (session-authenticated, linked from the dashboard sidebar as "My Owner Card"). It shows the shop name and owner name on the front, and the sign-in passcode on the back (as text and as the pass's QR barcode) — this doubles as the shop's physical/digital business card and closes the loop: install once, always have your login on you.
+
+- `generateOwnerApplePass()` in `src/lib/wallet/passGenerator.ts` — reuses `signAndZipPass()`, the same PKCS7-signing helper the customer loyalty pass uses.
+- Serial numbers are prefixed to disambiguate lookups in the shared PassKit web service routes: `yb-client-{accessCode}` for customers, `yb-owner-{passcode}` for barbers. `/api/wallet/v1/passes/...` and the device-registration routes branch on this prefix.
+- Owner cards are intentionally **static** — no live push updates (unlike the customer pass, which refreshes on queue position/loyalty stamps). `WalletDevice.customerId` is a required FK to `Customer`, so wiring live push to barbers would need a schema change; not done since a passcode rarely changes. Device registration for owner passes returns success without persisting a row.
+- **Not yet built:** Google Wallet equivalent for owners (only Apple exists), and the owner's card doesn't yet show the shop logo (see artwork placeholder note above).
 
 ---
 

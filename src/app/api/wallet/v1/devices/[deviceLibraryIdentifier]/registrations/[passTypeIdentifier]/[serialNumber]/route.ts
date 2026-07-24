@@ -9,10 +9,26 @@ function extractAuthToken(req: NextRequest): string | null {
 
 type Params = { deviceLibraryIdentifier: string; passTypeIdentifier: string; serialNumber: string };
 
+async function verifyOwnerToken(serialNumber: string, token: string): Promise<boolean> {
+  const barber = await db.barber.findUnique({
+    where: { ownerPassSerialNumber: serialNumber },
+    select: { ownerPassAuthToken: true },
+  });
+  return !!barber && barber.ownerPassAuthToken === token;
+}
+
 export async function POST(req: NextRequest, { params }: { params: Params }) {
   const { deviceLibraryIdentifier, passTypeIdentifier, serialNumber } = params;
   const token = extractAuthToken(req);
   if (!token) return NextResponse.json({}, { status: 401 });
+
+  // Owner cards are static (no live queue/loyalty data to push) — accept the
+  // registration without a WalletDevice row rather than force a nullable FK
+  // onto a table that exists for customer push delivery.
+  if (serialNumber.startsWith('yb-owner-')) {
+    const ok = await verifyOwnerToken(serialNumber, token);
+    return NextResponse.json({}, { status: ok ? 201 : 401 });
+  }
 
   const customer = await db.customer.findUnique({
     where: { applePassSerialNumber: serialNumber },
@@ -45,6 +61,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Params }) {
   const { deviceLibraryIdentifier, serialNumber } = params;
   const token = extractAuthToken(req);
   if (!token) return NextResponse.json({}, { status: 401 });
+
+  if (serialNumber.startsWith('yb-owner-')) {
+    const ok = await verifyOwnerToken(serialNumber, token);
+    return NextResponse.json({}, { status: ok ? 200 : 401 });
+  }
 
   const customer = await db.customer.findUnique({
     where: { applePassSerialNumber: serialNumber },

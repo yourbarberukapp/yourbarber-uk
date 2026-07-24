@@ -2,7 +2,7 @@ import type { NextAuthConfig } from 'next-auth';
 
 export const authConfig = {
   pages: {
-    signIn: '/login',
+    signIn: '/owner/login',
   },
   callbacks: {
     jwt({ token, user }) {
@@ -22,23 +22,12 @@ export const authConfig = {
         (session.user as any).role = token.role;
         (session.user as any).shopName = token.shopName;
         (session.user as any).shopSlug = token.shopSlug;
-        (session.user as any).needsSetup = token.needsSetup ?? false;
       }
       return session;
     },
     authorized({ auth, request }) {
       const { nextUrl } = request;
       const isLoggedIn = !!auth?.user;
-      const needsSetup = (auth?.user as any)?.needsSetup;
-
-      if (isLoggedIn && needsSetup) {
-        const isOnSetup = nextUrl.pathname.startsWith('/setup');
-        const isOnApi = nextUrl.pathname.startsWith('/api');
-        if (!isOnSetup && !isOnApi) {
-          return Response.redirect(new URL('/setup', nextUrl));
-        }
-        return true;
-      }
 
       const isCustomerPortal = nextUrl.pathname.startsWith('/customer') ||
                                nextUrl.pathname.startsWith('/c') ||
@@ -51,14 +40,15 @@ export const authConfig = {
                             nextUrl.pathname.startsWith('/reminders') ||
                             nextUrl.pathname.startsWith('/settings') ||
                             nextUrl.pathname.startsWith('/team');
-      const isOnLoginPage = nextUrl.pathname.startsWith('/login');
+      const isOnLoginPage = nextUrl.pathname.startsWith('/owner/login') ||
+                            nextUrl.pathname.startsWith('/login');
       const isOnSignup = nextUrl.pathname.startsWith('/signup');
 
       if (isOnDashboard) {
         if (isLoggedIn) return true;
         return false;
       } else if (isOnLoginPage || isOnSignup) {
-        if (isLoggedIn && !needsSetup) {
+        if (isLoggedIn) {
           return Response.redirect(new URL('/dashboard', nextUrl));
         }
         return true;

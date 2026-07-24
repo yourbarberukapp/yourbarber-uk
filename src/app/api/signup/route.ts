@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { randomBytes } from 'crypto';
-import { sendSetupCompleteEmail } from '@/lib/email';
+import { generateUniqueOwnerPasscode } from '@/lib/ownerPasscode';
 
 function generateSlug(name: string): string {
   return name.toLowerCase()
@@ -13,27 +12,9 @@ function generateSlug(name: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-  }
-  if (!(session.user as any).needsSetup) {
-    return NextResponse.json({ error: 'Account already set up' }, { status: 400 });
-  }
-
   const { shopName, yourName } = await req.json();
   if (!shopName?.trim() || !yourName?.trim()) {
     return NextResponse.json({ error: 'Shop name and your name are required' }, { status: 400 });
-  }
-
-  const email = session.user.email;
-
-  const existing = await db.barber.findFirst({
-    where: { email },
-    include: { shop: { select: { slug: true, name: true } } },
-  });
-  if (existing) {
-    return NextResponse.json({ ok: true, shopSlug: existing.shop.slug, shopName: existing.shop.name });
   }
 
   let slug = generateSlug(shopName);
@@ -41,6 +22,8 @@ export async function POST(req: NextRequest) {
   if (existingShop) {
     slug = `${slug}-${randomBytes(3).toString('hex')}`;
   }
+
+  const passcode = await generateUniqueOwnerPasscode();
 
   const shop = await db.shop.create({
     data: { name: shopName.trim(), slug },
@@ -50,13 +33,12 @@ export async function POST(req: NextRequest) {
     data: {
       shopId: shop.id,
       name: yourName.trim(),
-      email,
-      passwordHash: 'OAUTH',
+      email: `${slug}-owner@yourbarber.uk`, // placeholder — no email captured, kept unique for the schema's email/shop constraint
+      passwordHash: 'PASSCODE',
       role: 'owner',
+      ownerPasscode: passcode,
     },
   });
 
-  sendSetupCompleteEmail({ name: yourName.trim(), email, shopName: shopName.trim(), shopSlug: slug }).catch(() => null);
-
-  return NextResponse.json({ ok: true, shopSlug: slug, shopName: shopName.trim() });
+  return NextResponse.json({ ok: true, shopSlug: slug, shopName: shopName.trim(), passcode });
 }

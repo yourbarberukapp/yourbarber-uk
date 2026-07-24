@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered, BarChart2, Scissors, Home, QrCode } from 'lucide-react';
+import { Users, Bell, UserPlus, Settings, LogOut, Menu, X, Globe, MessageSquare, Calendar, ListOrdered, BarChart2, Scissors, Home, QrCode, CreditCard } from 'lucide-react';
 import { AppSession } from '@/lib/session';
 
 interface Props {
@@ -110,7 +110,17 @@ export function Sidebar({ session, signOutAction }: Props) {
               <div className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold">{session.role}</div>
             </div>
           </div>
-          
+
+          {session.role === 'owner' && (
+            <a
+              href="/api/wallet/owner/apple"
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-sm text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors group mb-1"
+            >
+              <CreditCard size={16} className="text-muted-foreground group-hover:text-white" />
+              <span className="text-xs font-medium">My Owner Card</span>
+            </a>
+          )}
+
           <form action={signOutAction}>
             <button
               type="submit"

@@ -11,7 +11,7 @@ export default async function TeamPage() {
     where: { shopId: session.shopId, isActive: true },
     select: { id: true, name: true, email: true, role: true },
     orderBy: { createdAt: 'asc' },
-  });
+  }).then(rows => rows.map(b => ({ ...b, ownerPasscode: null as string | null })));
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -34,6 +34,69 @@ function buildStampDisplay(stampCount: number, target: number): string {
   return `${filled} of ${target}`;
 }
 
+/** Zips pass.json + artwork into a signed (or unsigned, if no certs configured) .pkpass buffer. */
+async function signAndZipPass(passJson: Record<string, unknown>, accentColor: string): Promise<Buffer> {
+  const zip = new JSZip();
+  const passJsonStr = JSON.stringify(passJson, null, 2);
+  const artwork = await generateApplePassArtwork({ accentColour: accentColor });
+
+  zip.file('pass.json', passJsonStr);
+  zip.file('icon.png', artwork.icon);
+  zip.file('icon@2x.png', artwork.icon2x);
+  zip.file('logo.png', artwork.logo);
+  zip.file('logo@2x.png', artwork.logo2x);
+  zip.file('strip.png', artwork.strip);
+  zip.file('strip@2x.png', artwork.strip2x);
+
+  const manifest: Record<string, string> = {
+    'pass.json': createHash('sha1').update(passJsonStr).digest('hex'),
+    'icon.png': createHash('sha1').update(artwork.icon).digest('hex'),
+    'icon@2x.png': createHash('sha1').update(artwork.icon2x).digest('hex'),
+    'logo.png': createHash('sha1').update(artwork.logo).digest('hex'),
+    'logo@2x.png': createHash('sha1').update(artwork.logo2x).digest('hex'),
+    'strip.png': createHash('sha1').update(artwork.strip).digest('hex'),
+    'strip@2x.png': createHash('sha1').update(artwork.strip2x).digest('hex'),
+  };
+  const manifestStr = JSON.stringify(manifest);
+  zip.file('manifest.json', manifestStr);
+
+  const certPem = process.env.APPLE_PASS_CERT_PEM;
+  const keyPem = process.env.APPLE_PASS_KEY_PEM;
+  const wwdrPem = process.env.APPLE_WWDR_PEM;
+
+  if (certPem && keyPem && wwdrPem) {
+    try {
+      const cert = forge.pki.certificateFromPem(certPem.replace(/\\n/g, '\n'));
+      const key = forge.pki.privateKeyFromPem(keyPem.replace(/\\n/g, '\n'));
+      const wwdr = forge.pki.certificateFromPem(wwdrPem.replace(/\\n/g, '\n'));
+
+      const p7 = forge.pkcs7.createSignedData();
+      p7.content = forge.util.createBuffer(manifestStr, 'utf8');
+      p7.addCertificate(cert);
+      p7.addCertificate(wwdr);
+      p7.addSigner({
+        key,
+        certificate: cert,
+        digestAlgorithm: forge.pki.oids.sha1,
+        authenticatedAttributes: [
+          { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
+          { type: forge.pki.oids.messageDigest },
+          { type: forge.pki.oids.signingTime, value: new Date().toISOString() },
+        ],
+      });
+      p7.sign({ detached: true });
+      const derBuffer = Buffer.from(forge.asn1.toDer(p7.toAsn1()).getBytes(), 'binary');
+      zip.file('signature', derBuffer);
+    } catch {
+      zip.file('signature', Buffer.alloc(0));
+    }
+  } else {
+    zip.file('signature', Buffer.alloc(0));
+  }
+
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+}
+
 export interface ClientPassInput {
   shopName: string;
   shopSlug: string;
@@ -276,4 +339,75 @@ export async function generateClientGooglePass(input: ClientPassInput): Promise<
   }
 
   return { saveUrl: `https://pay.google.com/gp/v/save/${jwt}` };
+}
+
+export interface OwnerPassInput {
+  shopName: string;
+  shopSlug: string;
+  accentColor: string;
+  ownerName: string;
+  passcode: string;
+  passAuthToken?: string | null;
+}
+
+/**
+ * The owner's own Wallet card — doubles as their business card and their
+ * sign-in credential. The barcode encodes the 6-digit passcode so scanning
+ * it (e.g. at /owner/login on a new device) fills the code in automatically.
+ */
+export async function generateOwnerApplePass(input: OwnerPassInput): Promise<{ pkpassBuffer: Buffer; serialNumber: string }> {
+  const serialNumber = `yb-owner-${input.passcode}`;
+  const appUrl = getAppUrl();
+
+  const passJson: Record<string, unknown> = {
+    formatVersion: 1,
+    passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.uk.yourbarber.client',
+    serialNumber,
+    teamIdentifier: process.env.APPLE_TEAM_ID || 'XXXXXXXXXX',
+    organizationName: input.shopName,
+    description: `${input.shopName} — Owner Card`,
+    logoText: input.shopName,
+    backgroundColor: rgbString(input.accentColor),
+    foregroundColor: 'rgb(255, 255, 255)',
+    labelColor: computeLabelColour(input.accentColor),
+    generic: {
+      primaryFields: [
+        { key: 'owner', label: 'OWNER', value: input.ownerName, textAlignment: 'PKTextAlignmentLeft' },
+      ],
+      secondaryFields: [
+        { key: 'shop', label: 'SHOP', value: input.shopName, textAlignment: 'PKTextAlignmentLeft' },
+        { key: 'role', label: 'ACCESS', value: 'Owner', textAlignment: 'PKTextAlignmentRight' },
+      ],
+      backFields: [
+        { key: 'passcode', label: 'SIGN-IN PASSCODE', value: input.passcode },
+        {
+          key: 'dashboard',
+          label: 'DASHBOARD',
+          value: 'Sign in to your shop',
+          attributedValue: `<a href='${appUrl}/owner/login'>Open Sign-in</a>`,
+        },
+        {
+          key: 'powered_by',
+          label: 'POWERED BY',
+          value: 'YourBarber.uk — Barbershop Management Platform',
+        },
+      ],
+    },
+    barcodes: [
+      {
+        message: input.passcode,
+        format: 'PKBarcodeFormatQR',
+        messageEncoding: 'iso-8859-1',
+        altText: 'Scan to sign in',
+      },
+    ],
+  };
+
+  if (input.passAuthToken) {
+    passJson.authenticationToken = input.passAuthToken;
+    passJson.webServiceURL = `${appUrl}/api/wallet/v1`;
+  }
+
+  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor);
+  return { pkpassBuffer, serialNumber };
 }

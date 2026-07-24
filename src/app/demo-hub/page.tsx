@@ -99,21 +99,6 @@ const previewScreens = [
 export default function DemoHubPage() {
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
 
-  async function quickLogin(role: 'barber' | 'owner') {
-    setLoadingRole(role);
-    const { signIn } = await import('next-auth/react');
-    const creds = role === 'barber'
-      ? { email: 'james@thebarbershop.com', password: 'barber123' }
-      : { email: 'ben@thebarbershop.com', password: 'owner123' };
-    const result = await signIn('credentials', { ...creds, redirect: false });
-    if (!result?.error) {
-      window.location.href = role === 'barber' ? '/barber' : '/dashboard';
-    } else {
-      setLoadingRole(null);
-      alert('Demo login failed. Please try the manual login page.');
-    }
-  }
-
   async function quickCustomerLogin() {
     setLoadingRole('customer');
     const res = await fetch('/api/customer/auth', {

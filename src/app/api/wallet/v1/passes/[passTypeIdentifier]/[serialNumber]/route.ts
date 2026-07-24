@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { generateClientApplePass } from '@/lib/wallet/passGenerator';
+import { generateClientApplePass, generateOwnerApplePass } from '@/lib/wallet/passGenerator';
 import { getQueueStatusForCustomer } from '@/lib/wallet/queueStatus';
 
 function extractAuthToken(req: NextRequest): string | null {
@@ -11,10 +11,38 @@ function extractAuthToken(req: NextRequest): string | null {
 
 type Params = { passTypeIdentifier: string; serialNumber: string };
 
+async function handleOwnerPass(serialNumber: string, token: string) {
+  const barber = await db.barber.findUnique({
+    where: { ownerPassSerialNumber: serialNumber },
+    include: { shop: true },
+  });
+  if (!barber || barber.ownerPassAuthToken !== token || !barber.ownerPasscode) {
+    return NextResponse.json({}, { status: 401 });
+  }
+
+  const { pkpassBuffer } = await generateOwnerApplePass({
+    shopName: barber.shop.name,
+    shopSlug: barber.shop.slug,
+    accentColor: barber.shop.passAccentColor || '#111111',
+    ownerName: barber.name,
+    passcode: barber.ownerPasscode,
+    passAuthToken: barber.ownerPassAuthToken,
+  });
+
+  return new NextResponse(new Uint8Array(pkpassBuffer), {
+    status: 200,
+    headers: { 'Content-Type': 'application/vnd.apple.pkpass' },
+  });
+}
+
 export async function GET(req: NextRequest, { params }: { params: Params }) {
   const { serialNumber } = params;
   const token = extractAuthToken(req);
   if (!token) return NextResponse.json({}, { status: 401 });
+
+  if (serialNumber.startsWith('yb-owner-')) {
+    return handleOwnerPass(serialNumber, token);
+  }
 
   const customer = await db.customer.findUnique({
     where: { applePassSerialNumber: serialNumber },

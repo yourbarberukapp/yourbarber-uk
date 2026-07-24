@@ -75,6 +75,9 @@ model Barber {
   acceptsBookings  Boolean          @default(true)
   workingHours     Json?
   isBusy           Boolean          @default(false)
+  ownerPasscode    String?          @unique
+  ownerPassAuthToken String?
+  ownerPassSerialNumber String?     @unique
   appointments     Appointment[]
   barberPass       BarberPass?
   shop             Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
@@ -333,6 +336,15 @@ model WalkIn {
   @@index([shopId, arrivedAt])
   @@index([shopId, status])
   @@index([shopId, presenceStatus])
+}
+
+model RateLimitBucket {
+  bucketKey   String   @id
+  count       Int      @default(0)
+  windowStart DateTime
+  expiresAt   DateTime
+
+  @@index([expiresAt])
 }
 
 model DemoLead {
