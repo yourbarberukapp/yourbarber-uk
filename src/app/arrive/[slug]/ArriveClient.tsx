@@ -183,7 +183,7 @@ export default function ArriveClient({
     if (googleWalletLoading || googleWalletDone) return;
     setGoogleWalletLoading(true);
     try {
-      const res = await fetch('/api/customer/wallet/google');
+      const res = await fetch('/api/wallet/client/google');
       if (!res.ok) throw new Error('failed');
       const { saveUrl } = await res.json();
       window.open(saveUrl, '_blank', 'noopener');
@@ -978,7 +978,7 @@ export default function ArriveClient({
 
                   {(walletPlatform === 'ios' || walletPlatform === 'other') && (
                     <a
-                      href="/api/customer/wallet/apple"
+                      href="/api/wallet/client/apple"
                       style={{ display: 'block', lineHeight: 0 }}
                       aria-label="Add to Apple Wallet"
                     >

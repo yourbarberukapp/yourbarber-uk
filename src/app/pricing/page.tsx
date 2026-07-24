@@ -151,7 +151,7 @@ export default function PricingPage() {
                 </div>
                 <p className="text-white/45 text-sm font-inter mb-8 h-10">{plan.desc}</p>
                 
-                <Link href={plan.highlight ? '/#waitlist' : plan.name === 'Network' ? '/demo-hub' : '/demo-hub'}>
+                <Link href={plan.highlight ? '/signup' : plan.name === 'Network' ? '/demo-hub' : '/demo-hub'}>
                   <button className={`w-full py-3 text-sm font-bold uppercase tracking-widest rounded-sm mb-8 transition-all ${
                     plan.highlight
                       ? "bg-[#C8F135] text-[#0A0A0A] hover:bg-white"

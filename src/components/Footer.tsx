@@ -37,7 +37,7 @@ export default function Footer() {
               {[
                 { href: "/features/cut-passport", label: "Cut Passport" },
                 { href: "/features/live-walk-in-queue", label: "Live Walk-In Queue" },
-                { href: "/features/automated-nudge", label: "SMS Reminders" },
+                { href: "/features/automated-nudge", label: "Wallet Reminders" },
               ].map(link => (
                 <li key={link.href}>
                   <Link href={link.href}>

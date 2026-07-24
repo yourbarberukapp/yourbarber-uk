@@ -50,7 +50,7 @@ const screens = [
     title: 'Remember the Fade',
     desc: "Open the next client, check their last cut, and record today's photos in under 30 seconds. This is the Cut Passport in the chair.",
     link: '/login?callbackUrl=%2Fbarber',
-    creds: 'james@thebarbershop.com\nbarber123',
+    creds: 'Passcode 113355',
     image: '/demo-barber.png',
     imageAlt: 'Barber queue view on a phone inside a barbershop',
     cta: 'Open Barber Mode',
@@ -63,7 +63,7 @@ const screens = [
     title: 'Run the Shop',
     desc: 'See the queue, the team, customer history, reminders, feedback, bookings, and settings from one owner dashboard.',
     link: '/login?callbackUrl=%2Fdashboard',
-    creds: 'ben@thebarbershop.com\nowner123',
+    creds: 'Passcode 482910',
     image: '/demo-dashboard.png',
     imageAlt: 'Owner dashboard on a laptop in a barbershop',
     cta: 'Open Owner Dashboard',
@@ -193,6 +193,12 @@ export default function DemoPage() {
                   {!s.creds && (
                     <div className="mt-6 bg-black/30 rounded-lg p-3 border border-white/6">
                       <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-[#C8F135]/60">No login required</span>
+                    </div>
+                  )}
+                  {s.creds && (
+                    <div className="mt-6 bg-black/30 rounded-lg p-3 border border-white/6">
+                      <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/35">Demo login — </span>
+                      <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-[#C8F135]/70">{s.creds}</span>
                     </div>
                   )}
                 </div>

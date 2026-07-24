@@ -3,7 +3,6 @@ dotenv.config({ path: '.env.local' });
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import bcrypt from 'bcryptjs';
 import { STYLE_DEFAULTS } from '../src/lib/styleDefaults';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -285,8 +284,13 @@ async function main() {
   });
 
   // ── Barbers ──
-  const ownerHash = await bcrypt.hash('owner123', 12);
-  const barberHash = await bcrypt.hash('barber123', 12);
+  // Fixed, well-known passcodes for the public demo shop — deliberately not random,
+  // since /demo links to these accounts and the copy there must stay accurate across reseeds.
+  // passwordHash is a required legacy column but auth only ever checks ownerPasscode now.
+  const DEMO_OWNER_PASSCODE = '482910';
+  const DEMO_JAMES_PASSCODE = '113355';
+  const DEMO_KIERAN_PASSCODE = '224466';
+  const DEMO_MATTHEW_PASSCODE = '335577';
 
   const [ben, james, kieran, matthew] = await Promise.all([
     prisma.barber.create({
@@ -294,7 +298,8 @@ async function main() {
         shopId: shop.id,
         name: 'Ben',
         email: 'ben@thebarbershop.com',
-        passwordHash: ownerHash,
+        passwordHash: 'PASSCODE',
+        ownerPasscode: DEMO_OWNER_PASSCODE,
         role: 'owner',
         bio: 'Owner and head barber. 12 years experience, specialising in skin fades and classic cuts.',
       },
@@ -304,7 +309,8 @@ async function main() {
         shopId: shop.id,
         name: 'James',
         email: 'james@thebarbershop.com',
-        passwordHash: barberHash,
+        passwordHash: 'PASSCODE',
+        ownerPasscode: DEMO_JAMES_PASSCODE,
         role: 'barber',
         bio: 'Specialist in high fades and textured styling.',
       },
@@ -314,7 +320,8 @@ async function main() {
         shopId: shop.id,
         name: 'Kieran',
         email: 'kieran@thebarbershop.com',
-        passwordHash: barberHash,
+        passwordHash: 'PASSCODE',
+        ownerPasscode: DEMO_KIERAN_PASSCODE,
         role: 'barber',
         bio: 'Known for clean low fades and beard work.',
       },
@@ -324,7 +331,8 @@ async function main() {
         shopId: shop.id,
         name: 'Matthew',
         email: 'matthew@thebarbershop.com',
-        passwordHash: barberHash,
+        passwordHash: 'PASSCODE',
+        ownerPasscode: DEMO_MATTHEW_PASSCODE,
         role: 'barber',
         bio: 'Classic cuts and tapers, 6 years in the trade.',
       },
@@ -388,11 +396,11 @@ async function main() {
   console.log('  Clients:', CLIENTS.length);
   console.log('  Visits: ', CLIENTS.reduce((n, c) => n + c.visits.length, 0));
   console.log('');
-  console.log('  Logins:');
-  console.log('  ben@thebarbershop.com     / owner123  → owner dashboard');
-  console.log('  james@thebarbershop.com   / barber123 → barber mode');
-  console.log('  kieran@thebarbershop.com  / barber123 → barber mode');
-  console.log('  matthew@thebarbershop.com / barber123 → barber mode');
+  console.log('  Logins (6-digit passcode at /owner/login):');
+  console.log(`  Ben (owner)      passcode ${DEMO_OWNER_PASSCODE}   → owner dashboard`);
+  console.log(`  James (barber)   passcode ${DEMO_JAMES_PASSCODE}   → barber mode`);
+  console.log(`  Kieran (barber)  passcode ${DEMO_KIERAN_PASSCODE}   → barber mode`);
+  console.log(`  Matthew (barber) passcode ${DEMO_MATTHEW_PASSCODE}   → barber mode`);
   console.log('');
   console.log('  Demo URLs:');
   console.log('  /arrive/the-barber-room → customer queue join');

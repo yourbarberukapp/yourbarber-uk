@@ -60,9 +60,9 @@ export default function Navbar() {
               Sign in
             </span>
           </Link>
-          <Link href="/#waitlist">
+          <Link href="/signup">
             <button className="btn-lime px-5 py-2 text-sm">
-              Get beta access
+              Set up my shop
             </button>
           </Link>
         </div>
@@ -95,9 +95,9 @@ export default function Navbar() {
                 Sign in
               </span>
             </Link>
-            <Link href="/#waitlist">
+            <Link href="/signup">
               <button className="btn-lime px-5 py-3 text-sm w-full" onClick={() => setMobileOpen(false)}>
-                Get beta access
+                Set up my shop
               </button>
             </Link>
           </div>

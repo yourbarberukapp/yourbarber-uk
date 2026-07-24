@@ -1,9 +1,11 @@
 # YourBarber — Master Build Log
 
-**Last updated:** 2026-05-02  
+**Last updated:** 2026-07-24  
 **For:** Claude, Gemini, OpenAI, or any AI assistant working on this codebase.
 
-> **Read this before touching anything.** This document is the single source of truth for what has been built, what is in progress, and what is next. If something is marked ✅ — it is done. Do not re-implement it, do not refactor it unless explicitly asked, do not create duplicate routes or components. Check here first.
+> **Read this before touching anything, and read the root `CLAUDE.md` too — it is now the primary source of truth.** This document is a supplementary build log. If something is marked ✅ — it is done. Do not re-implement it, do not refactor it unless explicitly asked, do not create duplicate routes or components. Check here first.
+>
+> **This file was significantly out of date as of 2026-07-24** (last touched 2026-05-02, before the SMS-removal and passcode-auth pivot). Sections below have been corrected to match the codebase as it actually is today. If you find another stale claim, fix it in place rather than trusting it.
 
 ---
 
@@ -13,9 +15,9 @@
 |---|---|
 | Framework | Next.js **14** App Router (not 15) |
 | Database | PostgreSQL via **Prisma 7** + `@prisma/adapter-pg` + `pg.Pool` |
-| Auth | **NextAuth.js v5** (CLAUDE.md incorrectly says Iron Session — ignore that) |
-| Customer auth | Separate signed JWT via `jose`, stored in `yb-customer-session` httpOnly cookie |
-| SMS | **Vonage** (NOT Twilio — `src/lib/vonage.ts`). `src/lib/twilio.ts` is a one-line re-export shim for legacy imports |
+| Auth (owner/barber) | **NextAuth v5, 6-digit passcode `Credentials` provider** (`src/lib/auth.ts`) — no email/password, no Google/Facebook OAuth. Those were fully removed 2026-07-24; do not reintroduce. |
+| Customer auth | Separate signed JWT via `jose`, stored in `yb-customer-session` httpOnly cookie. Login via Wallet-pass access code at `/me/login` (`/customer/login` is a legacy redirect shim to the same place — keep it, other pages still link to it) |
+| SMS | **Removed entirely (2026-07-24).** No Vonage, no Twilio, no `src/lib/vonage.ts`/`src/lib/twilio.ts`. All client notifications go through the Wallet push channel (`src/lib/wallet/notify.ts`, `apnsPush.ts`, `googlePush.ts`). Do not reintroduce an SMS provider. |
 | Email | Resend (`RESEND_API_KEY`) |
 | Photo storage | AWS S3, private bucket, presigned GET URLs at render time |
 | Hosting | Vercel, auto-deploys from `main` branch |
@@ -38,13 +40,13 @@
 ## What's Built ✅
 
 ### Authentication & Users
-- ✅ Barber/owner login — `src/app/(auth)/login/page.tsx` → NextAuth v5
-- ✅ OAuth (Google/Facebook) — gates on pre-registered `Barber` rows
-- ✅ Password reset — Resend email, `resetToken`/`resetTokenExpiry` on Barber model
-- ✅ Forgot password — `src/app/(auth)/forgot-password/`, `src/app/(auth)/reset-password/`
+- ✅ Barber/owner login — **6-digit passcode**, `src/app/owner/login/` → NextAuth v5 `Credentials` provider (`src/lib/auth.ts`). `/login` redirects to `/owner/login` for old links.
+- ❌ OAuth (Google/Facebook), password login, forgot/reset-password — **all removed 2026-07-24**. `/setup`, `/api/setup`, `/api/auth/register` deleted. Do not re-add.
+- ✅ Signup is fully open — `POST /api/signup` creates Shop + owner Barber and returns a generated passcode in the response (`src/lib/ownerPasscode.ts`)
+- ✅ Staff passcodes — `POST /api/team` (owner-only) generates a passcode for a new staff member, shown once
+- ✅ DB-backed rate limiting on passcode login — `src/lib/rateLimit.ts`, 5 attempts / 15 min per passcode + per IP
 - ✅ Role-based redirect on login — barbers → `/barber`, owners → `/dashboard`
-- ✅ Customer auth — OTP via Vonage SMS, `yb-customer-session` JWT cookie
-  - Dev shortcut: OTP is always `12345` when `NODE_ENV !== 'production'` and no `VONAGE_API_KEY`
+- ✅ Customer auth — Wallet pass access code at `/me/login`, `yb-customer-session` JWT cookie. **No OTP, no SMS.**
 
 ### Owner Dashboard (`/dashboard`)
 - ✅ Dashboard home — `src/app/(dashboard)/dashboard/page.tsx` (stats + recent activity)
@@ -149,14 +151,13 @@
 - ✅ Feedback dashboard — view tickets, resolve, assign to barber
 - ✅ `POST /api/feedback/create`, `/api/feedback/[id]/complete`, `/api/feedback/[id]/resolve`
 
-### Reminders & SMS
-- ✅ Vonage SMS wired — `src/lib/vonage.ts`
-- ✅ `src/lib/twilio.ts` — shim that re-exports from vonage (do not remove, legacy imports depend on it)
+### Reminders & Wallet Push (SMS removed 2026-07-24)
+- ❌ Vonage/Twilio SMS — **removed entirely**, no per-message cost, ever. `src/lib/vonage.ts` and `src/lib/twilio.ts` no longer exist. Do not reintroduce, even as a "fallback" — ask first.
+- ✅ Client notifications now go through the Wallet pass push channel — `src/lib/wallet/notify.ts`, `src/lib/wallet/apnsPush.ts` (Apple), `src/lib/wallet/googlePush.ts` (Google object PATCH)
 - ✅ Manual reminder trigger — owner/barber sends reminder from customer profile
 - ✅ Scheduled reminder cron — `GET /api/cron/reminders` (CRON_SECRET protected)
 - ✅ `POST /api/reminders/send`, `GET /api/reminders/scheduled`, `GET /api/reminders/preview`
 - ✅ Appointment reminders — `POST /api/appointments/[id]/remind`
-- ⚠️ SMS is wired but **not confirmed live in production** — Vonage credentials must be set in Vercel env vars
 
 ### Database Schema (prisma/schema.prisma) — current models
 - `Shop` — name, slug, logoUrl, address, phone, about, coverPhotoUrl, googleMapsUrl, bookingUrl, openingHours, defaultReminderWeeks, shopType, allowBarberReminders, **defaultCutTime**, **googleReviewUrl**
@@ -174,8 +175,11 @@
 - `ShopStyle` — name, category, sortOrder, active, imageUrl
 - `ShopService` — name, duration, description, price
 - `ShopPhoto` — url, caption, sortOrder
-- `SmsLog` — customerId, message, twilioSid, status
 - `DemoLead` — name, shopName, phone, email
+- `Barber` also has `ownerPasscode`, `ownerPassAuthToken`, `ownerPassSerialNumber` (passcode auth + owner Wallet card)
+- `Customer` also has `accessCode`, `applePassSerialNumber`, `googlePassId`, `passAuthToken`, `passMessage`, `loyaltyStamps`
+- `RateLimitBucket` — bucketKey, count, windowStart, expiresAt (passcode login rate limiting)
+- **`SmsLog` and `twilioSid`/`otpCode`/`otpExpiry`/`smsOptIn` fields no longer exist — removed with SMS**
 
 ### Migrations applied (in order)
 1. `20260424000000_add_access_code`
@@ -199,38 +203,16 @@
 
 ## What's NOT Built Yet ❌
 
-### 0. Digital Wallet Pass — Apple Wallet / Google Wallet (Priority 0 — Vision, Not Started)
+### 0. Digital Wallet Pass — Apple Wallet / Google Wallet — ✅ BUILT (2026-07-24), see CLAUDE.md
 
-**The idea (decided 2026-05-02):** Replace SMS as the primary client communication channel with a branded `.pkpass` / Google Wallet pass that lives permanently on the client's phone.
+The vision described in earlier versions of this doc (replace SMS with Wallet push, pass = client identity, free push notifications) **is now implemented**, not a future plan. SMS has been removed entirely. See root `CLAUDE.md` "Apple Wallet & Google Wallet Passes" / "Owner & Staff Passcode Login" sections for the current architecture:
 
-**Why it matters:**
-- SMS (Vonage) costs ~5p per message. At scale this becomes a meaningful monthly cost that grows with success.
-- A Wallet pass, once installed, allows **free push notifications** to the client's lock screen via Apple APNS / Google FCM.
-- The pass QR code becomes the client's permanent identity — barber scans it, system looks up who it is, no phone number typing required for returning clients.
-- It elevates YourBarber from "web utility" to "phone citizen" — sits in the wallet next to Lloyds, Tesco, and boarding passes.
+- `src/lib/wallet/passGenerator.ts` — canonical pass generator (`generateClientApplePass`, `generateClientGooglePass`, `generateOwnerApplePass`). **The old `src/lib/walletGenerator.ts` (appointment-oriented, pre-pivot) was deleted 2026-07-24** — if you find code importing it, that's a regression, not a valid reference.
+- Live pass endpoints actually wired to the frontend: `GET /api/wallet/client/apple`, `GET /api/wallet/client/google` (called from `ArriveClient.tsx`'s "Save your loyalty card" buttons — **fixed 2026-07-24**, they previously pointed at a dead-end legacy route pair `/api/customer/wallet/apple|google` that produced passes with the wrong serial scheme and no push token, meaning arrive-page passes could never receive live push updates)
+- Serial number scheme: `yb-client-{accessCode}` (customers), `yb-owner-{passcode}` (owner cards) — the PassKit web service (`/api/wallet/v1/passes/...`) and push senders depend on this prefix
+- Owner Wallet business card — `GET /api/wallet/owner/apple`, static (no live push), carries the owner's sign-in passcode as its QR/barcode
 
-**The architecture (agreed):**
-- **Wallet pass = quick identity + free nudges.** Contains a QR with a unique client token. Barber scans it → auto check-in.
-- **Browser = full passport.** Tapping "Details" on the back of the pass opens a secure browser page (token in URL, no login needed) showing full cut history, photos, grades.
-- SMS stays as **fallback only** for clients who haven't installed the pass yet.
-
-**What needs building:**
-1. Apple Developer account ($99/yr) + Pass Type ID certificate + signing server that wraps pass JSON → `.pkpass`
-2. Google Wallet service account + pass class definition
-3. `WalletPass` model on Customer — `applePassSerial`, `googlePassId`, `passToken` (UUID, the QR payload)
-4. `POST /api/customer/wallet/apple` — generates and returns `.pkpass` file
-5. `POST /api/customer/wallet/google` — returns Google Wallet save link
-6. `POST /api/customer/wallet/notify` — sends free push update to installed passes (e.g. "Your place is next")
-7. Update `/arrive/[slug]` — after check-in, offer "Add to Apple/Google Wallet" button
-8. Update barber QR scanner — recognise `passToken` as a valid scan payload (alongside existing `qrToken`)
-9. Update `/me` customer portal — "Your pass" section with install buttons
-
-**The modular vision (do not build all at once):**
-- **Phase 1 — YourBarber:** Pass = client identity for barbershops. Replaces SMS for queue nudges.
-- **Phase 2 — YourStyle network:** One master pass works across barbershops, nail bars, threading studios. The shop gets a branded entry point; the client gets one universal card. Each shop pays for only the modules they need (Loyalty stamps / Cut Passport / Queue).
-- **Phase 3 — Consumer passport:** Clients register once at `yourstyle.uk`, get a free pass. Shops who aren't on the platform still see the client's passport when shown the phone — "Trojan Horse" acquisition.
-
-**Do not start this until:** At least 5 barbershops are actively paying. The pass infrastructure is meaningless without a user base.
+The **modular multi-vertical vision** (YourStyle network, universal pass across barbershops/nail bars/etc.) described in earlier drafts of this doc is still just a vision, not started — gate that on "5+ shops paying," per the original plan.
 
 ---
 
@@ -240,10 +222,9 @@
 - Needed for physical onboarding pack (sticker, card, poster)
 - `qrcode` and `qrcode.react` packages are already installed
 
-### 2. SMS Reminders — confirmed live sending (Priority 2)
-- Vonage is wired and routes exist, but live sending in production is unconfirmed
-- Barber should tap a button on the customer profile → SMS fires
-- The "remind" button exists in reminders page but needs verification it actually sends
+### 2. Wallet push reminders — confirmed live sending (Priority 2)
+- Reminder routes exist and call the Wallet push channel (`src/lib/wallet/notify.ts`), but live delivery via real APNs/Google Wallet credentials in production is unconfirmed
+- Without `APPLE_PASS_CERT_PEM`/`APPLE_PASS_KEY_PEM`/`APPLE_WWDR_PEM` set, passes are generated but unsigned (not installable); without `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY`, a demo JWT is returned instead of a real save link
 
 ### 3. Analytics (Priority 3)
 - `/analytics` in sidebar shows as "Soon" placeholder
@@ -260,8 +241,10 @@
 
 | Thing | Why it might seem missing | Reality |
 |---|---|---|
-| Twilio SMS | CLAUDE.md and some docs reference Twilio | Replaced by Vonage. `src/lib/twilio.ts` re-exports vonage. Do not add Twilio. |
+| Any SMS (Twilio or Vonage) | Old commits/docs reference SMS providers | **Removed entirely 2026-07-24.** No `vonage.ts`, no `twilio.ts`, no `SmsLog` model. All client notifications go through Wallet push. Do not reintroduce, even as a fallback. |
+| Google/Facebook OAuth, password login | Old docs describe it as current | **Removed entirely 2026-07-24.** Owner/barber auth is passcode-only via NextAuth `Credentials` provider (`src/lib/auth.ts`). Do not reintroduce OAuth or password fields. |
 | Iron Session | CLAUDE.md says "Iron Session" | Replaced by NextAuth v5. Do not install or use iron-session. |
+| `src/lib/walletGenerator.ts` | Some old code/docs reference it | **Deleted 2026-07-24** (appointment-oriented, pre-pivot generator). Use `src/lib/wallet/passGenerator.ts` instead. |
 | Walk-in waitlist | Might look incomplete | Fully built including family grouping. See `/waitlist` and `WalkIn` model. |
 | Family check-in | Might not be obvious from schema | Done. `groupId` on WalkIn, `FamilyMember` + `FamilySharing` models, full UI. |
 | 5-star ratings | Old code may reference `rating: 'positive'/'negative'` | Upgraded to `stars: 1-5`. Both fields exist on Feedback — `rating` (derived string) and `stars` (int). |
@@ -276,9 +259,6 @@
 DATABASE_URL
 NEXTAUTH_SECRET
 NEXTAUTH_URL
-VONAGE_API_KEY
-VONAGE_API_SECRET
-VONAGE_FROM_NUMBER
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 AWS_S3_BUCKET
@@ -286,14 +266,25 @@ AWS_REGION
 RESEND_API_KEY
 CRON_SECRET
 SESSION_SECRET
+APPLE_PASS_TYPE_ID
+APPLE_TEAM_ID
+APPLE_PASS_CERT_PEM
+APPLE_PASS_KEY_PEM
+APPLE_WWDR_PEM
+APPLE_PASS_WEB_SERVICE_URL
+GOOGLE_WALLET_ISSUER_ID
+GOOGLE_WALLET_SERVICE_ACCOUNT_KEY
+NEXT_PUBLIC_APP_URL
 ```
+
+`VONAGE_*` variables no longer apply — remove from Vercel if still set.
 
 ---
 
 ## Demo Credentials
 
 - **Shop:** Ben J Barbers
-- **Owner login:** owner@benjbarbers.com / owner123
+- **Owner login:** 6-digit passcode (generated at signup / shown once in Team page — no email/password login exists anymore)
 - **Arrival URL:** `yourbarber.uk/arrive/ben-j-barbers` (or whatever the shop slug is)
 
 ---
