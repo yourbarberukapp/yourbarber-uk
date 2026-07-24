@@ -144,6 +144,9 @@
 - ✅ Booking page — `src/app/shop/[slug]/book/`
 - ✅ Queue status component — `src/components/microsite/QueueStatus.tsx`
 - ✅ `GET /api/shop/[slug]/queue` — public queue length for microsite
+- ✅ **Product catalogue** (2026-07-24) — `ShopProduct` model, display-only (no checkout), settings editor at `/settings/microsite` (`ProductsEditor.tsx`), API at `/api/microsite/products`
+- ✅ **Google reviews link + real social links** (2026-07-24) — public page now shows a "Read our reviews" link using `shop.googleReviewUrl`, and footer social icons (Instagram/Facebook/X) only render when a real URL is set (`Shop.instagramUrl/facebookUrl/xUrl`)
+- ✅ **Completeness gate** (2026-07-24) — `src/lib/microsite.ts`'s `isMicrositeComplete()` (address, phone, hours, cover photo, 1+ service required) gates whether `/shop/[slug]` shows the real page or a "coming soon" placeholder. Settings page shows an itemized checklist of what's missing. Built as one reusable function specifically so a future paywall can reuse the same check instead of duplicating field logic.
 
 ### Ratings & Feedback
 - ✅ `Feedback` model — `rating`, `stars`, `issue`, `sourceType`
@@ -216,24 +219,27 @@ The **modular multi-vertical vision** (YourStyle network, universal pass across 
 
 ---
 
-### 1. QR Code Download (Priority 1)
-- Owner should be able to download a printable QR code for `/arrive/[slug]`
-- Currently settings page shows the URL text only (`QRSection.tsx`) — no actual QR image download
-- Needed for physical onboarding pack (sticker, card, poster)
-- `qrcode` and `qrcode.react` packages are already installed
-
-### 2. Wallet push reminders — confirmed live sending (Priority 2)
-- Reminder routes exist and call the Wallet push channel (`src/lib/wallet/notify.ts`), but live delivery via real APNs/Google Wallet credentials in production is unconfirmed
-- Without `APPLE_PASS_CERT_PEM`/`APPLE_PASS_KEY_PEM`/`APPLE_WWDR_PEM` set, passes are generated but unsigned (not installable); without `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY`, a demo JWT is returned instead of a real save link
-
-### 3. Analytics (Priority 3)
+### 1. Analytics (still open)
 - `/analytics` in sidebar shows as "Soon" placeholder
 - No page or data at that route yet
 - Planned: visits per week, retention rate, busiest days, revenue
 
-### 4. PWA "Add to Home Screen" (Priority 4)
-- Barber mode designed for personal iPhone home screen
-- PWA manifest exists but hasn't been fully tested/verified for install prompt
+### 2. Wallet cert / S3 credentials — real values not confirmed in this environment (still open, but not a code gap)
+- The code paths are real and tested: reminders call `src/lib/wallet/notify.ts`; uploads (visit photos, style images, shop logo as of 2026-07-24) all use `src/lib/s3.ts`'s presigned-URL flow
+- But `.env.local`'s `AWS_ACCESS_KEY_ID` is literally the placeholder string `your-access-key`, and Apple/Google Wallet cert env vars are unconfirmed — until real credentials are set, uploads and signed/installable passes can't actually complete in this environment. Check Vercel's production env vars have real values; don't assume they match `.env.local`.
+
+### ~~QR Code Download~~ — ✅ already built, this doc was wrong
+- `/api/qr/arrive/[slug]` generates real SVG previews and printable PDF posters/stickers, wired up in `QRSection.tsx`. Verified live 2026-07-24 (200 OK, valid SVG + 37KB PDF returned). Don't re-build this.
+
+### ~~PWA "Add to Home Screen"~~ — ✅ already built, this doc was wrong
+- `public/manifest.json` + both icon files (`icon-192.png`, `icon-512.png`) all serve correctly. Verified live 2026-07-24. Don't re-build this.
+
+### ~~Real logo on Wallet pass / logo upload~~ — logo upload is now built (2026-07-24)
+- `POST /api/settings/logo` + file picker in Settings, mirrors the existing style-image upload pattern exactly
+- Still open: `src/lib/wallet/artwork.ts` doesn't yet pull the real `shop.logoUrl` into the pass artwork — wire that up as a follow-on
+
+### ~~Google Wallet owner card~~ — ✅ built (2026-07-24)
+- `generateOwnerGooglePass` in `passGenerator.ts` + `/api/wallet/owner/google`. Sidebar "My Owner Card" now offers both Apple and Google.
 
 ---
 

@@ -140,18 +140,19 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - [x] **Wallet Pass QR Barcode Scanner & Auto Loyalty Stamp Awarding** (`/scan` & `/api/scan`)
 - [x] **Apple Wallet push notifications** — PassKit web service (`/api/wallet/v1/*`), APNs sender (`src/lib/wallet/apnsPush.ts`), Google Wallet object PATCH (`src/lib/wallet/googlePush.ts`). Free at any volume, no SMS.
 - [x] **Customer login via Wallet pass access code** — `/me/login`, no OTP/SMS step
-- [x] **Owner Wallet business card** — `/api/wallet/owner/apple`, carries the sign-in passcode as its QR/barcode
+- [x] **Owner Wallet business card** — `/api/wallet/owner/apple` + `/api/wallet/owner/google` (2026-07-24), carries the sign-in passcode as its QR/barcode. Sidebar "My Owner Card" offers both platforms.
+- [x] Walk-in waitlist, `/arrive/[shop-slug]`, barber mode, customer portal (`/me`) — this section of the doc previously listed these as "next" long after they shipped; verified live 2026-07-24.
+- [x] **QR code download** — `/api/qr/arrive/[slug]` generates real SVG previews and printable PDF posters/stickers (`src/app/(dashboard)/settings/QRSection.tsx`) — this doc previously said "not built," it was.
+- [x] **Shop microsite: products, Google reviews link, social links, completeness gate** (2026-07-24) — every shop's `/shop/[slug]` now includes a display-only product catalogue, a "Read our reviews" link (`googleReviewUrl`), and real social links. A shop's microsite only goes fully public once address/phone/hours/cover photo/1+ service are set (`src/lib/microsite.ts`'s `isMicrositeComplete()`) — incomplete shops get a "coming soon" page instead of the fabricated placeholder content (fake address, stock photo, fake customer count) that used to show. Deliberately built as one reusable check so a future paywall can reuse it.
+- [x] **Real logo file upload** (2026-07-24) — `POST /api/settings/logo`, presigned S3 upload with file picker + preview in Settings. Was URL-paste only.
 
 ## What's Next (priority order)
 
-1. **Walk-in waitlist** — `WalkIn` table, live barber view, claim/complete flow
-2. **`/arrive/[shop-slug]`** — client-facing arrival page (the wall QR destination)
-3. **Barber mode** — `/barber` scoped view, 30-day session, PWA manifest
-4. **Customer portal** — `/me` — client views their own cut history, photos, preferences
-5. **QR code download** — shop settings page, generate printable QR for `/arrive/[slug]`
-6. **Analytics** — visits per week, retention, busiest days
-7. **Real logo on the Wallet pass** — `src/lib/wallet/artwork.ts` currently returns a 1×1 placeholder PNG; shop logo never reaches the card. Logo upload in settings is also URL-paste only, no file upload.
-8. **Google Wallet owner card** — only Apple is built (`generateOwnerApplePass`); no Google equivalent yet.
+1. **Wallet push delivery in production is unconfirmed** — the code path is real (`src/lib/wallet/notify.ts`, `apnsPush.ts`, `googlePush.ts`), but without real `APPLE_PASS_CERT_PEM`/`APPLE_TEAM_ID`/`APPLE_WWDR_PEM` and `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY` set in Vercel, passes generate unsigned/demo-only. Check these are actually set before relying on this for real shops.
+2. **AWS S3 credentials are placeholders in `.env.local`** (`AWS_ACCESS_KEY_ID=your-access-key`) — every upload feature (visit photos, style images, shop logo) needs a real bucket + credentials to actually persist files; the code is correct and tested down to the presigned-URL request, but the actual `PUT` to S3 can't complete without real credentials.
+3. **Analytics** — `/analytics` is still a "Soon" placeholder, no data behind it.
+4. **Real logo reaching the Wallet pass artwork** — `src/lib/wallet/artwork.ts` still returns a placeholder; now that logo upload works, wire the real `shop.logoUrl` into pass artwork generation.
+5. **Retail product checkout** — the new product catalogue is display-only by design (no payment/cart); revisit only if there's real demand.
 
 ---
 
