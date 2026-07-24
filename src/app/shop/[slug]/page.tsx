@@ -8,6 +8,8 @@ import StickyBookingBar from '@/components/microsite/StickyBookingBar';
 import TestimonialCarousel from '@/components/microsite/TestimonialCarousel';
 import AnimateIn from '@/components/microsite/AnimateIn';
 import QueueStatus from '@/components/microsite/QueueStatus';
+import { isMicrositeComplete } from '@/lib/microsite';
+import ComingSoonMicrosite from '@/components/microsite/ComingSoonMicrosite';
 
 type OpeningHours = {
   mon: { open: string; close: string; closed: boolean };
@@ -40,6 +42,7 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
     include: {
       photos: { orderBy: { sortOrder: 'asc' } },
       services: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
+      products: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
       barbers: { where: { isActive: true } },
       visits: {
         where: { photos: { some: {} } },
@@ -57,6 +60,10 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
   });
 
   if (!shopData) notFound();
+
+  if (!isMicrositeComplete(shopData)) {
+    return <ComingSoonMicrosite shopName={shopData.name} logoUrl={shopData.logoUrl} />;
+  }
 
   // Apply Demo Overrides if present in cookies
   const cookieStore = cookies();
@@ -139,21 +146,21 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
                 <QueueStatus shopSlug={shop.slug} />
               </div>
 
-              <div className="flex items-center gap-6 px-4">
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0A0A0A] bg-[#111] flex items-center justify-center overflow-hidden">
-                      <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="Customer" />
-                    </div>
-                  ))}
-                </div>
-                <div>
+              {shop.googleReviewUrl && (
+                <a
+                  href={shop.googleReviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 group"
+                >
                   <div className="flex text-[#C8F135]">
                     {[1, 2, 3, 4, 5].map((i) => <Star key={i} size={14} fill="currentColor" />)}
                   </div>
-                  <p className="text-white/40 text-xs font-inter mt-1 uppercase tracking-widest font-bold">500+ Happy Clients</p>
-                </div>
-              </div>
+                  <p className="text-white/40 group-hover:text-[#C8F135] text-xs font-inter uppercase tracking-widest font-bold transition-colors">
+                    Read our reviews
+                  </p>
+                </a>
+              )}
             </div>
           </AnimateIn>
         </div>
@@ -212,6 +219,58 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
             ))}
           </div>
         </section>
+
+        {/* Products */}
+        {shop.products.length > 0 && (
+          <section id="products">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+              <div>
+                <h2 className="font-barlow font-black text-6xl md:text-8xl uppercase tracking-tighter leading-none mb-4">
+                  Products
+                </h2>
+                <p className="text-white/40 font-inter text-lg">Stocked and ready in-shop</p>
+              </div>
+              <div className="h-px flex-1 bg-white/5 mx-12 hidden md:block" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {shop.products.map((product) => (
+                <div
+                  key={product.id}
+                  className="group relative bg-[#111] border border-white/5 rounded-2xl overflow-hidden hover:border-[#C8F135]/30 transition-all"
+                >
+                  {product.imageUrl && (
+                    <div className="aspect-[4/3] overflow-hidden bg-black">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start gap-4 mb-2">
+                      <h3 className="font-barlow font-bold text-xl uppercase tracking-tight group-hover:text-[#C8F135] transition-colors">
+                        {product.name}
+                      </h3>
+                      {product.price !== null && (
+                        <span className="font-barlow font-black text-xl text-[#C8F135] whitespace-nowrap">
+                          £{Number(product.price).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    {product.description && (
+                      <p className="text-white/50 font-inter text-sm leading-relaxed">
+                        {product.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Gallery / Recent Cuts */}
         <section id="gallery">
@@ -362,17 +421,25 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <Link href="#" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:border-[#C8F135] hover:text-[#C8F135] transition-colors">
-                <span className="text-xs font-black">IG</span>
-              </Link>
-              <Link href="#" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:border-[#C8F135] hover:text-[#C8F135] transition-colors">
-                <span className="text-xs font-black">FB</span>
-              </Link>
-              <Link href="#" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:border-[#C8F135] hover:text-[#C8F135] transition-colors">
-                <span className="text-xs font-black">X</span>
-              </Link>
-            </div>
+            {(shop.instagramUrl || shop.facebookUrl || shop.xUrl) && (
+              <div className="flex gap-4">
+                {shop.instagramUrl && (
+                  <a href={shop.instagramUrl} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:border-[#C8F135] hover:text-[#C8F135] transition-colors">
+                    <span className="text-xs font-black">IG</span>
+                  </a>
+                )}
+                {shop.facebookUrl && (
+                  <a href={shop.facebookUrl} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:border-[#C8F135] hover:text-[#C8F135] transition-colors">
+                    <span className="text-xs font-black">FB</span>
+                  </a>
+                )}
+                {shop.xUrl && (
+                  <a href={shop.xUrl} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:border-[#C8F135] hover:text-[#C8F135] transition-colors">
+                    <span className="text-xs font-black">X</span>
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="rounded-3xl overflow-hidden bg-[#111] border border-white/5 h-[600px] relative">

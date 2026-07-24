@@ -245,7 +245,6 @@ async function main() {
   console.log('Seeding demo shop...');
 
   // ── Clean all shop data ──
-  await prisma.smsLog.deleteMany({});
   await prisma.visitPhoto.deleteMany({});
   await prisma.visit.deleteMany({});
   await prisma.walkIn.deleteMany({});
@@ -266,6 +265,7 @@ async function main() {
       slug: 'the-barber-room',
       address: '14 Market Street, Southampton, SO14 1AB',
       phone: '023 8099 1234',
+      coverPhotoUrl: '/hero-barber.webp',
       shopType: 'uk_general',
       defaultCutTime: 25,
       about: 'The Barber Room is your local destination for precision fades, classic cuts, and top-tier grooming. Walk-ins always welcome.',

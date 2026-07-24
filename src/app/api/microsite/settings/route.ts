@@ -15,6 +15,9 @@ const updateSchema = z.object({
   coverPhotoUrl: z.string().url().optional().or(z.literal('')),
   googleMapsUrl: z.string().url().optional().or(z.literal('')),
   bookingUrl: z.string().url().optional().or(z.literal('')),
+  instagramUrl: z.string().url().optional().or(z.literal('')),
+  facebookUrl: z.string().url().optional().or(z.literal('')),
+  xUrl: z.string().url().optional().or(z.literal('')),
   openingHours: z.object({
     mon: daySchema, tue: daySchema, wed: daySchema, thu: daySchema,
     fri: daySchema, sat: daySchema, sun: daySchema,
@@ -31,8 +34,10 @@ export async function GET() {
     select: {
       name: true, slug: true, address: true, phone: true, about: true,
       coverPhotoUrl: true, googleMapsUrl: true, bookingUrl: true, openingHours: true,
+      instagramUrl: true, facebookUrl: true, xUrl: true,
       photos: { orderBy: { sortOrder: 'asc' }, select: { id: true, url: true, caption: true, sortOrder: true } },
       services: { where: { isActive: true }, orderBy: { sortOrder: 'asc' }, select: { id: true, name: true, price: true, duration: true, description: true, sortOrder: true } },
+      products: { where: { isActive: true }, orderBy: { sortOrder: 'asc' }, select: { id: true, name: true, price: true, imageUrl: true, description: true, sortOrder: true } },
       barbers: { where: { isActive: true }, select: { id: true, name: true, role: true, bio: true, photoUrl: true } },
     },
   });
@@ -51,7 +56,7 @@ export async function PATCH(req: NextRequest) {
   const shop = await db.shop.update({
     where: { id: shopId },
     data: parsed.data,
-    select: { name: true, slug: true, phone: true, about: true, coverPhotoUrl: true, googleMapsUrl: true, bookingUrl: true, openingHours: true },
+    select: { name: true, slug: true, phone: true, about: true, coverPhotoUrl: true, googleMapsUrl: true, bookingUrl: true, openingHours: true, instagramUrl: true, facebookUrl: true, xUrl: true },
   });
   return NextResponse.json(shop);
 }

@@ -32,15 +32,34 @@ model Shop {
   loyaltyTarget        Int           @default(5)
   loyaltyReward        String        @default("50% Off 5th Cut")
   promoMessage         String?
+  instagramUrl         String?
+  facebookUrl          String?
+  xUrl                 String?
   appointments         Appointment[]
   barbers              Barber[]
   customers            Customer[]
   feedbacks            Feedback[]
   photos               ShopPhoto[]
+  products             ShopProduct[]
   services             ShopService[]
   styles               ShopStyle[]
   visits               Visit[]
   walkIns              WalkIn[]
+}
+
+model ShopProduct {
+  id          String   @id @default(cuid())
+  shopId      String
+  name        String
+  price       Decimal? @db.Decimal(10, 2)
+  imageUrl    String?
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
 }
 
 model ShopStyle {

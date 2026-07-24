@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Save, ExternalLink } from 'lucide-react';
 import { HoursEditor, OpeningHours, DEFAULT_HOURS } from './HoursEditor';
 import { ServicesEditor, Service } from './ServicesEditor';
+import { ProductsEditor, Product } from './ProductsEditor';
 import { GalleryEditor, Photo } from './GalleryEditor';
 
 interface ShopData {
@@ -13,8 +14,12 @@ interface ShopData {
   coverPhotoUrl: string | null;
   googleMapsUrl: string | null;
   bookingUrl: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  xUrl: string | null;
   openingHours: OpeningHours | null;
   services: Service[];
+  products: Product[];
   photos: Photo[];
 }
 
@@ -24,6 +29,9 @@ export function MicrositeForm({ shop }: { shop: ShopData }) {
   const [coverPhotoUrl, setCoverPhotoUrl] = useState(shop.coverPhotoUrl ?? '');
   const [googleMapsUrl, setGoogleMapsUrl] = useState(shop.googleMapsUrl ?? '');
   const [bookingUrl, setBookingUrl] = useState(shop.bookingUrl ?? '');
+  const [instagramUrl, setInstagramUrl] = useState(shop.instagramUrl ?? '');
+  const [facebookUrl, setFacebookUrl] = useState(shop.facebookUrl ?? '');
+  const [xUrl, setXUrl] = useState(shop.xUrl ?? '');
   const [hours, setHours] = useState<OpeningHours>(shop.openingHours ?? DEFAULT_HOURS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -34,7 +42,7 @@ export function MicrositeForm({ shop }: { shop: ShopData }) {
     await fetch('/api/microsite/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, about, coverPhotoUrl, googleMapsUrl, bookingUrl, openingHours: hours }),
+      body: JSON.stringify({ phone, about, coverPhotoUrl, googleMapsUrl, bookingUrl, instagramUrl, facebookUrl, xUrl, openingHours: hours }),
     });
     setSaved(true);
     setSaving(false);
@@ -78,6 +86,18 @@ export function MicrositeForm({ shop }: { shop: ShopData }) {
           <label className={sectionLabel}>Booking link (optional)</label>
           <input type="url" value={bookingUrl} onChange={e => setBookingUrl(e.target.value)} placeholder="https://your-booking-tool.com/…" className={inputCls} />
         </div>
+        <div>
+          <label className={sectionLabel}>Instagram URL (optional)</label>
+          <input type="url" value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/yourshop" className={inputCls} />
+        </div>
+        <div>
+          <label className={sectionLabel}>Facebook URL (optional)</label>
+          <input type="url" value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} placeholder="https://facebook.com/yourshop" className={inputCls} />
+        </div>
+        <div>
+          <label className={sectionLabel}>X (Twitter) URL (optional)</label>
+          <input type="url" value={xUrl} onChange={e => setXUrl(e.target.value)} placeholder="https://x.com/yourshop" className={inputCls} />
+        </div>
       </div>
 
       <div>
@@ -97,6 +117,12 @@ export function MicrositeForm({ shop }: { shop: ShopData }) {
       <div>
         <h3 className="font-['Barlow_Condensed'] font-bold text-base uppercase tracking-wide text-white mb-4">Services & prices</h3>
         <ServicesEditor initial={shop.services} />
+      </div>
+
+      <div>
+        <h3 className="font-['Barlow_Condensed'] font-bold text-base uppercase tracking-wide text-white mb-4">Products</h3>
+        <p className="text-white/30 text-xs font-['Inter'] mb-3">Retail items you stock in-shop. Display only — no online checkout.</p>
+        <ProductsEditor initial={shop.products} />
       </div>
 
       <div>
