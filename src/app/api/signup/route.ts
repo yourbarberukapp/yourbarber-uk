@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { randomBytes } from 'crypto';
 import { generateUniqueOwnerPasscode } from '@/lib/ownerPasscode';
+import { checkRateLimit } from '@/lib/rateLimit';
+
+function getClientIp(): string {
+  const h = headers();
+  const forwarded = h.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return h.get('x-real-ip') || 'unknown';
+}
 
 function generateSlug(name: string): string {
   return name.toLowerCase()
@@ -12,6 +21,12 @@ function generateSlug(name: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  // Open, unauthenticated by design — throttle against scripted shop creation.
+  const rl = await checkRateLimit('signup', getClientIp(), { windowMs: 60 * 60 * 1000, max: 10 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many signups from this network. Try again later.' }, { status: 429 });
+  }
+
   const { shopName, yourName } = await req.json();
   if (!shopName?.trim() || !yourName?.trim()) {
     return NextResponse.json({ error: 'Shop name and your name are required' }, { status: 400 });

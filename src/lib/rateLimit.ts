@@ -5,8 +5,14 @@
  * serverless cold starts (each instance gets its own map), so brute-force
  * protection has to live in Postgres to be shared across every instance.
  *
- * Fails open (allows the request) if the DB is unavailable — a DB blip
- * shouldn't turn a low-friction login into a hard outage.
+ * Fails open (allows the request) if the DB is unavailable. Deliberate,
+ * not an oversight: the passcode login this backs (src/lib/auth.ts) reads
+ * from the same DB immediately after via db.barber.findFirst — a DB that's
+ * too flaky for this upsert but fine for that lookup is a vanishingly
+ * unlikely middle state. Failing closed instead would mean a transient DB
+ * blip locks every barber out of their own shop with no fallback, which is
+ * worse for this product (small shop owners, no IT support) than the
+ * marginal brute-force exposure during that same blip.
  */
 import { db } from '@/lib/db';
 

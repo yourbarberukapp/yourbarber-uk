@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto';
 import { db } from '@/lib/db';
 
 // Digits only — easy to read off a Wallet pass and type on a numeric keypad.
@@ -6,7 +7,7 @@ const CODE_LENGTH = 6;
 function randomPasscode(): string {
   let code = '';
   for (let i = 0; i < CODE_LENGTH; i++) {
-    code += Math.floor(Math.random() * 10).toString();
+    code += randomInt(0, 10).toString();
   }
   return code;
 }

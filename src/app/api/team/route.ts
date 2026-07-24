@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { randomBytes } from 'crypto';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { generateUniqueOwnerPasscode } from '@/lib/ownerPasscode';
@@ -33,7 +34,9 @@ export async function POST(req: NextRequest) {
 
   const passcode = await generateUniqueOwnerPasscode();
   const slug = (await db.shop.findUnique({ where: { id: shopId }, select: { slug: true } }))?.slug ?? shopId;
-  const placeholderEmail = `${slug}-${passcode}@yourbarber.uk`;
+  // Random token, not the passcode itself — email is read back on GET /api/team,
+  // so embedding the login credential there would leak it to anyone who can view the page.
+  const placeholderEmail = `${slug}-${randomBytes(6).toString('hex')}@yourbarber.uk`;
 
   const barber = await db.barber.create({
     data: {
