@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon, BellRing, ShieldAlert, Clock, Star } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Save, ExternalLink, Globe, Store, MapPin, Image as ImageIcon, BellRing, ShieldAlert, Clock, Star, Upload, Loader2 } from 'lucide-react';
 
 interface Props { shop: { name: string; address: string | null; logoUrl: string | null; slug: string; allowBarberReminders: boolean; defaultCutTime: number; googleReviewUrl: string | null }; }
 
@@ -15,6 +15,37 @@ export function SettingsForm({ shop }: Props) {
   const [defaultCutTime, setDefaultCutTime] = useState(shop.defaultCutTime);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setLogoError('Use a JPG, PNG, or WEBP image.');
+      return;
+    }
+    setLogoError('');
+    setUploadingLogo(true);
+    try {
+      const res = await fetch('/api/settings/logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentType: file.type }),
+      });
+      if (!res.ok) throw new Error();
+      const { uploadUrl, publicUrl } = await res.json();
+      const putRes = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      if (!putRes.ok) throw new Error();
+      setLogoUrl(publicUrl);
+    } catch {
+      setLogoError('Upload failed — try again.');
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault(); setSaving(true);
@@ -52,22 +83,56 @@ export function SettingsForm({ shop }: Props) {
         {[
           { label: 'Shop Name', icon: Store, type: 'text', value: name, setter: setName, placeholder: 'My Barbershop' },
           { label: 'Address', icon: MapPin, type: 'text', value: address, setter: setAddress, placeholder: '123 Street Name, City' },
-          { label: 'Logo URL', icon: ImageIcon, type: 'url', value: logoUrl, setter: setLogoUrl, placeholder: 'https://...' }
         ].map((field) => (
           <div key={field.label}>
             <div className="flex items-center gap-2 mb-1.5 ml-1">
               <field.icon size={12} className="text-white/30" />
               <label className="text-[11px] font-bold uppercase tracking-widest text-white/40">{field.label}</label>
             </div>
-            <input 
-              type={field.type} 
-              value={field.value} 
-              onChange={e => field.setter(e.target.value)} 
+            <input
+              type={field.type}
+              value={field.value}
+              onChange={e => field.setter(e.target.value)}
               placeholder={field.placeholder}
-              className="w-full h-12 px-4 bg-[#111] border border-white/5 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/[0.02] transition-all" 
+              className="w-full h-12 px-4 bg-[#111] border border-white/5 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/[0.02] transition-all"
             />
           </div>
         ))}
+
+        <div>
+          <div className="flex items-center gap-2 mb-1.5 ml-1">
+            <ImageIcon size={12} className="text-white/30" />
+            <label className="text-[11px] font-bold uppercase tracking-widest text-white/40">Logo</label>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-[#111] border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt="Shop logo" className="w-full h-full object-cover" />
+              ) : (
+                <ImageIcon size={20} className="text-white/15" />
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleLogoFile}
+                className="hidden"
+                id="logo-upload"
+              />
+              <label
+                htmlFor="logo-upload"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#111] border border-white/10 rounded-xl text-sm text-white/70 hover:border-primary/40 hover:text-white cursor-pointer transition-all"
+              >
+                {uploadingLogo ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                {uploadingLogo ? 'Uploading…' : logoUrl ? 'Replace logo' : 'Upload logo'}
+              </label>
+              {logoError && <p className="text-[11px] text-red-400 mt-1.5">{logoError}</p>}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Google review URL */}
@@ -137,7 +202,7 @@ export function SettingsForm({ shop }: Props) {
             </div>
             <div>
               <p className="text-sm font-bold text-white uppercase tracking-tight">Barber Reminders</p>
-              <p className="text-xs text-white/30 font-inter">Allow staff to send manual SMS reminders</p>
+              <p className="text-xs text-white/30 font-inter">Allow staff to send manual Wallet-pass reminders</p>
             </div>
           </div>
           <div className={`w-10 h-6 rounded-full relative transition-colors ${allowBarberReminders ? 'bg-primary' : 'bg-white/10'}`}>
