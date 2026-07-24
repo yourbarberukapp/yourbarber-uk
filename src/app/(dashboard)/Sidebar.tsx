@@ -112,13 +112,33 @@ export function Sidebar({ session, signOutAction }: Props) {
           </div>
 
           {session.role === 'owner' && (
-            <a
-              href="/api/wallet/owner/apple"
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-sm text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors group mb-1"
-            >
-              <CreditCard size={16} className="text-muted-foreground group-hover:text-white" />
-              <span className="text-xs font-medium">My Owner Card</span>
-            </a>
+            <div className="mb-1">
+              <div className="flex items-center gap-3 w-full px-3 py-2 text-muted-foreground">
+                <CreditCard size={16} />
+                <span className="text-xs font-medium">My Owner Card</span>
+              </div>
+              <div className="flex gap-1 px-3">
+                <a
+                  href="/api/wallet/owner/apple"
+                  className="flex-1 text-center px-2 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wide text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors border border-white/5"
+                >
+                  Apple
+                </a>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await fetch('/api/wallet/owner/google');
+                    if (res.ok) {
+                      const { saveUrl } = await res.json();
+                      window.open(saveUrl, '_blank', 'noopener');
+                    }
+                  }}
+                  className="flex-1 text-center px-2 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wide text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors border border-white/5"
+                >
+                  Google
+                </button>
+              </div>
+            </div>
           )}
 
           <form action={signOutAction}>

@@ -411,3 +411,82 @@ export async function generateOwnerApplePass(input: OwnerPassInput): Promise<{ p
   const pkpassBuffer = await signAndZipPass(passJson, input.accentColor);
   return { pkpassBuffer, serialNumber };
 }
+
+/**
+ * Google Wallet equivalent of generateOwnerApplePass. Uses a Generic pass
+ * (not Loyalty) since this is a sign-in credential / business card, not a
+ * stamp card — genericObjects is the correct Google Wallet object type for
+ * that. Same demo-JWT fallback as generateClientGooglePass when no real
+ * service account is configured.
+ */
+export async function generateOwnerGooglePass(input: OwnerPassInput): Promise<{ saveUrl: string }> {
+  const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID || 'demo_issuer';
+  const classId = `${issuerId}.yb_owner`;
+  const objectId = `${issuerId}.owner_${input.passcode}`;
+  const appUrl = getAppUrl();
+
+  const genericClass = {
+    id: classId,
+    reviewStatus: 'APPROVED',
+  };
+
+  const genericObject = {
+    id: objectId,
+    classId,
+    state: 'active',
+    cardTitle: { defaultValue: { language: 'en', value: `${input.shopName} — Owner Card` } },
+    header: { defaultValue: { language: 'en', value: input.ownerName } },
+    hexBackgroundColor: input.accentColor || '#111111',
+    textModulesData: [
+      { header: 'Sign-in passcode', body: input.passcode, id: 'passcode' },
+      { header: 'Shop', body: input.shopName, id: 'shop' },
+    ],
+    barcode: {
+      type: 'QR_CODE',
+      value: input.passcode,
+      alternateText: 'Scan to sign in',
+    },
+    linksModuleData: {
+      uris: [{ uri: `${appUrl}/owner/login`, description: 'Sign in to your shop' }],
+    },
+  };
+
+  const serviceAccountKey = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_KEY;
+  let serviceAccountEmail = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL || 'demo@example.iam.gserviceaccount.com';
+  let privateKey = process.env.GOOGLE_WALLET_PRIVATE_KEY;
+
+  if (serviceAccountKey) {
+    try {
+      const parsed = JSON.parse(serviceAccountKey);
+      serviceAccountEmail = parsed.client_email || serviceAccountEmail;
+      privateKey = parsed.private_key || privateKey;
+    } catch {}
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: serviceAccountEmail,
+    aud: 'google',
+    typ: 'savetowallet',
+    iat: now,
+    payload: {
+      genericClasses: [genericClass],
+      genericObjects: [genericObject],
+    },
+  };
+
+  const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  let jwt: string;
+  if (privateKey) {
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    const signer = createSign('RSA-SHA256');
+    signer.update(`${header}.${body}`);
+    const signature = signer.sign(privateKey, 'base64url');
+    jwt = `${header}.${body}.${signature}`;
+  } else {
+    jwt = `${header}.${body}.DEMO_SIGNATURE`;
+  }
+
+  return { saveUrl: `https://pay.google.com/gp/v/save/${jwt}` };
+}
