@@ -24,6 +24,25 @@ export function getPublicUrl(key: string): string {
   return `https://${BUCKET}.s3.${region}.amazonaws.com/${key}`;
 }
 
+/**
+ * Only URLs pointing at our own S3 bucket are safe to fetch server-side.
+ * logoUrl/passStripUrl are always written via generateUploadUrl+getPublicUrl
+ * above, so this should never reject a legitimate value — it exists to stop
+ * an attacker-supplied URL (e.g. a crafted logoUrl) from making the server
+ * fetch arbitrary/internal hosts (SSRF) when we later re-fetch the image to
+ * build Wallet pass artwork or extract a dominant colour.
+ */
+export function isTrustedAssetUrl(rawUrl: string): boolean {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== 'https:') return false;
+    const region = process.env.AWS_REGION ?? 'us-east-1';
+    return url.hostname === `${BUCKET}.s3.${region}.amazonaws.com`;
+  } catch {
+    return false;
+  }
+}
+
 export async function generateReadUrl(publicUrl: string): Promise<string> {
   const s3 = getS3Client();
   const url = new URL(publicUrl);

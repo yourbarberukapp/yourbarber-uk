@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isTrustedAssetUrl } from '@/lib/s3';
 
 const select = {
   name: true, address: true, logoUrl: true, slug: true,
@@ -9,15 +10,21 @@ const select = {
   passStripUrl: true, passAccentColor: true, passLabelColor: true,
 };
 
+// logoUrl/passStripUrl are later fetched server-side (Wallet pass artwork
+// generation, colour extraction) — restricting them to our own S3 bucket
+// host at write time stops this endpoint being used to plant an internal
+// or arbitrary URL that gets fetched (SSRF) further down the line.
+const trustedAssetUrl = z.string().url().refine(isTrustedAssetUrl, { message: 'Image must be hosted on our storage' });
+
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   address: z.string().max(200).optional(),
-  logoUrl: z.string().url().optional().or(z.literal('')),
+  logoUrl: trustedAssetUrl.optional().or(z.literal('')),
   shopType: z.string().optional(),
   allowBarberReminders: z.boolean().optional(),
   defaultCutTime: z.number().int().min(5).max(120).optional(),
   googleReviewUrl: z.string().url().optional().or(z.literal('')),
-  passStripUrl: z.string().url().optional().or(z.literal('')),
+  passStripUrl: trustedAssetUrl.optional().or(z.literal('')),
   passAccentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   passLabelColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
 });

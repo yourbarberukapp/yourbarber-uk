@@ -7,16 +7,35 @@
  *   strip: 375x144 / 750x288 (@2x) — storeCard/coupon banner image
  */
 import sharp from 'sharp';
+import { isTrustedAssetUrl } from '@/lib/s3';
+
+const MAX_ASSET_BYTES = 10 * 1024 * 1024; // 10MB — logos/banners are small; guards against a huge response tying up the function.
+const FETCH_TIMEOUT_MS = 8000;
 
 function safeHex(hex?: string): string {
   return /^#[0-9a-f]{6}$/i.test(hex || '') ? (hex as string) : '#111111';
 }
 
+/**
+ * Fetches an uploaded logo/banner image for embedding in a Wallet pass.
+ * Only fetches URLs pointing at our own S3 bucket (see isTrustedAssetUrl) —
+ * logoUrl/passStripUrl ultimately come from Shop columns set via our own
+ * presigned-upload flow, but treating them as untrusted here prevents an
+ * SSRF if that ever changes (e.g. a future admin-editable field).
+ */
 async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  if (!isTrustedAssetUrl(url)) return null;
   try {
-    const res = await fetch(url);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const res = await fetch(url, { signal: controller.signal, redirect: 'error' });
+    clearTimeout(timeout);
     if (!res.ok) return null;
-    return Buffer.from(await res.arrayBuffer());
+    const contentLength = res.headers.get('content-length');
+    if (contentLength && Number(contentLength) > MAX_ASSET_BYTES) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.byteLength > MAX_ASSET_BYTES) return null;
+    return buffer;
   } catch {
     return null;
   }
