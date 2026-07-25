@@ -47,6 +47,8 @@ export async function GET() {
     queuePosition: queue?.position ?? null,
     waitMinutes: queue?.waitMinutes ?? null,
     passAuthToken: customer.passAuthToken,
+    logoUrl: shop.logoUrl,
+    stripUrl: shop.passStripUrl,
   });
 
   return new NextResponse(new Uint8Array(pkpassBuffer), {

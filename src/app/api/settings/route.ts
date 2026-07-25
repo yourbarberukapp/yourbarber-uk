@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 const select = {
   name: true, address: true, logoUrl: true, slug: true,
   shopType: true, allowBarberReminders: true, defaultCutTime: true, googleReviewUrl: true,
+  passStripUrl: true, passAccentColor: true, passLabelColor: true,
 };
 
 const updateSchema = z.object({
@@ -16,6 +17,9 @@ const updateSchema = z.object({
   allowBarberReminders: z.boolean().optional(),
   defaultCutTime: z.number().int().min(5).max(120).optional(),
   googleReviewUrl: z.string().url().optional().or(z.literal('')),
+  passStripUrl: z.string().url().optional().or(z.literal('')),
+  passAccentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  passLabelColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
 });
 
 export async function GET(_req: NextRequest) {
@@ -35,7 +39,11 @@ export async function PATCH(req: NextRequest) {
   const parsed = updateSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const data = { ...parsed.data, googleReviewUrl: parsed.data.googleReviewUrl || null };
+  const data = {
+    ...parsed.data,
+    googleReviewUrl: parsed.data.googleReviewUrl || null,
+    passStripUrl: parsed.data.passStripUrl === '' ? null : parsed.data.passStripUrl,
+  };
   const shop = await db.shop.update({ where: { id: shopId }, data, select });
   return NextResponse.json(shop);
 }

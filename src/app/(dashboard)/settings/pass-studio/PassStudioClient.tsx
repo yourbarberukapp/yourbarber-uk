@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import Link from 'next/link';
 import { AppleWalletPreview, GoogleWalletPreview } from '@/components/WalletPreview';
-import { Loader2, Check, Sparkles } from 'lucide-react';
+import { Loader2, Check, Sparkles, Upload } from 'lucide-react';
 
 interface ShopData {
   id: string;
@@ -14,6 +15,8 @@ interface ShopData {
   loyaltyTarget: number;
   loyaltyReward: string;
   promoMessage: string | null;
+  logoUrl?: string | null;
+  passStripUrl?: string | null;
 }
 
 export default function PassStudioClient({ shop }: { shop: ShopData }) {
@@ -25,6 +28,9 @@ export default function PassStudioClient({ shop }: { shop: ShopData }) {
   const [previewTab, setPreviewTab] = useState<'apple' | 'google'>('apple');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [stripUrl, setStripUrl] = useState(shop.passStripUrl || '');
+  const [uploadingStrip, setUploadingStrip] = useState(false);
+  const stripInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSave() {
     setSaving(true);
@@ -41,12 +47,38 @@ export default function PassStudioClient({ shop }: { shop: ShopData }) {
           promoMessage,
         }),
       });
+      if (stripUrl !== (shop.passStripUrl || '')) {
+        await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passStripUrl: stripUrl }),
+        });
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
       alert('Failed to save settings');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleStripUpload(file: File) {
+    setUploadingStrip(true);
+    try {
+      const presign = await fetch('/api/settings/strip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentType: file.type }),
+      });
+      if (!presign.ok) throw new Error('presign failed');
+      const { uploadUrl, publicUrl } = await presign.json();
+      await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      setStripUrl(publicUrl);
+    } catch {
+      alert('Failed to upload banner image');
+    } finally {
+      setUploadingStrip(false);
     }
   }
 
@@ -113,6 +145,74 @@ export default function PassStudioClient({ shop }: { shop: ShopData }) {
               value={labelColor}
               onChange={(e) => setLabelColor(e.target.value)}
               className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm uppercase w-32"
+            />
+          </div>
+        </div>
+
+        {/* Logo */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-white/50 mb-2 font-barlow">
+            Shop Logo
+          </label>
+          <div className="flex items-center gap-3">
+            {shop.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={shop.logoUrl} alt="" className="w-10 h-10 rounded-lg object-cover border border-white/20" />
+            ) : (
+              <div className="w-10 h-10 rounded-lg border border-white/20 bg-white/5" />
+            )}
+            <Link
+              href="/settings"
+              className="text-xs font-barlow font-bold uppercase text-white/60 hover:text-white underline underline-offset-2"
+            >
+              {shop.logoUrl ? 'Change logo in Settings' : 'Upload a logo in Settings'}
+            </Link>
+          </div>
+        </div>
+
+        {/* Banner / Strip Image */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-white/50 mb-2 font-barlow">
+            Pass Banner Image (optional)
+          </label>
+          <p className="text-white/40 text-xs mb-2">
+            Wide image shown across the top of the card. Falls back to your accent color if left blank.
+          </p>
+          <div className="flex items-center gap-3">
+            {stripUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={stripUrl} alt="" className="w-24 h-9 rounded-md object-cover border border-white/20" />
+            ) : (
+              <div className="w-24 h-9 rounded-md border border-white/20 bg-white/5" />
+            )}
+            <button
+              type="button"
+              onClick={() => stripInputRef.current?.click()}
+              disabled={uploadingStrip}
+              className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs font-barlow font-bold uppercase text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              {uploadingStrip ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {uploadingStrip ? 'Uploading...' : stripUrl ? 'Change Banner' : 'Upload Banner'}
+            </button>
+            {stripUrl && (
+              <button
+                type="button"
+                onClick={() => setStripUrl('')}
+                className="text-xs font-barlow font-bold uppercase text-white/40 hover:text-white/70"
+              >
+                Remove
+              </button>
+            )}
+            <input
+              ref={stripInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleStripUpload(file);
+                e.target.value = '';
+              }}
             />
           </div>
         </div>
@@ -221,6 +321,8 @@ export default function PassStudioClient({ shop }: { shop: ShopData }) {
             loyaltyTarget={loyaltyTarget}
             rewardName={loyaltyReward}
             promoMessage={promoMessage}
+            logoUrl={shop.logoUrl}
+            stripUrl={stripUrl}
           />
         ) : (
           <GoogleWalletPreview
@@ -228,6 +330,8 @@ export default function PassStudioClient({ shop }: { shop: ShopData }) {
             accentColor={accentColor}
             loyaltyTarget={loyaltyTarget}
             rewardName={loyaltyReward}
+            logoUrl={shop.logoUrl}
+            stripUrl={stripUrl}
           />
         )}
       </div>

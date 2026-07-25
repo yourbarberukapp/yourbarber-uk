@@ -43,6 +43,8 @@ export async function GET() {
     promoMessage: customer.passMessage || shop.promoMessage,
     queuePosition: queue?.position ?? null,
     waitMinutes: queue?.waitMinutes ?? null,
+    logoUrl: shop.logoUrl,
+    stripUrl: shop.passStripUrl,
   });
 
   return NextResponse.json({ saveUrl });

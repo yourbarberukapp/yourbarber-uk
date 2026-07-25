@@ -1,19 +1,75 @@
 /**
  * Artwork generator for Apple & Google Wallet Passes in YourBarber.uk
+ *
+ * Apple's exact required pixel sizes (from PassKit docs):
+ *   icon:  29x29 / 58x58 (@2x) / 87x87 (@3x — not shipped, we only emit @1x/@2x)
+ *   logo:  up to 160x50 / 320x100 (@2x), left-aligned in the pass header
+ *   strip: 375x144 / 750x288 (@2x) — storeCard/coupon banner image
  */
-import { createHash } from 'crypto';
+import sharp from 'sharp';
 
-function generatePlaceholderPng(colourHex: string = '#111111'): Buffer {
-  // Minimal valid 1x1 PNG Buffer
-  const PNG_1x1 = Buffer.from(
-    '89504e470d0a1a0a0000000d49484452000000010000000108020000009001' +
-    '2e0000000c4944415408d7636060600000000400019b5c0e0000000049454e44ae426082',
-    'hex'
-  );
-  return PNG_1x1;
+function safeHex(hex?: string): string {
+  return /^#[0-9a-f]{6}$/i.test(hex || '') ? (hex as string) : '#111111';
 }
 
-export async function generateApplePassArtwork(params: { accentColour?: string }): Promise<{
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return Buffer.from(await res.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+/** Flat-colour square PNG, used when no logo is uploaded. */
+async function solidSquare(size: number, colour: string): Promise<Buffer> {
+  return sharp({
+    create: { width: size, height: size, channels: 4, background: colour },
+  })
+    .png()
+    .toBuffer();
+}
+
+/** Flat-colour rectangle PNG, used for the strip banner when no image is uploaded. */
+async function solidRect(width: number, height: number, colour: string): Promise<Buffer> {
+  return sharp({
+    create: { width, height, channels: 4, background: colour },
+  })
+    .png()
+    .toBuffer();
+}
+
+/** Crops/pads a source image into an exact square, for icon.png. */
+async function squareFromLogo(source: Buffer, size: number, colour: string): Promise<Buffer> {
+  return sharp(source)
+    .resize(size, size, { fit: 'cover', position: 'centre' })
+    .flatten({ background: colour })
+    .png()
+    .toBuffer();
+}
+
+/** Fits a source image inside a rect without cropping (Apple logo art must not be cropped), padded with the accent colour. */
+async function padLogoToRect(source: Buffer, width: number, height: number, colour: string): Promise<Buffer> {
+  return sharp(source)
+    .resize(width, height, { fit: 'contain', background: colour })
+    .flatten({ background: colour })
+    .png()
+    .toBuffer();
+}
+
+async function stripFromBanner(source: Buffer, width: number, height: number): Promise<Buffer> {
+  return sharp(source)
+    .resize(width, height, { fit: 'cover', position: 'centre' })
+    .png()
+    .toBuffer();
+}
+
+export async function generateApplePassArtwork(params: {
+  accentColour?: string;
+  logoUrl?: string | null;
+  stripUrl?: string | null;
+}): Promise<{
   icon: Buffer;
   icon2x: Buffer;
   logo: Buffer;
@@ -21,17 +77,53 @@ export async function generateApplePassArtwork(params: { accentColour?: string }
   strip: Buffer;
   strip2x: Buffer;
 }> {
-  const icon = generatePlaceholderPng(params.accentColour);
-  return {
-    icon,
-    icon2x: icon,
-    logo: icon,
-    logo2x: icon,
-    strip: icon,
-    strip2x: icon,
-  };
+  const colour = safeHex(params.accentColour);
+  const logoSource = params.logoUrl ? await fetchImageBuffer(params.logoUrl) : null;
+  const stripSource = params.stripUrl ? await fetchImageBuffer(params.stripUrl) : null;
+
+  const [icon, icon2x, logo, logo2x] = logoSource
+    ? await Promise.all([
+        squareFromLogo(logoSource, 29, colour),
+        squareFromLogo(logoSource, 58, colour),
+        padLogoToRect(logoSource, 160, 50, colour),
+        padLogoToRect(logoSource, 320, 100, colour),
+      ])
+    : await Promise.all([
+        solidSquare(29, colour),
+        solidSquare(58, colour),
+        solidRect(160, 50, colour),
+        solidRect(320, 100, colour),
+      ]);
+
+  const [strip, strip2x] = stripSource
+    ? await Promise.all([stripFromBanner(stripSource, 375, 144), stripFromBanner(stripSource, 750, 288)])
+    : await Promise.all([solidRect(375, 144, colour), solidRect(750, 288, colour)]);
+
+  return { icon, icon2x, logo, logo2x, strip, strip2x };
 }
 
-export async function generateGoogleHeroArtwork(params: { accentColour?: string }): Promise<Buffer> {
-  return generatePlaceholderPng(params.accentColour);
+/** Google Wallet's heroImage — 1032x336, shown as the wide banner at the top of the card. */
+export async function generateGoogleHeroArtwork(params: {
+  accentColour?: string;
+  stripUrl?: string | null;
+}): Promise<Buffer> {
+  const colour = safeHex(params.accentColour);
+  const stripSource = params.stripUrl ? await fetchImageBuffer(params.stripUrl) : null;
+  return stripSource
+    ? stripFromBanner(stripSource, 1032, 336)
+    : solidRect(1032, 336, colour);
+}
+
+/**
+ * Averages an uploaded image down to a single representative colour, for
+ * auto-suggesting a pass accent colour from a shop's uploaded logo.
+ */
+export async function extractDominantColour(imageBuffer: Buffer): Promise<string> {
+  const { data } = await sharp(imageBuffer)
+    .resize(1, 1, { fit: 'cover' })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const toHex = (n: number) => n.toString(16).padStart(2, '0');
+  return `#${toHex(data[0])}${toHex(data[1])}${toHex(data[2])}`;
 }

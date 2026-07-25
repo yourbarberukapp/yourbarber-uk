@@ -4,7 +4,7 @@
 import { createHash, createSign } from 'crypto';
 import JSZip from 'jszip';
 import forge from 'node-forge';
-import { generateApplePassArtwork, generateGoogleHeroArtwork } from './artwork';
+import { generateApplePassArtwork } from './artwork';
 
 function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://yourbarber.uk';
@@ -35,10 +35,15 @@ function buildStampDisplay(stampCount: number, target: number): string {
 }
 
 /** Zips pass.json + artwork into a signed (or unsigned, if no certs configured) .pkpass buffer. */
-async function signAndZipPass(passJson: Record<string, unknown>, accentColor: string): Promise<Buffer> {
+async function signAndZipPass(
+  passJson: Record<string, unknown>,
+  accentColor: string,
+  logoUrl?: string | null,
+  stripUrl?: string | null
+): Promise<Buffer> {
   const zip = new JSZip();
   const passJsonStr = JSON.stringify(passJson, null, 2);
-  const artwork = await generateApplePassArtwork({ accentColour: accentColor });
+  const artwork = await generateApplePassArtwork({ accentColour: accentColor, logoUrl, stripUrl });
 
   zip.file('pass.json', passJsonStr);
   zip.file('icon.png', artwork.icon);
@@ -117,6 +122,8 @@ export interface ClientPassInput {
   waitMinutes?: number | null;
   promoMessage?: string | null;
   passAuthToken?: string | null;
+  logoUrl?: string | null;
+  stripUrl?: string | null;
 }
 
 export async function generateClientApplePass(input: ClientPassInput): Promise<{ pkpassBuffer: Buffer; serialNumber: string }> {
@@ -202,7 +209,7 @@ export async function generateClientApplePass(input: ClientPassInput): Promise<{
     passJson.webServiceURL = `${appUrl}/api/wallet/v1`;
   }
 
-  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor);
+  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor, input.logoUrl, input.stripUrl);
   return { pkpassBuffer, serialNumber };
 }
 
@@ -212,13 +219,22 @@ export async function generateClientGooglePass(input: ClientPassInput): Promise<
   const objectId = `${issuerId}.card_${input.accessCode}`;
   const appUrl = getAppUrl();
 
-  const loyaltyClass = {
+  // Google Wallet fetches hero/logo images from a real public URL — it cannot accept
+  // a data: URI, so we only set these fields when we have an actual uploaded asset URL
+  // (unlike Apple's artwork, which is embedded directly in the signed .pkpass zip).
+  const loyaltyClass: Record<string, unknown> = {
     id: classId,
     issuerName: input.shopName,
     programName: `${input.shopName} Card`,
     hexBackgroundColor: input.accentColor || '#111111',
     reviewStatus: 'APPROVED',
   };
+  if (input.stripUrl) {
+    loyaltyClass.heroImage = { sourceUri: { uri: input.stripUrl } };
+  }
+  if (input.logoUrl) {
+    loyaltyClass.programLogo = { sourceUri: { uri: input.logoUrl } };
+  }
 
   const loyaltyObject = {
     id: objectId,
@@ -296,6 +312,8 @@ export interface OwnerPassInput {
   ownerName: string;
   passcode: string;
   passAuthToken?: string | null;
+  logoUrl?: string | null;
+  stripUrl?: string | null;
 }
 
 /**
@@ -356,7 +374,7 @@ export async function generateOwnerApplePass(input: OwnerPassInput): Promise<{ p
     passJson.webServiceURL = `${appUrl}/api/wallet/v1`;
   }
 
-  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor);
+  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor, input.logoUrl, input.stripUrl);
   return { pkpassBuffer, serialNumber };
 }
 
@@ -378,13 +396,14 @@ export async function generateOwnerGooglePass(input: OwnerPassInput): Promise<{ 
     reviewStatus: 'APPROVED',
   };
 
-  const genericObject = {
+  const genericObject: Record<string, unknown> = {
     id: objectId,
     classId,
     state: 'active',
     cardTitle: { defaultValue: { language: 'en', value: `${input.shopName} — Owner Card` } },
     header: { defaultValue: { language: 'en', value: input.ownerName } },
     hexBackgroundColor: input.accentColor || '#111111',
+    ...(input.logoUrl ? { logo: { sourceUri: { uri: input.logoUrl } } } : {}),
     textModulesData: [
       { header: 'Sign-in passcode', body: input.passcode, id: 'passcode' },
       { header: 'Shop', body: input.shopName, id: 'shop' },

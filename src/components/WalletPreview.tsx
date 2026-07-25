@@ -11,6 +11,8 @@ interface Props {
   loyaltyTarget?: number;
   rewardName?: string;
   promoMessage?: string;
+  logoUrl?: string | null;
+  stripUrl?: string | null;
 }
 
 export function AppleWalletPreview({
@@ -22,6 +24,8 @@ export function AppleWalletPreview({
   loyaltyTarget = 5,
   rewardName = '50% Off 5th Cut',
   promoMessage,
+  logoUrl,
+  stripUrl,
 }: Props) {
   const filled = Math.min(loyaltyStamps, loyaltyTarget);
   const stampDots = '●'.repeat(filled) + '○'.repeat(Math.max(0, loyaltyTarget - filled));
@@ -56,10 +60,24 @@ export function AppleWalletPreview({
             {shopName || 'BENJ BARBERS'}
           </h4>
         </div>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 900, color: labelColor }}>YB</span>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: labelColor }}>YB</span>
+          )}
         </div>
       </div>
+
+      {stripUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={stripUrl}
+          alt=""
+          style={{ width: '100%', height: 64, objectFit: 'cover', borderRadius: 8, margin: '0.75rem 0 0' }}
+        />
+      )}
 
       {/* Stamp Section */}
       <div style={{ margin: '1.5rem 0 1rem' }}>
@@ -122,6 +140,8 @@ export function GoogleWalletPreview({
   loyaltyStamps = 3,
   loyaltyTarget = 5,
   rewardName = '50% Off 5th Cut',
+  logoUrl,
+  stripUrl,
 }: Props) {
   return (
     <div
@@ -142,13 +162,25 @@ export function GoogleWalletPreview({
       }}
     >
       {/* Google Wallet Header Banner */}
-      <div style={{ background: accentColor || '#111111', borderRadius: 12, padding: '1rem', color: 'white' }}>
-        <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }}>
-          YOURBARBER PASS
-        </span>
-        <h4 style={{ margin: '2px 0 0', fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase' }}>
-          {shopName || 'BENJ BARBERS'}
-        </h4>
+      <div style={{ background: accentColor || '#111111', borderRadius: 12, overflow: 'hidden', color: 'white' }}>
+        {stripUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={stripUrl} alt="" style={{ width: '100%', height: 64, objectFit: 'cover', display: 'block' }} />
+        )}
+        <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+          )}
+          <div>
+            <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }}>
+              YOURBARBER PASS
+            </span>
+            <h4 style={{ margin: '2px 0 0', fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase' }}>
+              {shopName || 'BENJ BARBERS'}
+            </h4>
+          </div>
+        </div>
       </div>
 
       {/* Content */}

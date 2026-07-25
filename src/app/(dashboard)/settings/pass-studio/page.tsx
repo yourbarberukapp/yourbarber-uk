@@ -17,6 +17,8 @@ export default async function PassStudioPage() {
       loyaltyTarget: true,
       loyaltyReward: true,
       promoMessage: true,
+      logoUrl: true,
+      passStripUrl: true,
     },
   });
 

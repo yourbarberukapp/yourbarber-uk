@@ -27,6 +27,8 @@ async function handleOwnerPass(serialNumber: string, token: string) {
     ownerName: barber.name,
     passcode: barber.ownerPasscode,
     passAuthToken: barber.ownerPassAuthToken,
+    logoUrl: barber.shop.logoUrl,
+    stripUrl: barber.shop.passStripUrl,
   });
 
   return new NextResponse(new Uint8Array(pkpassBuffer), {
@@ -76,6 +78,8 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     promoMessage: customer.passMessage || shop.promoMessage,
     queuePosition: queue?.position ?? null,
     waitMinutes: queue?.waitMinutes ?? null,
+    logoUrl: shop.logoUrl,
+    stripUrl: shop.passStripUrl,
   });
 
   return new NextResponse(new Uint8Array(pkpassBuffer), {

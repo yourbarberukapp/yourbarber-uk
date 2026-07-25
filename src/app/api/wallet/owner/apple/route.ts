@@ -39,6 +39,8 @@ export async function GET() {
     ownerName: barber.name,
     passcode,
     passAuthToken: barber.ownerPassAuthToken,
+    logoUrl: shop.logoUrl,
+    stripUrl: shop.passStripUrl,
   });
 
   return new NextResponse(new Uint8Array(pkpassBuffer), {

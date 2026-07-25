@@ -38,6 +38,8 @@ export async function GET() {
     accentColor: shop.passAccentColor || '#111111',
     ownerName: barber.name,
     passcode,
+    logoUrl: shop.logoUrl,
+    stripUrl: shop.passStripUrl,
   });
 
   return NextResponse.json({ saveUrl });
