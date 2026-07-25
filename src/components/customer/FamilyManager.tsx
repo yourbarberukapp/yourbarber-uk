@@ -56,7 +56,7 @@ export default function FamilyManager() {
         const err = await res.json();
         alert(err.error || 'Failed to add family member');
       }
-    } catch (error) {
+    } catch {
       alert('Error adding family member');
     } finally {
       setSubmitting(false);
@@ -74,7 +74,7 @@ export default function FamilyManager() {
       if (res.ok) {
         fetchMembers();
       }
-    } catch (error) {
+    } catch {
       alert('Error removing family member');
     }
   };

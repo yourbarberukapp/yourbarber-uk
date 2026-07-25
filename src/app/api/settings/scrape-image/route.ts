@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
       }
     });
 
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Could not fetch image' }, { status: 502 });
   }
 }

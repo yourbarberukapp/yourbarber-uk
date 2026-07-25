@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { generateReadUrl } from '@/lib/s3';
 import { getCustomerSession } from '@/lib/customerAuth';
 import Image from 'next/image';
-import { Scissors, LogOut, Users, Plus, Trash2 } from 'lucide-react';
+import { Scissors, LogOut } from 'lucide-react';
 import { RateVisit } from './RateVisit';
 import { FamilyManager } from './FamilyManager';
 

@@ -7,7 +7,7 @@ export default async function ArrivePage({
   searchParams,
 }: {
   params: { slug: string };
-  searchParams?: { demo?: string };
+  searchParams?: { demo?: string; barber?: string };
 }) {
   const shop = await db.shop.findUnique({
     where: { slug: params.slug },
@@ -29,6 +29,10 @@ export default async function ArrivePage({
     },
   });
   if (!shop) notFound();
+
+  // A barber's own shareable QR/link (e.g. "See Jamie") encodes ?barber=<id> —
+  // only honour it if that barber is real, active, and takes bookings at this shop.
+  const presetBarberId = shop.barbers.find((b) => b.id === searchParams?.barber)?.id ?? null;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -60,6 +64,7 @@ export default async function ArrivePage({
       initialWaitMinutes={waitMinutes}
       isDemoShop={isDemoShop}
       demoWalkIn={searchParams?.demo === 'walkin'}
+      presetBarberId={presetBarberId}
     />
   );
 }

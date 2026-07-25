@@ -269,7 +269,7 @@ export default function OnboardingWizard({
       const result = await eyeDropper.open();
       update('accentColor', result.sRGBHex);
       update('labelColor', computeLabelColour(result.sRGBHex));
-    } catch (e) {
+    } catch {
       // user canceled
     }
   }

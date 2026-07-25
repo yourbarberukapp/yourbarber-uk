@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
       images: Array.from(urls).filter(Boolean)
     });
 
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Could not scrape website' }, { status: 502 });
   }
 }

@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { Scissors, Clock, MapPin, X, Calendar, Settings, Plus } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import QueueStatus from '@/components/microsite/QueueStatus';
-import Link from 'next/link';
 import { Users } from 'lucide-react';
 
 const fadeUp = {

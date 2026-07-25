@@ -79,7 +79,7 @@ export default async function ShopMicrosite({ params }: { params: { slug: string
         address: overrides.address || shopData.address,
         googleMapsUrl: overrides.googleMapsUrl || shopData.googleMapsUrl,
       };
-    } catch (e) {
+    } catch {
       console.error('Failed to parse demo overrides from cookie');
     }
   }

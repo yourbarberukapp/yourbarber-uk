@@ -12,7 +12,6 @@ import {
   Monitor,
   Layout,
   ExternalLink,
-  Lock,
   ArrowLeft,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';

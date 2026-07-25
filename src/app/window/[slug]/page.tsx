@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 type OpeningHours = {
@@ -51,20 +51,20 @@ export default function WindowDisplay({ params }: { params: { slug: string } }) 
 
   const arriveUrl = `https://yourbarber.uk/arrive/${params.slug}`;
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       const res = await fetch(`/api/window/${params.slug}`, { cache: 'no-store' });
       if (res.ok) setData(await res.json());
     } catch {
       // silent — keep showing last known state
     }
-  }
+  }, [params.slug]);
 
   useEffect(() => {
     fetchData();
     const poll = setInterval(fetchData, 30_000);
     return () => clearInterval(poll);
-  }, [params.slug]);
+  }, [fetchData]);
 
   // Clock
   useEffect(() => {

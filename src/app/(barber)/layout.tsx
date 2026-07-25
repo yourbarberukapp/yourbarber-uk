@@ -18,7 +18,7 @@ export default async function BarberLayout({ children }: { children: React.React
     try {
       const overrides = JSON.parse(decodeURIComponent(atob(overrideCookie.value)));
       if (overrides.name) shopName = overrides.name;
-    } catch (e) {
+    } catch {
       // Ignore
     }
   }
@@ -48,7 +48,7 @@ export default async function BarberLayout({ children }: { children: React.React
               {shopName}
             </div>
           </div>
-          <BarberWalletCardLink />
+          <BarberWalletCardLink shopSlug={session.shopSlug} barberId={session.barberId} />
           {session.role === 'owner' && (
             <Link href="/dashboard" title="Owner dashboard" style={{
               color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center',

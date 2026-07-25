@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, Clock3, Coffee, MessageSquareText, QrCode, Smartphone, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Coffee, MessageSquareText, QrCode, Smartphone, Users } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeaturePager from '@/components/FeaturePager';

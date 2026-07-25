@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Settings, X, MapPin, Store, Clock, ExternalLink, Loader2, Sparkles, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Settings, X, ExternalLink, Loader2, Sparkles, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useDemoOverride } from './DemoOverrideProvider';
 
@@ -20,7 +20,10 @@ export default function DemoOverrideTrigger({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   
-  const currentOverrides = overrides[shopSlug] || {};
+  const currentOverrides = useMemo(
+    () => overrides[shopSlug] || {},
+    [overrides, shopSlug]
+  );
   
   const [formData, setFormData] = useState({
     name: currentOverrides.name || '',
@@ -40,7 +43,7 @@ export default function DemoOverrideTrigger({
   }, [isOpen, currentOverrides]);
 
   // Handle triple tap on the component
-  const handleTap = (e: React.MouseEvent | React.PointerEvent) => {
+  const handleTap = () => {
     setTapCount(prev => prev + 1);
   };
 

@@ -27,7 +27,7 @@ export function DeletePhotoButton({ visitId, photoId }: Props) {
         alert(`Error: ${data.error || 'Failed to delete photo'}`);
         setBusy(false);
       }
-    } catch (err) {
+    } catch {
       alert('Network error while deleting photo');
       setBusy(false);
     }

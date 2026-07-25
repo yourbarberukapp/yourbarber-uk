@@ -6,7 +6,7 @@
  * Updated for smooth automated sequence with head shape overlay and camera switching.
  */
 import { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, X, Check, Loader2, RefreshCw, Smartphone } from 'lucide-react';
+import { Camera, X, Check, Loader2, RefreshCw, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ANGLES = ['back', 'left', 'right', 'front'] as const;

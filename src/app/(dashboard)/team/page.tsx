@@ -23,7 +23,7 @@ export default async function TeamPage() {
           Manage your barbers and access roles.
         </p>
       </div>
-      <TeamClient barbers={barbers} currentBarberId={session.barberId} />
+      <TeamClient barbers={barbers} currentBarberId={session.barberId} shopSlug={session.shopSlug} />
     </div>
   );
 }

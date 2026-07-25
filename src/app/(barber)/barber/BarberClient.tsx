@@ -99,6 +99,11 @@ export default function BarberClient({
   const [searching, setSearching] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addPhone, setAddPhone] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
 
   const refresh = useCallback(async () => {
     const res = await fetch('/api/waitlist', { cache: 'no-store' });
@@ -158,6 +163,37 @@ export default function BarberClient({
     await fetch(`/api/waitlist/${id}/return-reminder`, { method: 'POST' });
     await refresh();
     setUpdating(null);
+  }
+
+  async function addClient() {
+    setAddError('');
+    if (addPhone.trim().length < 7) {
+      setAddError('Enter a valid phone number');
+      return;
+    }
+    setAdding(true);
+    try {
+      const res = await fetch('/api/waitlist/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: addPhone.trim(), name: addName.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAddError(data.error || 'Something went wrong');
+        return;
+      }
+      setShowAddClient(false);
+      setAddName('');
+      setAddPhone('');
+      setQuery('');
+      setTab('queue');
+      await refresh();
+    } catch {
+      setAddError('Connection error — try again');
+    } finally {
+      setAdding(false);
+    }
   }
 
   async function deleteWalkIn(id: string) {
@@ -337,11 +373,11 @@ export default function BarberClient({
           </div>
 
           {query.length >= 2 && results.length === 0 && !searching && (
-            <p style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.25)', fontSize: '0.875rem', margin: 0 }}>
+            <p style={{ textAlign: 'center', padding: '1.5rem 0 1rem', color: 'rgba(255,255,255,0.25)', fontSize: '0.875rem', margin: 0 }}>
               No clients found
             </p>
           )}
-          {query.length < 2 && (
+          {query.length < 2 && !showAddClient && (
             <p style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'rgba(255,255,255,0.2)', fontSize: '0.875rem', margin: 0 }}>
               Type a name or phone number
             </p>
@@ -368,6 +404,77 @@ export default function BarberClient({
               </Link>
             ))}
           </div>
+
+          {!showAddClient ? (
+            <button
+              onClick={() => {
+                setShowAddClient(true);
+                setAddError('');
+              }}
+              style={{
+                width: '100%', marginTop: '1rem', padding: '0.9rem',
+                background: 'rgba(200,241,53,0.06)', border: '1px dashed rgba(200,241,53,0.25)',
+                borderRadius: 10, cursor: 'pointer',
+                color: '#C8F135', fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800,
+                fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.06em',
+              }}
+            >
+              + Add client to queue
+            </button>
+          ) : (
+            <div style={{
+              marginTop: '1rem', background: '#111', border: '1px solid rgba(200,241,53,0.2)',
+              borderRadius: 12, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem',
+            }}>
+              <p style={{ margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', fontWeight: 800, fontSize: '0.9rem', color: 'white', textTransform: 'uppercase' }}>
+                Add walk-in client
+              </p>
+              <input
+                type="tel" placeholder="Phone number" autoFocus
+                value={addPhone} onChange={e => setAddPhone(e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box', background: '#0a0a0a',
+                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+                  padding: '0.75rem 0.875rem', color: 'white', fontSize: '0.95rem',
+                  fontFamily: 'var(--font-inter, sans-serif)', outline: 'none',
+                }}
+              />
+              <input
+                type="text" placeholder="Name (if new client)"
+                value={addName} onChange={e => setAddName(e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box', background: '#0a0a0a',
+                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+                  padding: '0.75rem 0.875rem', color: 'white', fontSize: '0.95rem',
+                  fontFamily: 'var(--font-inter, sans-serif)', outline: 'none',
+                }}
+              />
+              {addError && <p style={{ color: '#f87171', fontSize: '0.8rem', margin: 0 }}>{addError}</p>}
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setShowAddClient(false)}
+                  style={{
+                    flex: 1, padding: '0.75rem', background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8,
+                    color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '0.85rem',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={addClient}
+                  disabled={adding}
+                  style={{
+                    flex: 2, padding: '0.75rem', background: '#C8F135', border: 'none',
+                    borderRadius: 8, color: '#0a0a0a', cursor: 'pointer', fontWeight: 800,
+                    fontSize: '0.85rem', textTransform: 'uppercase',
+                  }}
+                >
+                  {adding ? 'Adding…' : 'Add & queue'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

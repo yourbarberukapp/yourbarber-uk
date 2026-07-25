@@ -26,7 +26,7 @@ export function DemoOverrideProvider({ children }: { children: ReactNode }) {
     if (saved) {
       try {
         setOverrides(JSON.parse(saved));
-      } catch (e) {
+      } catch {
         console.error('Failed to parse overrides from localStorage');
       }
     }

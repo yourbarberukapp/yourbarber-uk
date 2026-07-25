@@ -32,6 +32,8 @@ interface Props {
   initialWaitMinutes: number;
   isDemoShop?: boolean;
   demoWalkIn?: boolean;
+  /** Set when the client scanned a specific barber's own shareable QR/link (e.g. "See Jamie") — pre-selects that barber and skips the barber_choice step. */
+  presetBarberId?: string | null;
 }
 
 function ordinal(n: number) {
@@ -58,13 +60,15 @@ export default function ArriveClient({
   shopSlug, shopName, services, barbers,
   initialWaitingCount, initialWaitMinutes,
   isDemoShop = false, demoWalkIn = false,
+  presetBarberId = null,
 }: Props) {
   const [step, setStep] = useState<Step>('queue_info');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-  const [preferredBarberId, setPreferredBarberId] = useState<string>('any');
+  const [preferredBarberId, setPreferredBarberId] = useState<string>(presetBarberId || 'any');
+  const presetBarberName = presetBarberId ? barbers.find((b) => b.id === presetBarberId)?.name : null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{
@@ -419,6 +423,18 @@ export default function ArriveClient({
               Demo shop
             </div>
           )}
+          {presetBarberName && (
+            <div style={{
+              display: 'inline-block', marginTop: '0.5rem',
+              background: 'rgba(200,241,53,0.08)', border: '1px solid rgba(200,241,53,0.2)',
+              borderRadius: 100, padding: '0.2rem 0.75rem',
+              color: '#C8F135', fontSize: '0.65rem', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.12em',
+              fontFamily: 'var(--font-barlow, sans-serif)',
+            }}>
+              You&apos;ll be seeing {presetBarberName}
+            </div>
+          )}
         </div>
 
         {/* Card */}
@@ -501,7 +517,7 @@ export default function ArriveClient({
                 onChange={e => setName(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && name.trim().length >= 1) {
-                    setStep(barbers.length > 0 ? 'barber_choice' : 'queue_confirm');
+                    setStep(presetBarberId ? 'queue_confirm' : (barbers.length > 0 ? 'barber_choice' : 'queue_confirm'));
                   }
                 }}
                 autoFocus
@@ -509,7 +525,7 @@ export default function ArriveClient({
               <button
                 style={{ ...btnLime, opacity: name.trim().length < 1 ? 0.5 : 1 }}
                 disabled={name.trim().length < 1}
-                onClick={() => setStep(barbers.length > 0 ? 'barber_choice' : 'queue_confirm')}
+                onClick={() => setStep(presetBarberId ? 'queue_confirm' : (barbers.length > 0 ? 'barber_choice' : 'queue_confirm'))}
               >
                 <ChevronRight size={16} /> Next
               </button>

@@ -55,7 +55,7 @@ export default function SharingManager() {
         const err = await res.json();
         alert(err.error || 'Failed to share account');
       }
-    } catch (error) {
+    } catch {
       alert('Error sharing account');
     } finally {
       setSubmitting(false);
@@ -75,7 +75,7 @@ export default function SharingManager() {
       if (res.ok) {
         fetchSharings();
       }
-    } catch (error) {
+    } catch {
       alert('Error removing sharing');
     }
   };
