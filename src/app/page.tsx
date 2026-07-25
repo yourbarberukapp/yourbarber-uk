@@ -109,7 +109,7 @@ function BarberMockup() {
                 { src: '/trends/classic-taper.png', pos: 'center 5%', label: 'Back' },
               ].map(({ src, pos, label }, i) => (
                 <div key={i} style={{ aspectRatio: '4/3', borderRadius: 3, overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <Image src={src} alt={label} fill sizes="60px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.85 }} />
+                  <Image src={src} alt={label} fill sizes="(max-width: 768px) 30vw, 100px" style={{ objectFit: 'cover', objectPosition: pos, opacity: 0.85 }} />
                   <span style={{ position: 'absolute', bottom: 2, left: 2, fontSize: '5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.7)', padding: '1px 3px', borderRadius: 1, fontFamily: 'var(--font-barlow)' }}>{label}</span>
                 </div>
               ))}

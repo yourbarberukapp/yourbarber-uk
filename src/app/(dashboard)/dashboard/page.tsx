@@ -66,7 +66,7 @@ export default async function DashboardRoot() {
 
   const stats = [
     { label: 'Total Customers', value: totalCustomers.toString(), icon: Users, change: 'All time', highlight: false },
-    { label: 'SMS Opted In', value: optedIn.toString(), icon: Bell, change: `${optInRate}% opt-in rate`, highlight: false },
+    { label: 'Reminders Opted In', value: optedIn.toString(), icon: Bell, change: `${optInRate}% opt-in rate`, highlight: false },
     { label: 'In Queue Now', value: walkIns.length.toString(), icon: UserCheck, change: 'Walk-ins today', highlight: walkIns.length > 0 },
     { label: 'Due for Reminder', value: dueForReminder.length.toString(), icon: Clock, change: 'Overdue 6+ weeks', highlight: dueForReminder.length > 0 },
   ];
