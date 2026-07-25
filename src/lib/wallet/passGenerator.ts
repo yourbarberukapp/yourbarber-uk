@@ -87,10 +87,16 @@ async function signAndZipPass(passJson: Record<string, unknown>, accentColor: st
       p7.sign({ detached: true });
       const derBuffer = Buffer.from(forge.asn1.toDer(p7.toAsn1()).getBytes(), 'binary');
       zip.file('signature', derBuffer);
-    } catch {
+    } catch (err) {
+      // Was previously a silent catch — a bad/malformed cert produced an
+      // unsigned (uninstallable) pass with zero visibility into why. Logged
+      // now so a cert misconfiguration shows up in Vercel's function logs
+      // instead of only manifesting as "the pass won't install" support tickets.
+      console.error('[Wallet] Apple pass signing failed — shipping unsigned pass:', err);
       zip.file('signature', Buffer.alloc(0));
     }
   } else {
+    console.warn('[Wallet] APPLE_PASS_CERT_PEM/APPLE_PASS_KEY_PEM/APPLE_WWDR_PEM not fully set — shipping unsigned pass.');
     zip.file('signature', Buffer.alloc(0));
   }
 
@@ -196,65 +202,7 @@ export async function generateClientApplePass(input: ClientPassInput): Promise<{
     passJson.webServiceURL = `${appUrl}/api/wallet/v1`;
   }
 
-  const zip = new JSZip();
-  const passJsonStr = JSON.stringify(passJson, null, 2);
-  const artwork = await generateApplePassArtwork({ accentColour: input.accentColor });
-
-  zip.file('pass.json', passJsonStr);
-  zip.file('icon.png', artwork.icon);
-  zip.file('icon@2x.png', artwork.icon2x);
-  zip.file('logo.png', artwork.logo);
-  zip.file('logo@2x.png', artwork.logo2x);
-  zip.file('strip.png', artwork.strip);
-  zip.file('strip@2x.png', artwork.strip2x);
-
-  const manifest: Record<string, string> = {
-    'pass.json': createHash('sha1').update(passJsonStr).digest('hex'),
-    'icon.png': createHash('sha1').update(artwork.icon).digest('hex'),
-    'icon@2x.png': createHash('sha1').update(artwork.icon2x).digest('hex'),
-    'logo.png': createHash('sha1').update(artwork.logo).digest('hex'),
-    'logo@2x.png': createHash('sha1').update(artwork.logo2x).digest('hex'),
-    'strip.png': createHash('sha1').update(artwork.strip).digest('hex'),
-    'strip@2x.png': createHash('sha1').update(artwork.strip2x).digest('hex'),
-  };
-  const manifestStr = JSON.stringify(manifest);
-  zip.file('manifest.json', manifestStr);
-
-  const certPem = process.env.APPLE_PASS_CERT_PEM;
-  const keyPem = process.env.APPLE_PASS_KEY_PEM;
-  const wwdrPem = process.env.APPLE_WWDR_PEM;
-
-  if (certPem && keyPem && wwdrPem) {
-    try {
-      const cert = forge.pki.certificateFromPem(certPem.replace(/\\n/g, '\n'));
-      const key = forge.pki.privateKeyFromPem(keyPem.replace(/\\n/g, '\n'));
-      const wwdr = forge.pki.certificateFromPem(wwdrPem.replace(/\\n/g, '\n'));
-
-      const p7 = forge.pkcs7.createSignedData();
-      p7.content = forge.util.createBuffer(manifestStr, 'utf8');
-      p7.addCertificate(cert);
-      p7.addCertificate(wwdr);
-      p7.addSigner({
-        key,
-        certificate: cert,
-        digestAlgorithm: forge.pki.oids.sha1,
-        authenticatedAttributes: [
-          { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
-          { type: forge.pki.oids.messageDigest },
-          { type: forge.pki.oids.signingTime, value: new Date().toISOString() },
-        ],
-      });
-      p7.sign({ detached: true });
-      const derBuffer = Buffer.from(forge.asn1.toDer(p7.toAsn1()).getBytes(), 'binary');
-      zip.file('signature', derBuffer);
-    } catch {
-      zip.file('signature', Buffer.alloc(0));
-    }
-  } else {
-    zip.file('signature', Buffer.alloc(0));
-  }
-
-  const pkpassBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor);
   return { pkpassBuffer, serialNumber };
 }
 

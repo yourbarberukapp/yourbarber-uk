@@ -50,3 +50,6 @@ manus/
 next-env.d.ts
 .env.vercel*
 certificates/
+
+# private account/ownership reference — not for the repo
+ACCOUNTS.md
