@@ -8,7 +8,7 @@ export default auth(function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') ?? '';
   const url = req.nextUrl.clone();
 
-  // Subdomain detection: benjbarbers.yourbarber.uk → /shop/benj-barbers
+  // Subdomain detection: benjbarbers.yourbarber.uk -> /shop/benj-barbers
   const hostParts = hostname.split('.');
   const isSubdomain =
     hostParts.length >= 3 &&

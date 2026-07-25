@@ -38,20 +38,19 @@ function buildStampDisplay(stampCount: number, target: number): string {
 async function signAndZipPass(
   passJson: Record<string, unknown>,
   accentColor: string,
+  passType: 'storeCard' | 'generic',
   logoUrl?: string | null,
   stripUrl?: string | null
 ): Promise<Buffer> {
   const zip = new JSZip();
   const passJsonStr = JSON.stringify(passJson, null, 2);
-  const artwork = await generateApplePassArtwork({ accentColour: accentColor, logoUrl, stripUrl });
+  const artwork = await generateApplePassArtwork({ accentColour: accentColor, logoUrl, stripUrl, passType });
 
   zip.file('pass.json', passJsonStr);
   zip.file('icon.png', artwork.icon);
   zip.file('icon@2x.png', artwork.icon2x);
   zip.file('logo.png', artwork.logo);
   zip.file('logo@2x.png', artwork.logo2x);
-  zip.file('strip.png', artwork.strip);
-  zip.file('strip@2x.png', artwork.strip2x);
 
   const manifest: Record<string, string> = {
     'pass.json': createHash('sha1').update(passJsonStr).digest('hex'),
@@ -59,9 +58,20 @@ async function signAndZipPass(
     'icon@2x.png': createHash('sha1').update(artwork.icon2x).digest('hex'),
     'logo.png': createHash('sha1').update(artwork.logo).digest('hex'),
     'logo@2x.png': createHash('sha1').update(artwork.logo2x).digest('hex'),
-    'strip.png': createHash('sha1').update(artwork.strip).digest('hex'),
-    'strip@2x.png': createHash('sha1').update(artwork.strip2x).digest('hex'),
   };
+
+  if (passType === 'storeCard' && artwork.strip && artwork.strip2x) {
+    zip.file('strip.png', artwork.strip);
+    zip.file('strip@2x.png', artwork.strip2x);
+    manifest['strip.png'] = createHash('sha1').update(artwork.strip).digest('hex');
+    manifest['strip@2x.png'] = createHash('sha1').update(artwork.strip2x).digest('hex');
+  } else if (passType === 'generic' && artwork.thumbnail && artwork.thumbnail2x) {
+    zip.file('thumbnail.png', artwork.thumbnail);
+    zip.file('thumbnail@2x.png', artwork.thumbnail2x);
+    manifest['thumbnail.png'] = createHash('sha1').update(artwork.thumbnail).digest('hex');
+    manifest['thumbnail@2x.png'] = createHash('sha1').update(artwork.thumbnail2x).digest('hex');
+  }
+
   const manifestStr = JSON.stringify(manifest);
   zip.file('manifest.json', manifestStr);
 
@@ -209,7 +219,7 @@ export async function generateClientApplePass(input: ClientPassInput): Promise<{
     passJson.webServiceURL = `${appUrl}/api/wallet/v1`;
   }
 
-  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor, input.logoUrl, input.stripUrl);
+  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor, 'storeCard', input.logoUrl, input.stripUrl);
   return { pkpassBuffer, serialNumber };
 }
 
@@ -219,22 +229,17 @@ export async function generateClientGooglePass(input: ClientPassInput): Promise<
   const objectId = `${issuerId}.card_${input.accessCode}`;
   const appUrl = getAppUrl();
 
-  // Google Wallet fetches hero/logo images from a real public URL — it cannot accept
-  // a data: URI, so we only set these fields when we have an actual uploaded asset URL
-  // (unlike Apple's artwork, which is embedded directly in the signed .pkpass zip).
+  // Google Wallet fetches hero/logo images from a real public URL. We route these
+  // through our own endpoints to ensure they are cropped and formatted correctly.
   const loyaltyClass: Record<string, unknown> = {
     id: classId,
     issuerName: input.shopName,
     programName: `${input.shopName} Card`,
     hexBackgroundColor: input.accentColor || '#111111',
     reviewStatus: 'APPROVED',
+    heroImage: { sourceUri: { uri: `${appUrl}/api/wallet/artwork/google-hero?shop=${input.shopSlug}` } },
+    programLogo: { sourceUri: { uri: `${appUrl}/api/wallet/artwork/google-logo?shop=${input.shopSlug}` } },
   };
-  if (input.stripUrl) {
-    loyaltyClass.heroImage = { sourceUri: { uri: input.stripUrl } };
-  }
-  if (input.logoUrl) {
-    loyaltyClass.programLogo = { sourceUri: { uri: input.logoUrl } };
-  }
 
   const loyaltyObject = {
     id: objectId,
@@ -374,7 +379,7 @@ export async function generateOwnerApplePass(input: OwnerPassInput): Promise<{ p
     passJson.webServiceURL = `${appUrl}/api/wallet/v1`;
   }
 
-  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor, input.logoUrl, input.stripUrl);
+  const pkpassBuffer = await signAndZipPass(passJson, input.accentColor, 'generic', input.logoUrl, input.stripUrl);
   return { pkpassBuffer, serialNumber };
 }
 
@@ -403,7 +408,7 @@ export async function generateOwnerGooglePass(input: OwnerPassInput): Promise<{ 
     cardTitle: { defaultValue: { language: 'en', value: `${input.shopName} — Owner Card` } },
     header: { defaultValue: { language: 'en', value: input.ownerName } },
     hexBackgroundColor: input.accentColor || '#111111',
-    ...(input.logoUrl ? { logo: { sourceUri: { uri: input.logoUrl } } } : {}),
+    logo: { sourceUri: { uri: `${appUrl}/api/wallet/artwork/google-logo?shop=${input.shopSlug}` } },
     textModulesData: [
       { header: 'Sign-in passcode', body: input.passcode, id: 'passcode' },
       { header: 'Shop', body: input.shopName, id: 'shop' },

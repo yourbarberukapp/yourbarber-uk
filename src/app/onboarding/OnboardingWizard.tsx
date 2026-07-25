@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { ArrowRight, ArrowLeft, Loader2, Upload, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Loader2, Upload, Check, Link as LinkIcon, Pipette } from 'lucide-react';
 import { OnboardingLayout, inputStyle, cardStyle, type WizardState } from './OnboardingLayout';
+import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 const QRCodeSVG = dynamic(() => import('qrcode.react').then((m) => m.QRCodeSVG), { ssr: false });
 
@@ -54,11 +56,43 @@ export default function OnboardingWizard({
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [logoUrlInput, setLogoUrlInput] = useState('');
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
+  const [scrapedImages, setScrapedImages] = useState<string[] | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const imageRef = useRef<HTMLImageElement>(null);
+
   const steps = ['logo', 'colour', 'banner', 'loyalty', 'review'] as const;
   const step = steps[stepIndex];
+
+  function initCrop(file: File | Blob | string) {
+    if (typeof file === 'string') {
+      setCropSrc(file);
+    } else {
+      setCropSrc(URL.createObjectURL(file));
+    }
+  }
+
+  useEffect(() => {
+    if (step !== 'logo') return;
+    function handlePaste(e: ClipboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      const items = Array.from(e.clipboardData?.items ?? []);
+      const imageItem = items.find((item) => item.type.startsWith('image/'));
+      if (!imageItem) return;
+      e.preventDefault();
+      const file = imageItem.getAsFile();
+      if (file) initCrop(file);
+    }
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [step]);
 
   function update<K extends keyof WizardState>(key: K, value: WizardState[K]) {
     setState((s) => ({ ...s, [key]: value }));
@@ -72,7 +106,77 @@ export default function OnboardingWizard({
     }).catch(() => {});
   }
 
-  async function handleLogoUpload(file: File) {
+  async function handleScrapeUrl(url: string) {
+    if (!url) return;
+    setUploadingLogo(true);
+    try {
+      // First try website scraper
+      const res = await fetch(`/api/settings/scrape-website?url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        const { images } = await res.json();
+        if (images && images.length > 0) {
+          setScrapedImages(images);
+          setUploadingLogo(false);
+          return;
+        }
+      }
+      
+      // Fallback: direct image scraper
+      const imgRes = await fetch(`/api/settings/scrape-image?url=${encodeURIComponent(url)}`);
+      if (!imgRes.ok) throw new Error('Could not fetch image from URL');
+      const blob = await imgRes.blob();
+      initCrop(blob);
+    } catch (err: any) {
+      alert(err.message || 'Failed to grab images from URL.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    const initialCrop = centerCrop(
+      makeAspectCrop({ unit: '%', width: 90 }, 1, naturalWidth, naturalHeight),
+      naturalWidth,
+      naturalHeight
+    );
+    setCrop(initialCrop);
+  }
+
+  async function applyCrop() {
+    if (!completedCrop || !imageRef.current) return;
+    const image = imageRef.current;
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = completedCrop.width;
+    canvas.height = completedCrop.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      image,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0,
+      0,
+      completedCrop.width,
+      completedCrop.height
+    );
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      setCropSrc(null);
+      const file = new File([blob], 'logo-cropped.jpg', { type: 'image/jpeg' });
+      await uploadLogoFile(file);
+    }, 'image/jpeg', 0.95);
+  }
+
+  async function uploadLogoFile(file: File) {
     setUploadingLogo(true);
     try {
       const presign = await fetch('/api/settings/logo', {
@@ -99,7 +203,7 @@ export default function OnboardingWizard({
         }
       }
     } catch {
-      alert('Failed to upload logo — you can try again or skip this step.');
+      alert('Failed to upload logo - you can try again or skip this step.');
     } finally {
       setUploadingLogo(false);
     }
@@ -119,7 +223,7 @@ export default function OnboardingWizard({
       update('stripUrl', publicUrl);
       await persist({ passStripUrl: publicUrl });
     } catch {
-      alert('Failed to upload banner — you can try again or skip this step.');
+      alert('Failed to upload banner - you can try again or skip this step.');
     } finally {
       setUploadingBanner(false);
     }
@@ -153,8 +257,74 @@ export default function OnboardingWizard({
     router.push('/dashboard');
   }
 
+  async function openEyedropper() {
+    // @ts-expect-error EyeDropper is a non-standard API
+    if (!window.EyeDropper) {
+      alert('Your browser does not support the EyeDropper API.');
+      return;
+    }
+    try {
+      // @ts-expect-error EyeDropper is a non-standard API
+      const eyeDropper = new window.EyeDropper();
+      const result = await eyeDropper.open();
+      update('accentColor', result.sRGBHex);
+      update('labelColor', computeLabelColour(result.sRGBHex));
+    } catch (e) {
+      // user canceled
+    }
+  }
+
   return (
     <OnboardingLayout step={step} state={state}>
+      {cropSrc && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div style={{ background: '#111', padding: '1.5rem', borderRadius: 12, maxWidth: '100%', maxHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ color: 'white', marginTop: 0 }}>Crop Logo</h3>
+            <div style={{ overflow: 'auto', flex: 1, minHeight: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <ReactCrop
+                crop={crop}
+                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={1}
+                circularCrop
+              >
+                <img ref={imageRef} src={cropSrc} alt="Crop" style={{ maxHeight: '60vh', objectFit: 'contain' }} onLoad={onImageLoad} />
+              </ReactCrop>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+              <button onClick={() => setCropSrc(null)} style={{ background: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.2)', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={applyCrop} className="btn-lime" style={{ padding: '0.5rem 1.5rem', borderRadius: 4, border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Apply & Upload</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {scrapedImages && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div style={{ background: '#111', padding: '1.5rem', borderRadius: 12, maxWidth: 600, width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ color: 'white', marginTop: 0 }}>Found Images</h3>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>Select an image below to use as your logo.</p>
+            <div style={{ overflowY: 'auto', flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '1rem', marginTop: '1rem', paddingRight: '0.5rem' }}>
+              {scrapedImages.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setScrapedImages(null);
+                    initCrop(src);
+                  }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100 }}
+                >
+                  <img src={src} alt="Scraped" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setScrapedImages(null)} style={{ background: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.2)', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {step === 'logo' && (
         <div style={cardStyle}>
           <h2 style={headingStyle}>Add your logo</h2>
@@ -176,7 +346,7 @@ export default function OnboardingWizard({
               style={{ padding: '0.75rem 1.25rem', borderRadius: 4, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700 }}
             >
               {uploadingLogo ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              {uploadingLogo ? 'Uploading…' : state.logoUrl ? 'Change logo' : 'Upload logo'}
+              {uploadingLogo ? 'Uploading...' : state.logoUrl ? 'Change logo' : 'Upload logo'}
             </button>
             <input
               ref={logoInputRef}
@@ -185,11 +355,32 @@ export default function OnboardingWizard({
               style={{ display: 'none' }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) handleLogoUpload(file);
+                if (file) initCrop(file);
                 e.target.value = '';
               }}
             />
           </div>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="url"
+              placeholder="Or paste an image URL or website..."
+              value={logoUrlInput}
+              onChange={(e) => setLogoUrlInput(e.target.value)}
+              style={{ ...inputStyle, flex: 1 }}
+              onKeyDown={(e) => e.key === 'Enter' && handleScrapeUrl(logoUrlInput)}
+            />
+            <button
+              type="button"
+              onClick={() => handleScrapeUrl(logoUrlInput)}
+              disabled={!logoUrlInput || uploadingLogo}
+              style={{ padding: '0.75rem 1rem', borderRadius: 4, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}
+            >
+              <LinkIcon size={16} /> Grab
+            </button>
+          </div>
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '0.75rem' }}>
+            Tip: You can also press <strong>Ctrl+V</strong> to paste a logo directly from your clipboard.
+          </p>
           <StepNav onNext={goNext} nextLabel={state.logoUrl ? 'Next' : 'Skip for now'} showBack={false} />
         </div>
       )}
@@ -198,7 +389,7 @@ export default function OnboardingWizard({
         <div style={cardStyle}>
           <h2 style={headingStyle}>Pick your colour</h2>
           <p style={subStyle}>
-            {state.logoUrl ? "We've suggested a colour from your logo — tweak it if you like." : 'This is the background colour of your Wallet pass.'}
+            {state.logoUrl ? "We've suggested a colour from your logo - tweak it if you like." : 'This is the background colour of your Wallet pass.'}
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
             <input
@@ -210,11 +401,19 @@ export default function OnboardingWizard({
               }}
               style={{ width: 44, height: 44, borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', cursor: 'pointer', padding: 0 }}
             />
+            <button
+              type="button"
+              title="Pick color from screen"
+              onClick={openEyedropper}
+              style={{ padding: '0.5rem', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 44, width: 44 }}
+            >
+              <Pipette size={18} />
+            </button>
             <input
               type="text"
               value={state.accentColor}
               onChange={(e) => update('accentColor', e.target.value)}
-              style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase', width: 130 }}
+              style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase', width: 110 }}
             />
             <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
               {PRESET_COLORS.map((c) => (
@@ -255,7 +454,7 @@ export default function OnboardingWizard({
               style={{ padding: '0.75rem 1.25rem', borderRadius: 4, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700 }}
             >
               {uploadingBanner ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              {uploadingBanner ? 'Uploading…' : state.stripUrl ? 'Change banner' : 'Upload banner'}
+              {uploadingBanner ? 'Uploading...' : state.stripUrl ? 'Change banner' : 'Upload banner'}
             </button>
             <input
               ref={bannerInputRef}
@@ -336,7 +535,7 @@ export default function OnboardingWizard({
             </p>
           </div>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', marginTop: '0.75rem', lineHeight: 1.5 }}>
-            Print this and put it on the wall or front desk — clients scan it to join your queue.
+            Print this and put it on the wall or front desk - clients scan it to join your queue.
           </p>
 
           <button

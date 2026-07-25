@@ -79,7 +79,7 @@ function OwnerLoginForm() {
                 style={inputStyle}
               />
               <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
-                From your Wallet business card — no password needed.
+                From your Wallet business card - no password needed.
               </p>
             </div>
             {error && (

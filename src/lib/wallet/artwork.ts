@@ -88,13 +88,16 @@ export async function generateApplePassArtwork(params: {
   accentColour?: string;
   logoUrl?: string | null;
   stripUrl?: string | null;
+  passType: 'storeCard' | 'generic';
 }): Promise<{
   icon: Buffer;
   icon2x: Buffer;
   logo: Buffer;
   logo2x: Buffer;
-  strip: Buffer;
-  strip2x: Buffer;
+  strip?: Buffer;
+  strip2x?: Buffer;
+  thumbnail?: Buffer;
+  thumbnail2x?: Buffer;
 }> {
   const colour = safeHex(params.accentColour);
   const logoSource = params.logoUrl ? await fetchImageBuffer(params.logoUrl) : null;
@@ -114,11 +117,23 @@ export async function generateApplePassArtwork(params: {
         solidRect(320, 100, colour),
       ]);
 
-  const [strip, strip2x] = stripSource
-    ? await Promise.all([stripFromBanner(stripSource, 375, 144), stripFromBanner(stripSource, 750, 288)])
-    : await Promise.all([solidRect(375, 144, colour), solidRect(750, 288, colour)]);
+  const result: any = { icon, icon2x, logo, logo2x };
 
-  return { icon, icon2x, logo, logo2x, strip, strip2x };
+  if (params.passType === 'storeCard') {
+    const [strip, strip2x] = stripSource
+      ? await Promise.all([stripFromBanner(stripSource, 375, 123), stripFromBanner(stripSource, 750, 246)])
+      : await Promise.all([solidRect(375, 123, colour), solidRect(750, 246, colour)]);
+    result.strip = strip;
+    result.strip2x = strip2x;
+  } else if (params.passType === 'generic') {
+    const [thumbnail, thumbnail2x] = logoSource
+      ? await Promise.all([squareFromLogo(logoSource, 90, colour), squareFromLogo(logoSource, 180, colour)])
+      : await Promise.all([solidSquare(90, colour), solidSquare(180, colour)]);
+    result.thumbnail = thumbnail;
+    result.thumbnail2x = thumbnail2x;
+  }
+
+  return result;
 }
 
 /** Google Wallet's heroImage — 1032x336, shown as the wide banner at the top of the card. */
@@ -131,6 +146,18 @@ export async function generateGoogleHeroArtwork(params: {
   return stripSource
     ? stripFromBanner(stripSource, 1032, 336)
     : solidRect(1032, 336, colour);
+}
+
+/** Google Wallet's programLogo — 1:1 aspect ratio, min 300x300, masked to a circle by Google. */
+export async function generateGoogleLogoArtwork(params: {
+  accentColour?: string;
+  logoUrl?: string | null;
+}): Promise<Buffer> {
+  const colour = safeHex(params.accentColour);
+  const logoSource = params.logoUrl ? await fetchImageBuffer(params.logoUrl) : null;
+  return logoSource
+    ? squareFromLogo(logoSource, 300, colour)
+    : solidSquare(300, colour);
 }
 
 /**
