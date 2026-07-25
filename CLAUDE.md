@@ -146,32 +146,29 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - [x] **Shop microsite: products, Google reviews link, social links, completeness gate** (2026-07-24) — every shop's `/shop/[slug]` now includes a display-only product catalogue, a "Read our reviews" link (`googleReviewUrl`), and real social links. A shop's microsite only goes fully public once address/phone/hours/cover photo/1+ service are set (`src/lib/microsite.ts`'s `isMicrositeComplete()`) — incomplete shops get a "coming soon" page instead of the fabricated placeholder content (fake address, stock photo, fake customer count) that used to show. Deliberately built as one reusable check so a future paywall can reuse it.
 - [x] **Real logo file upload** (2026-07-24) — `POST /api/settings/logo`, presigned S3 upload with file picker + preview in Settings. Was URL-paste only.
 
-## Deployment pipeline — was broken until 2026-07-25, now fixed
+## IMPORTANT — there were TWO Vercel projects named "yourbarber.uk" (resolved 2026-07-25)
 
-For an unknown period (at least since the project was created 47+ days ago), the Vercel project for `yourbarber.uk` had **no Git repository connected at all**. Every prior "deploy" was actually someone manually running `vercel deploy --prod` from their own machine — which explains a lot of confusing prior symptoms (e.g. Apple Wallet certs appearing to work then not, env vars that seemed to vanish). A manual deploy builds using whatever's on that machine at that moment, not a clean checkout of `main`, so results were never reproducible.
+A huge chunk of 2026-07-25 was lost chasing a red herring: there is a shared Vercel account (`contentvoyagerapp-6383`, team "luke barents' projects", also hosting myloyalty/teachbase/content-voyager) that had **its own separate `yourbarber.uk` project** — fully fixed that day (Git connection, `NEXTAUTH_SECRET`, Apple certs, a build-breaking bug) — but **the real `yourbarber.uk` domain was never pointed at it.**
 
-**Root cause, if this ever recurs:** Vercel's account-level GitHub sign-in (Settings → Authentication → GitHub) was locked to a *different* GitHub account (`elitesavertravel`, used for other projects on the same shared Vercel account) than the one owning this repo (`yourbarberukapp`). Installing the Vercel GitHub App on `yourbarberukapp` was not sufficient by itself — the project's Git-connect picker only lists GitHub accounts already linked at the Vercel *account* level. Fix was: Vercel Settings → Authentication → GitHub → **Re-authenticate**, choosing `yourbarberukapp` — this did not disturb the existing `elitesavertravel` project connections. Then the per-project Settings → Git → Connect picker showed `yourbarberukapp/yourbarber-uk` correctly.
+**The actual, correct, permanently-live project is:** Vercel account `yourbarberukapp-9970's projects` (sign in via Google OAuth as `yourbarberukapp`), project name `yourbarber-uk`. This is a ~90-day-old project that has been running the live site the whole time — it already had `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, AWS keys, etc. correctly set. It was only missing the Apple Wallet cert vars (a newer feature than this project's original setup) — those were added 2026-07-25 and confirmed working (a real signed `.pkpass` downloads correctly, 3271-byte PKCS7 signature).
 
-**Verify this stays working:** `yourbarber.uk`'s Vercel project card should show a real commit message and `yourbarberukapp/yourbarber-uk` as the source, same as `teachbase` does — not a "Connect Git Repository" prompt. If it reverts to disconnected, redo the steps above.
+**If you're an AI assistant working on this project:** always verify you're looking at the right Vercel project before debugging "production" issues. Run `vercel whoami` and `vercel project ls` — the correct project is `yourbarber-uk` under `yourbarberukapp-9970s-projects`, and its Latest Production URL should read `https://yourbarber.uk` directly (not a `*.vercel.app` fallback). Full detail in `ACCOUNTS.md` (gitignored, local-only) if that file exists on the machine you're working from.
 
-## Auth was completely broken in production until 2026-07-25 — `NEXTAUTH_SECRET` was never set in Vercel
-
-Once the Git connection above was fixed and a real deploy finally ran, Vercel's runtime logs showed `[auth][error] MissingSecret: Please define a 'secret'` on **every single request** — middleware and API alike. `NEXTAUTH_SECRET` (and `AUTH_SECRET`, which NextAuth v5 also checks) were simply never set in Vercel Production; only present in `.env.local`. This was invisible before because there was no reliable way to see runtime errors when nothing was actually auto-deploying (see above) — some earlier manual `vercel deploy` runs may have baked a working secret into their build output, making the app look intermittently fine.
-
-This is very likely the **actual root cause** of the Apple Wallet signing mystery too, not corrupted certs: the owner-card route requires a valid session first, and a broken auth secret would produce exactly the kind of quiet failure that was observed. Fixed 2026-07-25 by adding `NEXTAUTH_SECRET`, `AUTH_SECRET`, and `NEXTAUTH_URL` to Vercel Production via CLI. **Re-verify after the next deploy**: confirm `/api/auth/session` returns real session data (not a 500) and a signed `.pkpass` downloads from `/api/wallet/owner/apple`.
+**Known remaining issue:** this project's GitHub webhook does not reliably auto-trigger a new deployment on every push (git connect reports "already connected" but deploys don't appear promptly). Workaround: run `vercel deploy --prod` manually from a machine linked to this project after pushing to `main`, until the webhook issue is diagnosed properly.
 
 ## What's Next (priority order)
 
-1. **Confirm the NEXTAUTH_SECRET fix actually resolved login + Wallet signing** — was just added to Vercel Production, needs a fresh deploy + re-test to confirm. If passes are still unsigned after this, check Vercel's function logs for `[Wallet] Apple pass signing failed` (the Apple certs were also independently re-uploaded on 2026-07-25 via CLI to rule out dashboard paste corruption).
-2. **AWS S3 credentials are placeholders in `.env.local`** (`AWS_ACCESS_KEY_ID=your-access-key`) — every upload feature (visit photos, style images, shop logo) needs a real bucket + credentials to actually persist files; the code is correct and tested down to the presigned-URL request, but the actual `PUT` to S3 can't complete without real credentials. Not yet confirmed set in Vercel Production either.
-3. **Google Wallet service account** — `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY` not yet confirmed set in Vercel Production.
+1. **Diagnose why the GitHub webhook isn't auto-deploying** on `yourbarberukapp-9970s-projects/yourbarber-uk` — currently working around it with manual `vercel deploy --prod`.
+2. **AWS S3 credentials** — confirmed set in the correct Vercel project (90 days old), but not independently re-verified working end-to-end this session (photo/logo uploads). Worth a real upload test.
+3. **Google Wallet service account** — `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY` not set on the correct project yet. Apple Wallet is confirmed working; Google Wallet passes will fall back to unsigned/demo mode until this is added.
 4. **Analytics** — `/analytics` is still a "Soon" placeholder, no data behind it.
-5. **Real logo reaching the Wallet pass artwork** — `src/lib/wallet/artwork.ts` still returns a placeholder; now that logo upload works, wire the real `shop.logoUrl` into pass artwork generation.
+5. **Real logo reaching the Wallet pass artwork** — `src/lib/wallet/artwork.ts` still returns a placeholder; wire the real `shop.logoUrl` into pass artwork generation.
 6. **Retail product checkout** — the new product catalogue is display-only by design (no payment/cart); revisit only if there's real demand.
+7. **Clean up the duplicate `yourbarber.uk` project** under `contentvoyagerapp-6383` — it's a source of exactly this confusion and no longer needed now the real project is fixed.
 
 **Blocked on the founder, not on more coding:**
-- AWS S3 and Google Wallet credentials — the code is real and correct, only Apple's certs have been confirmed re-set in Vercel so far. No AI assistant has access to the AWS or Google Cloud accounts — only the founder can set real values in Vercel.
-- **Practical next step:** now that deploys are reliable, check Vercel's production environment variables (`vercel env ls production`) for the full list against the "Environment Variables" section below, and fill in whatever's missing.
+- Google Wallet service account JSON — no AI assistant has access to that Google Cloud project.
+- Confirming AWS S3 credentials are the live, real bucket (not a placeholder) — check by uploading a real photo/logo through the dashboard once and confirming it renders back.
 
 ---
 
