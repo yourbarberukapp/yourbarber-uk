@@ -2,6 +2,7 @@ import { getRequiredSession } from '@/lib/session';
 import Link from 'next/link';
 import { LayoutDashboard } from 'lucide-react';
 import DemoOverrideTrigger from '@/components/DemoOverrideTrigger';
+import BarberWalletCardLink from './BarberWalletCardLink';
 
 import { cookies } from 'next/headers';
 
@@ -47,6 +48,7 @@ export default async function BarberLayout({ children }: { children: React.React
               {shopName}
             </div>
           </div>
+          <BarberWalletCardLink />
           {session.role === 'owner' && (
             <Link href="/dashboard" title="Owner dashboard" style={{
               color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center',

@@ -26,6 +26,7 @@ async function handleOwnerPass(serialNumber: string, token: string) {
     accentColor: barber.shop.passAccentColor || '#111111',
     ownerName: barber.name,
     passcode: barber.ownerPasscode,
+    role: barber.role === 'barber' ? 'barber' : 'owner',
     passAuthToken: barber.ownerPassAuthToken,
     logoUrl: barber.shop.logoUrl,
     stripUrl: barber.shop.passStripUrl,

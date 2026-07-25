@@ -316,19 +316,24 @@ export interface OwnerPassInput {
   accentColor: string;
   ownerName: string;
   passcode: string;
+  role?: 'owner' | 'barber';
   passAuthToken?: string | null;
   logoUrl?: string | null;
   stripUrl?: string | null;
 }
 
 /**
- * The owner's own Wallet card — doubles as their business card and their
- * sign-in credential. The barcode encodes the 6-digit passcode so scanning
- * it (e.g. at /owner/login on a new device) fills the code in automatically.
+ * A barber's own Wallet card — doubles as their business card and their
+ * sign-in credential. Used by both owners and staff barbers (anyone with a
+ * sign-in passcode); the role field only changes the label shown on the
+ * card ("Owner" vs "Barber"), the mechanics are identical for both.
+ * The barcode encodes the 6-digit passcode so scanning it (e.g. at
+ * /owner/login on a new device) fills the code in automatically.
  */
 export async function generateOwnerApplePass(input: OwnerPassInput): Promise<{ pkpassBuffer: Buffer; serialNumber: string }> {
   const serialNumber = `yb-owner-${input.passcode}`;
   const appUrl = getAppUrl();
+  const roleLabel = input.role === 'barber' ? 'Barber' : 'Owner';
 
   const passJson: Record<string, unknown> = {
     formatVersion: 1,
@@ -336,18 +341,18 @@ export async function generateOwnerApplePass(input: OwnerPassInput): Promise<{ p
     serialNumber,
     teamIdentifier: process.env.APPLE_TEAM_ID || 'XXXXXXXXXX',
     organizationName: input.shopName,
-    description: `${input.shopName} — Owner Card`,
+    description: `${input.shopName} — ${roleLabel} Card`,
     logoText: input.shopName,
     backgroundColor: rgbString(input.accentColor),
     foregroundColor: 'rgb(255, 255, 255)',
     labelColor: computeLabelColour(input.accentColor),
     generic: {
       primaryFields: [
-        { key: 'owner', label: 'OWNER', value: input.ownerName, textAlignment: 'PKTextAlignmentLeft' },
+        { key: 'owner', label: roleLabel.toUpperCase(), value: input.ownerName, textAlignment: 'PKTextAlignmentLeft' },
       ],
       secondaryFields: [
         { key: 'shop', label: 'SHOP', value: input.shopName, textAlignment: 'PKTextAlignmentLeft' },
-        { key: 'role', label: 'ACCESS', value: 'Owner', textAlignment: 'PKTextAlignmentRight' },
+        { key: 'role', label: 'ACCESS', value: roleLabel, textAlignment: 'PKTextAlignmentRight' },
       ],
       backFields: [
         { key: 'passcode', label: 'SIGN-IN PASSCODE', value: input.passcode },
@@ -395,6 +400,7 @@ export async function generateOwnerGooglePass(input: OwnerPassInput): Promise<{ 
   const classId = `${issuerId}.yb_owner`;
   const objectId = `${issuerId}.owner_${input.passcode}`;
   const appUrl = getAppUrl();
+  const roleLabel = input.role === 'barber' ? 'Barber' : 'Owner';
 
   const genericClass = {
     id: classId,
@@ -405,7 +411,7 @@ export async function generateOwnerGooglePass(input: OwnerPassInput): Promise<{ 
     id: objectId,
     classId,
     state: 'active',
-    cardTitle: { defaultValue: { language: 'en', value: `${input.shopName} — Owner Card` } },
+    cardTitle: { defaultValue: { language: 'en', value: `${input.shopName} — ${roleLabel} Card` } },
     header: { defaultValue: { language: 'en', value: input.ownerName } },
     hexBackgroundColor: input.accentColor || '#111111',
     logo: { sourceUri: { uri: `${appUrl}/api/wallet/artwork/google-logo?shop=${input.shopSlug}` } },

@@ -38,6 +38,7 @@ export async function GET() {
     accentColor: shop.passAccentColor || '#111111',
     ownerName: barber.name,
     passcode,
+    role: barber.role === 'barber' ? 'barber' : 'owner',
     logoUrl: shop.logoUrl,
     stripUrl: shop.passStripUrl,
   });

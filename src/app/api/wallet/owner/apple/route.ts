@@ -38,6 +38,7 @@ export async function GET() {
     accentColor: shop.passAccentColor || '#111111',
     ownerName: barber.name,
     passcode,
+    role: barber.role === 'barber' ? 'barber' : 'owner',
     passAuthToken: barber.ownerPassAuthToken,
     logoUrl: shop.logoUrl,
     stripUrl: shop.passStripUrl,
@@ -46,7 +47,7 @@ export async function GET() {
   return new NextResponse(new Uint8Array(pkpassBuffer), {
     headers: {
       'Content-Type': 'application/vnd.apple.pkpass',
-      'Content-Disposition': `attachment; filename="${shop.slug}-owner-card.pkpass"`,
+      'Content-Disposition': `attachment; filename="${shop.slug}-${barber.role === 'barber' ? 'staff' : 'owner'}-card.pkpass"`,
     },
   });
 }

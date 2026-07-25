@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import QRCode from 'qrcode';
+import sharp from 'sharp';
+import { isTrustedAssetUrl } from '@/lib/s3';
 
 function escapeXml(value: string) {
   return value
@@ -37,7 +39,38 @@ function pdfText(value: string) {
     .replace(/\)/g, '\\)');
 }
 
-function buildPdfPoster(shopName: string, slug: string, format: string, isDemoWalkIn = false) {
+/**
+ * Fetches the shop's logo and normalizes it to a plain baseline JPEG at a
+ * fixed size. JPEG (DCTDecode) is the simplest raster format to embed by
+ * hand in a hand-built PDF — no need to handle PNG's zlib/predictor filter
+ * variants. Only fetches our own S3 bucket (isTrustedAssetUrl) since this
+ * is a server-side fetch of a DB-stored URL.
+ */
+async function fetchLogoForPdf(logoUrl: string | null): Promise<Buffer | null> {
+  if (!logoUrl || !isTrustedAssetUrl(logoUrl)) return null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(logoUrl, { signal: controller.signal, redirect: 'error' });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.byteLength > 10 * 1024 * 1024) return null;
+    return await sharp(buffer).resize(300, 300, { fit: 'cover' }).flatten({ background: '#141414' }).jpeg({ quality: 90 }).toBuffer();
+  } catch {
+    return null;
+  }
+}
+
+/** Appends a JPEG image as a PDF XObject (always object 7 — see buildPdfPoster). */
+function addJpegObject(objects: string[], jpeg: Buffer): void {
+  const binary = jpeg.toString('binary');
+  objects.push(
+    `<< /Type /XObject /Subtype /Image /Width 300 /Height 300 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.byteLength} >>\nstream\n${binary}\nendstream`
+  );
+}
+
+async function buildPdfPoster(shopName: string, slug: string, format: string, logoUrl: string | null, isDemoWalkIn = false) {
   const pageWidth = 595.28;
   const pageHeight = format === 'square' ? 595.28 : 841.89;
   const lime = [0.784, 0.945, 0.208];
@@ -77,10 +110,14 @@ function buildPdfPoster(shopName: string, slug: string, format: string, isDemoWa
 
   rectTop(0, 0, pageWidth, pageHeight, dark);
 
+  // Helvetica-Bold's average advance width is ~0.6-0.62em for uppercase text;
+  // 0.56 (the previous factor) undershot it, so "BARBER" started drawing
+  // before "YOUR" finished rendering and the two words visibly overlapped.
   const wordSize = format === 'square' ? 46 : 62;
   const wordY = format === 'square' ? 66 : 108;
-  const yourWidth = 'YOUR'.length * wordSize * 0.56;
-  const barberWidth = 'BARBER'.length * wordSize * 0.56;
+  const charWidth = wordSize * 0.62;
+  const yourWidth = 'YOUR'.length * charWidth;
+  const barberWidth = 'BARBER'.length * charWidth;
   const wordX = (pageWidth - yourWidth - barberWidth) / 2;
   text('YOUR', wordX, wordY, wordSize, [1, 1, 1]);
   text('BARBER', wordX + yourWidth, wordY, wordSize, lime);
@@ -100,20 +137,36 @@ function buildPdfPoster(shopName: string, slug: string, format: string, isDemoWa
   const markX = qrX + (qrSize - markSize) / 2;
   const markTop = qrTop + (qrSize - markSize) / 2;
   rectTop(markX - 6, markTop - 6, markSize + 12, markSize + 12, panel);
-  centeredText('YB', markTop + markSize * 0.68, markSize * 0.52, lime);
+
+  const logoJpeg = await fetchLogoForPdf(logoUrl);
+  if (logoJpeg) {
+    // Image space is a unit square scaled/translated via `cm`, drawn bottom-up like the rest of the page.
+    lines.push(
+      `q ${markSize.toFixed(2)} 0 0 ${markSize.toFixed(2)} ${markX.toFixed(2)} ${(pageHeight - markTop - markSize).toFixed(2)} cm /Im1 Do Q`
+    );
+  } else {
+    centeredText('YB', markTop + markSize * 0.68, markSize * 0.52, lime);
+  }
 
   centeredText('SCAN TO CHECK IN', qrTop + qrSize + (format === 'square' ? 55 : 62), format === 'square' ? 20 : 24, lime);
   centeredText(`yourbarber.uk/arrive/${slug}`, qrTop + qrSize + (format === 'square' ? 82 : 92), format === 'square' ? 12 : 14, [0.55, 0.55, 0.55], 'F2');
 
   const content = lines.join('\n');
-  const objects = [
+  // Fixed object numbers: 1=Catalog 2=Pages 3=Page 4=F1 5=F2 6=Content.
+  // The logo image (if any) is appended as object 7 — kept last so the
+  // first six numbers never shift whether or not a logo is present.
+  const resources = logoJpeg
+    ? `/Resources << /Font << /F1 4 0 R /F2 5 0 R >> /XObject << /Im1 7 0 R >> >>`
+    : `/Resources << /Font << /F1 4 0 R /F2 5 0 R >> >>`;
+  const objects: string[] = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>`,
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] ${resources} /Contents 6 0 R >>`,
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
     `<< /Length ${Buffer.byteLength(content, 'utf8')} >>\nstream\n${content}\nendstream`,
   ];
+  if (logoJpeg) addJpegObject(objects, logoJpeg);
 
   let pdf = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
   const offsets = [0];
@@ -186,7 +239,7 @@ export async function GET(
     : 'public, max-age=3600, s-maxage=3600';
 
   if (output === 'pdf') {
-    const pdf = buildPdfPoster(shopName, slug, format, isDemoWalkIn);
+    const pdf = await buildPdfPoster(shopName, slug, format, shop.logoUrl, isDemoWalkIn);
     const variant = format === 'square' ? 'Sticker' : 'Poster';
     return new NextResponse(pdf, {
       headers: {
