@@ -154,9 +154,15 @@ For an unknown period (at least since the project was created 47+ days ago), the
 
 **Verify this stays working:** `yourbarber.uk`'s Vercel project card should show a real commit message and `yourbarberukapp/yourbarber-uk` as the source, same as `teachbase` does — not a "Connect Git Repository" prompt. If it reverts to disconnected, redo the steps above.
 
+## Auth was completely broken in production until 2026-07-25 — `NEXTAUTH_SECRET` was never set in Vercel
+
+Once the Git connection above was fixed and a real deploy finally ran, Vercel's runtime logs showed `[auth][error] MissingSecret: Please define a 'secret'` on **every single request** — middleware and API alike. `NEXTAUTH_SECRET` (and `AUTH_SECRET`, which NextAuth v5 also checks) were simply never set in Vercel Production; only present in `.env.local`. This was invisible before because there was no reliable way to see runtime errors when nothing was actually auto-deploying (see above) — some earlier manual `vercel deploy` runs may have baked a working secret into their build output, making the app look intermittently fine.
+
+This is very likely the **actual root cause** of the Apple Wallet signing mystery too, not corrupted certs: the owner-card route requires a valid session first, and a broken auth secret would produce exactly the kind of quiet failure that was observed. Fixed 2026-07-25 by adding `NEXTAUTH_SECRET`, `AUTH_SECRET`, and `NEXTAUTH_URL` to Vercel Production via CLI. **Re-verify after the next deploy**: confirm `/api/auth/session` returns real session data (not a 500) and a signed `.pkpass` downloads from `/api/wallet/owner/apple`.
+
 ## What's Next (priority order)
 
-1. **Re-verify Wallet push certs now that deploys are real** — the Apple certs were re-uploaded to Vercel Production on 2026-07-25 (via CLI, not the dashboard paste box, to rule out copy/paste corruption) and `src/lib/wallet/passGenerator.ts` now logs signing errors instead of swallowing them. Confirm a real signed `.pkpass` downloads from `/api/wallet/owner/apple` post-deploy — check Vercel's function logs for `[Wallet] Apple pass signing failed` if it's still unsigned.
+1. **Confirm the NEXTAUTH_SECRET fix actually resolved login + Wallet signing** — was just added to Vercel Production, needs a fresh deploy + re-test to confirm. If passes are still unsigned after this, check Vercel's function logs for `[Wallet] Apple pass signing failed` (the Apple certs were also independently re-uploaded on 2026-07-25 via CLI to rule out dashboard paste corruption).
 2. **AWS S3 credentials are placeholders in `.env.local`** (`AWS_ACCESS_KEY_ID=your-access-key`) — every upload feature (visit photos, style images, shop logo) needs a real bucket + credentials to actually persist files; the code is correct and tested down to the presigned-URL request, but the actual `PUT` to S3 can't complete without real credentials. Not yet confirmed set in Vercel Production either.
 3. **Google Wallet service account** — `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY` not yet confirmed set in Vercel Production.
 4. **Analytics** — `/analytics` is still a "Soon" placeholder, no data behind it.
