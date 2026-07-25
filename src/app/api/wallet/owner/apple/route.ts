@@ -45,6 +45,14 @@ export async function GET() {
     headers: {
       'Content-Type': 'application/vnd.apple.pkpass',
       'Content-Disposition': `attachment; filename="${shop.slug}-owner-card.pkpass"`,
+      // TEMPORARY diagnostic — booleans/lengths only, never the secret values.
+      // Remove once cert env vars are confirmed reaching the runtime correctly.
+      'X-Debug-Cert-Set': String(!!process.env.APPLE_PASS_CERT_PEM),
+      'X-Debug-Key-Set': String(!!process.env.APPLE_PASS_KEY_PEM),
+      'X-Debug-Wwdr-Set': String(!!process.env.APPLE_WWDR_PEM),
+      'X-Debug-Cert-Len': String(process.env.APPLE_PASS_CERT_PEM?.length ?? 0),
+      'X-Debug-Key-Len': String(process.env.APPLE_PASS_KEY_PEM?.length ?? 0),
+      'X-Debug-Wwdr-Len': String(process.env.APPLE_WWDR_PEM?.length ?? 0),
     },
   });
 }
