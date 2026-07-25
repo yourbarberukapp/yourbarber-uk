@@ -119,7 +119,7 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 | Auth | NextAuth v5, passcode-only (no email/password/Google) — see [Owner & Staff Passcode Login](#owner--staff-passcode-login) |
 | Photo storage | AWS S3 (private bucket, presigned URLs) |
 | Client notifications | Apple/Google Wallet push (`src/lib/wallet/notify.ts`) — no SMS provider |
-| Hosting | Vercel (Hobby, main branch auto-deploys) |
+| Hosting | Vercel (Pro, main branch auto-deploys — Git connection fixed 2026-07-25, see note below) |
 | Domain | yourbarber.uk — Vercel nameservers |
 | Subdomains | `*.yourbarber.uk` → `/shop/[slug]` via middleware |
 
@@ -146,17 +146,26 @@ This makes YourBarber tangible. A plaque on the wall is a churn deterrent.
 - [x] **Shop microsite: products, Google reviews link, social links, completeness gate** (2026-07-24) — every shop's `/shop/[slug]` now includes a display-only product catalogue, a "Read our reviews" link (`googleReviewUrl`), and real social links. A shop's microsite only goes fully public once address/phone/hours/cover photo/1+ service are set (`src/lib/microsite.ts`'s `isMicrositeComplete()`) — incomplete shops get a "coming soon" page instead of the fabricated placeholder content (fake address, stock photo, fake customer count) that used to show. Deliberately built as one reusable check so a future paywall can reuse it.
 - [x] **Real logo file upload** (2026-07-24) — `POST /api/settings/logo`, presigned S3 upload with file picker + preview in Settings. Was URL-paste only.
 
+## Deployment pipeline — was broken until 2026-07-25, now fixed
+
+For an unknown period (at least since the project was created 47+ days ago), the Vercel project for `yourbarber.uk` had **no Git repository connected at all**. Every prior "deploy" was actually someone manually running `vercel deploy --prod` from their own machine — which explains a lot of confusing prior symptoms (e.g. Apple Wallet certs appearing to work then not, env vars that seemed to vanish). A manual deploy builds using whatever's on that machine at that moment, not a clean checkout of `main`, so results were never reproducible.
+
+**Root cause, if this ever recurs:** Vercel's account-level GitHub sign-in (Settings → Authentication → GitHub) was locked to a *different* GitHub account (`elitesavertravel`, used for other projects on the same shared Vercel account) than the one owning this repo (`yourbarberukapp`). Installing the Vercel GitHub App on `yourbarberukapp` was not sufficient by itself — the project's Git-connect picker only lists GitHub accounts already linked at the Vercel *account* level. Fix was: Vercel Settings → Authentication → GitHub → **Re-authenticate**, choosing `yourbarberukapp` — this did not disturb the existing `elitesavertravel` project connections. Then the per-project Settings → Git → Connect picker showed `yourbarberukapp/yourbarber-uk` correctly.
+
+**Verify this stays working:** `yourbarber.uk`'s Vercel project card should show a real commit message and `yourbarberukapp/yourbarber-uk` as the source, same as `teachbase` does — not a "Connect Git Repository" prompt. If it reverts to disconnected, redo the steps above.
+
 ## What's Next (priority order)
 
-1. **Wallet push delivery in production is unconfirmed** — the code path is real (`src/lib/wallet/notify.ts`, `apnsPush.ts`, `googlePush.ts`), but without real `APPLE_PASS_CERT_PEM`/`APPLE_TEAM_ID`/`APPLE_WWDR_PEM` and `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY` set in Vercel, passes generate unsigned/demo-only. Check these are actually set before relying on this for real shops.
-2. **AWS S3 credentials are placeholders in `.env.local`** (`AWS_ACCESS_KEY_ID=your-access-key`) — every upload feature (visit photos, style images, shop logo) needs a real bucket + credentials to actually persist files; the code is correct and tested down to the presigned-URL request, but the actual `PUT` to S3 can't complete without real credentials.
-3. **Analytics** — `/analytics` is still a "Soon" placeholder, no data behind it.
-4. **Real logo reaching the Wallet pass artwork** — `src/lib/wallet/artwork.ts` still returns a placeholder; now that logo upload works, wire the real `shop.logoUrl` into pass artwork generation.
-5. **Retail product checkout** — the new product catalogue is display-only by design (no payment/cart); revisit only if there's real demand.
+1. **Re-verify Wallet push certs now that deploys are real** — the Apple certs were re-uploaded to Vercel Production on 2026-07-25 (via CLI, not the dashboard paste box, to rule out copy/paste corruption) and `src/lib/wallet/passGenerator.ts` now logs signing errors instead of swallowing them. Confirm a real signed `.pkpass` downloads from `/api/wallet/owner/apple` post-deploy — check Vercel's function logs for `[Wallet] Apple pass signing failed` if it's still unsigned.
+2. **AWS S3 credentials are placeholders in `.env.local`** (`AWS_ACCESS_KEY_ID=your-access-key`) — every upload feature (visit photos, style images, shop logo) needs a real bucket + credentials to actually persist files; the code is correct and tested down to the presigned-URL request, but the actual `PUT` to S3 can't complete without real credentials. Not yet confirmed set in Vercel Production either.
+3. **Google Wallet service account** — `GOOGLE_WALLET_SERVICE_ACCOUNT_KEY` not yet confirmed set in Vercel Production.
+4. **Analytics** — `/analytics` is still a "Soon" placeholder, no data behind it.
+5. **Real logo reaching the Wallet pass artwork** — `src/lib/wallet/artwork.ts` still returns a placeholder; now that logo upload works, wire the real `shop.logoUrl` into pass artwork generation.
+6. **Retail product checkout** — the new product catalogue is display-only by design (no payment/cart); revisit only if there's real demand.
 
 **Blocked on the founder, not on more coding:**
-- Wallet push certs and AWS S3 credentials — the code is real and correct, but `.env.local` has a literal placeholder (`AWS_ACCESS_KEY_ID=your-access-key`), and the Apple/Google Wallet cert vars are unconfirmed. No AI assistant has access to the Apple Developer or AWS/Google Cloud accounts — only the founder can set real values in Vercel.
-- **Practical next step:** check Vercel's production environment variables have real AWS and Apple/Google Wallet credentials. If production has the same placeholders as this dev `.env.local`, uploads and installable passes are silently broken in the live app right now.
+- AWS S3 and Google Wallet credentials — the code is real and correct, only Apple's certs have been confirmed re-set in Vercel so far. No AI assistant has access to the AWS or Google Cloud accounts — only the founder can set real values in Vercel.
+- **Practical next step:** now that deploys are reliable, check Vercel's production environment variables (`vercel env ls production`) for the full list against the "Environment Variables" section below, and fill in whatever's missing.
 
 ---
 
