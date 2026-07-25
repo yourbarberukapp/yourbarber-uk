@@ -12,6 +12,8 @@ export default async function OnboardingPage() {
       passLabelColor: true,
       loyaltyTarget: true,
       loyaltyReward: true,
+      logoUrl: true,
+      passStripUrl: true,
     },
   });
 
@@ -23,6 +25,8 @@ export default async function OnboardingPage() {
       initialLabelColor={shop?.passLabelColor || '#C8F135'}
       initialLoyaltyTarget={shop?.loyaltyTarget || 5}
       initialLoyaltyReward={shop?.loyaltyReward || '50% Off 5th Cut'}
+      initialLogoUrl={shop?.logoUrl || ''}
+      initialStripUrl={shop?.passStripUrl || ''}
     />
   );
 }

@@ -26,6 +26,8 @@ interface Props {
   initialLabelColor: string;
   initialLoyaltyTarget: number;
   initialLoyaltyReward: string;
+  initialLogoUrl: string;
+  initialStripUrl: string;
 }
 
 export default function OnboardingWizard({
@@ -35,15 +37,17 @@ export default function OnboardingWizard({
   initialLabelColor,
   initialLoyaltyTarget,
   initialLoyaltyReward,
+  initialLogoUrl,
+  initialStripUrl,
 }: Props) {
   const router = useRouter();
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(initialLogoUrl ? 1 : 0);
   const [state, setState] = useState<WizardState>({
     shopName,
-    logoUrl: '',
+    logoUrl: initialLogoUrl,
     accentColor: initialAccentColor,
     labelColor: initialLabelColor,
-    stripUrl: '',
+    stripUrl: initialStripUrl,
     loyaltyTarget: initialLoyaltyTarget,
     loyaltyReward: initialLoyaltyReward,
   });
