@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import {
   Monitor,
   Smartphone,
@@ -14,6 +13,7 @@ import {
   Lock,
   LogOut,
   Scissors,
+  ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
@@ -30,41 +30,70 @@ const fadeUp = {
   }),
 };
 
-const screens = [
+type Step = {
+  id: string;
+  number: string;
+  title: string;
+  subtitle: string;
+  desc: string;
+  icon: typeof Smartphone;
+  primaryHref: string;
+  primaryLabel: string;
+  primaryTarget?: '_blank';
+  login: string;
+  features: string[];
+};
+
+const steps: Step[] = [
   {
     id: 'kiosk',
+    number: '01',
     title: 'Customer Scan',
-    subtitle: 'Step 1 - Join the queue',
+    subtitle: 'A walk-in joins the queue',
     desc: 'A customer walks in, scans the QR, chooses today\'s cut from their phone, and joins the live queue without stopping the barber.',
     icon: Smartphone,
-    link: '/arrive/the-barber-room',
+    primaryHref: '/arrive/the-barber-room',
+    primaryLabel: 'Open Customer Scan',
+    primaryTarget: '_blank',
     login: 'No login required',
-    image: '/demo-kiosk-luke.png',
-    imageAlt: 'Wall check-in screen in a barbershop with a barber cutting hair in the background',
-    features: ['Scan the wall QR', 'Choose today\'s cut', 'See live queue position', 'Get a text when they are next'],
+    features: ['Scan the wall QR', 'Choose today\'s cut', 'See live queue position', 'Get a free Wallet-pass push when they\'re next'],
   },
   {
     id: 'barber',
+    number: '02',
     title: 'Barber Mode',
-    subtitle: 'Steps 2 to 4 - Queue to Cut Passport',
-    desc: 'The barber sees the live queue, opens the next client, checks what they had last time, and records the new cut before they leave the chair.',
+    subtitle: 'The queue, from the chair',
+    desc: 'The barber sees the live queue, opens the next client, and checks what they had last time before they sit down.',
     icon: Monitor,
-    link: '/demo/barber',
-    login: null,
-    image: '/demo-barber.png',
-    imageAlt: 'Barber mode showing the live queue and client cut history on a phone in a barbershop',
-    features: ['Live queue in the pocket', 'Mark in chair and done', 'Open the Cut Passport', 'Save grades, notes, and photos'],
+    primaryHref: '/demo/barber',
+    primaryLabel: 'Open Barber Mode',
+    primaryTarget: '_blank',
+    login: 'No login required',
+    features: ['Live queue in the pocket', 'Tap a client to open their history', 'See grades, notes, and photos', 'Know exactly what to repeat today'],
+  },
+  {
+    id: 'passport',
+    number: '03',
+    title: 'Cut Passport',
+    subtitle: 'What the barber sees, up close',
+    desc: 'The same client history from Barber Mode, laid out so you can see exactly what a returning client\'s record looks like: photos, grades, notes, and the next-visit recommendation.',
+    icon: Layout,
+    primaryHref: '/demo/passport',
+    primaryLabel: 'Open Cut Passport',
+    primaryTarget: '_blank',
+    login: 'No login required',
+    features: ['Front, back, left, right photos', 'Guard sizes and fade grade', 'Notes from the last visit', 'Recommended return date'],
   },
   {
     id: 'owner',
+    number: '04',
     title: 'Owner Dashboard',
-    subtitle: 'Step 5 - Run the shop',
+    subtitle: 'Run the whole shop',
     desc: 'The owner sees the whole shop in one place: the queue, the team, the regulars, reminders, feedback, and the tools that bring clients back.',
-    icon: Layout,
-    link: '/login?callbackUrl=%2Fdashboard',
-    login: null,
-    image: '/demo-dashboard.png',
-    imageAlt: 'Owner dashboard on a laptop in a barbershop',
+    icon: Store,
+    primaryHref: '/login?callbackUrl=%2Fdashboard',
+    primaryLabel: 'Open Owner Dashboard',
+    login: 'Demo passcode required — sign in to view',
     features: ['Live shop view', 'Customer history', 'Return-visit reminders', 'Feedback and settings'],
   },
 ];
@@ -78,178 +107,166 @@ const previewScreens = [
     icon: Store,
     link: '/shop/the-barber-room',
     status: 'No login required',
-    image: '/showcase-team.png',
-    imageAlt: 'Public-facing shop microsite preview for The Barber Room',
     cta: 'Open Microsite Preview',
   },
   {
     id: 'tv',
-    title: 'TV Queue Screen Preview',
+    title: 'TV Queue Screen',
     subtitle: 'Coming soon',
-    desc: 'Preview the Live-Board concept: a shop TV showing the queue, wait times, QR code, and shop presence for people inside the shop and outside the window.',
+    desc: 'The Live-Board concept: a shop TV showing the queue, wait times, and QR code for people inside the shop and outside the window. Not built yet.',
     icon: Tv2,
-    link: '/#live-board',
-    status: 'Preview on homepage',
-    image: '/hero-ipad.png',
-    imageAlt: 'YourBarber preview inside a barbershop representing the TV queue screen concept',
-    cta: 'View TV Preview',
+    link: null,
+    status: 'Not yet available',
+    cta: null,
   },
 ];
 
 export default function DemoHubPage() {
-  const [loadingRole, setLoadingRole] = useState<string | null>(null);
-
-  async function quickCustomerLogin() {
-    setLoadingRole('customer');
-    const res = await fetch('/api/customer/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: 'TEST1' }),
-    });
-    if (res.ok) {
-      window.location.href = '/me';
-    } else {
-      setLoadingRole(null);
-      alert('Customer demo login failed.');
-    }
-  }
+  const [activeStep, setActiveStep] = useState(0);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <Navbar />
 
-      <section className="relative pt-40 pb-24 px-6">
+      <section className="relative pt-40 pb-16 px-6">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute left-1/2 top-24 h-80 w-80 -translate-x-1/2 rounded-full bg-[#C8F135]/8 blur-3xl" />
         </div>
 
-        <div className="container relative mx-auto max-w-6xl">
-          <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="text-center mb-20">
-            <span className="badge-lime mb-6 inline-block">The Barber Room - Demo Shop</span>
-            <h1 className="font-barlow font-black text-[clamp(2.5rem,8vw,5.5rem)] uppercase leading-[0.9] mb-8">
+        <div className="container relative mx-auto max-w-4xl">
+          <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="text-center mb-14">
+            <span className="badge-lime mb-6 inline-block">The Barber Room — Demo Shop</span>
+            <h1 className="font-barlow font-black text-[clamp(2.5rem,8vw,5.5rem)] uppercase leading-[0.9] mb-6">
               Follow the
               <br />
               <span className="text-[#C8F135]">walk-in flow.</span>
             </h1>
-            <p className="text-white/48 font-inter text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
-              Start with the customer scan, follow the live queue into Barber Mode, open the Cut Passport, and finish in the owner dashboard. This demo is built to show how the shop runs from the front door to the next visit.
+            <p className="text-white/48 font-inter text-lg max-w-xl mx-auto leading-relaxed">
+              Four steps, in order: a customer joins the queue, the barber opens their history, you see the Cut Passport up close, then the owner's view of the whole shop.
             </p>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5 max-w-6xl mx-auto mb-10">
-              {[
-                { title: 'Customer Scan', body: 'A walk-in joins from their own phone with no app to download.' },
-                { title: 'Live Queue', body: 'The queue updates instantly so everyone knows where they stand.' },
-                { title: 'Barber Mode', body: 'The barber sees who is next and what they want before they sit down.' },
-                { title: 'Cut Passport', body: 'Last-cut photos, notes, and grades stay with the client record.' },
-                { title: 'Owner Dashboard', body: 'The owner sees reminders, feedback, customers, and shop activity.' },
-              ].map(item => (
-                <div key={item.title} className="bg-white/[0.03] border border-white/5 rounded-xl p-4">
-                  <div className="text-[11px] font-barlow font-bold uppercase tracking-[0.18em] text-white/35 mb-2">{item.title}</div>
-                  <p className="text-sm text-white/62 font-inter leading-relaxed">{item.body}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-center items-center gap-4 p-4 bg-white/[0.03] border border-white/5 rounded-full max-w-md mx-auto mb-8">
-              <span className="text-xs font-barlow font-bold uppercase tracking-widest text-white/40">Switching views?</span>
-              <button
-                onClick={() => signOut({ callbackUrl: '/demo-hub' })}
-                className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#C8F135] hover:text-white transition-colors"
-              >
-                <LogOut size={14} /> Sign out first
-              </button>
-            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-24">
-            {screens.map((screen, i) => (
-              <motion.div
-                key={screen.id}
-                initial="hidden"
-                animate="visible"
-                custom={i + 1}
-                variants={fadeUp}
-                className="group relative bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden hover:border-[#C8F135]/40 transition-all shadow-2xl hover:-translate-y-1"
+          {/* Step tracker */}
+          <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
+            {steps.map((step, i) => (
+              <button
+                key={step.id}
+                onClick={() => setActiveStep(i)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-sm border text-xs font-barlow font-bold uppercase tracking-wide transition-colors ${
+                  activeStep === i
+                    ? 'bg-[#C8F135] border-[#C8F135] text-[#0A0A0A]'
+                    : 'bg-white/[0.03] border-white/10 text-white/50 hover:border-white/25 hover:text-white/80'
+                }`}
               >
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C8F135]/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                <div className="relative aspect-[16/10] overflow-hidden border-b border-white/8 bg-black">
-                  <Image
-                    src={screen.image}
-                    alt={screen.imageAlt}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, 100vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent" />
-                </div>
-                <div className="p-8">
-                  <div className="w-12 h-12 rounded-sm bg-[#C8F135]/10 flex items-center justify-center mb-6 group-hover:bg-[#C8F135]/20 transition-colors">
-                    <screen.icon size={24} className="text-[#C8F135]" />
-                  </div>
-
-                  <div className="mb-6">
-                    <h3 className="font-barlow font-black text-2xl uppercase tracking-tight mb-1">{screen.title}</h3>
-                    <p className="font-barlow font-bold text-xs uppercase tracking-widest text-[#C8F135]/60">{screen.subtitle}</p>
-                  </div>
-
-                  <p className="text-white/52 text-sm font-inter leading-relaxed mb-8 min-h-20">{screen.desc}</p>
-
-                  <ul className="space-y-3 mb-10 border-t border-white/5 pt-8">
-                    {screen.features.map(feature => (
-                      <li key={feature} className="flex items-center gap-3 text-xs font-inter text-white/72">
-                        <CheckCircle2 size={14} className="text-[#C8F135]" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {screen.id === 'kiosk' ? (
-                    <>
-                      <div className="bg-black/40 rounded-lg p-4 mb-8 border border-white/5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Lock size={12} className="text-white/30" />
-                          <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/30">Access</span>
-                        </div>
-                        <p className="text-sm font-mono text-white/80">No login required</p>
-                      </div>
-                      <Link
-                        href={screen.link}
-                        className="w-full py-4 bg-white/5 hover:bg-[#C8F135] hover:text-[#0A0A0A] text-white font-barlow font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm border border-white/10 hover:border-transparent mb-3"
-                      >
-                        Open Customer Scan
-                        <ExternalLink size={16} />
-                      </Link>
-                      <div className="mb-3">
-                        <ArrivalQrDemoButton shopSlug="the-barber-room" shopName="The Barber Room" className="w-full py-4" />
-                      </div>
-                      <button
-                        onClick={quickCustomerLogin}
-                        disabled={loadingRole === 'customer'}
-                        className="w-full py-3 bg-[#C8F135]/10 hover:bg-[#C8F135]/20 text-[#C8F135] font-barlow font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 rounded-sm border border-[#C8F135]/25"
-                      >
-                        {loadingRole === 'customer' ? '⏳ Logging in…' : '⚡ Instant: Open Cut Passport'}
-                      </button>
-                    </>
-                  ) : (
-                    <Link
-                      href={screen.link}
-                      className="w-full py-4 bg-[#C8F135] hover:bg-[#d4f84d] text-[#0A0A0A] font-barlow font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm"
-                    >
-                      Open {screen.title}
-                      <ExternalLink size={16} />
-                    </Link>
-                  )}
-                </div>
-              </motion.div>
+                <span className={activeStep === i ? 'text-[#0A0A0A]/60' : 'text-white/25'}>{step.number}</span>
+                {step.title}
+              </button>
             ))}
           </div>
 
+          <div className="flex justify-center mb-12">
+            <button
+              onClick={() => signOut({ callbackUrl: '/demo-hub' })}
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/30 hover:text-[#C8F135] transition-colors"
+            >
+              <LogOut size={12} /> Switching views? Sign out first
+            </button>
+          </div>
+
+          {/* Active step panel */}
+          {steps.map((step, i) => {
+            if (i !== activeStep) return null;
+            return (
+              <motion.div
+                key={step.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className="bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden shadow-2xl"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-0">
+                  <div className="p-8 md:p-10 md:border-r border-white/8 md:w-96">
+                    <div className="w-12 h-12 rounded-sm bg-[#C8F135]/10 flex items-center justify-center mb-6">
+                      <step.icon size={24} className="text-[#C8F135]" />
+                    </div>
+                    <div className="mb-6">
+                      <div className="font-barlow font-bold text-xs uppercase tracking-widest text-[#C8F135]/60 mb-1">
+                        Step {step.number} of {steps.length} — {step.subtitle}
+                      </div>
+                      <h2 className="font-barlow font-black text-3xl uppercase tracking-tight">{step.title}</h2>
+                    </div>
+                    <p className="text-white/56 text-sm font-inter leading-relaxed mb-8">{step.desc}</p>
+
+                    <ul className="space-y-3 mb-8">
+                      {step.features.map(feature => (
+                        <li key={feature} className="flex items-start gap-3 text-xs font-inter text-white/72">
+                          <CheckCircle2 size={14} className="text-[#C8F135] flex-shrink-0 mt-0.5" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="bg-black/40 rounded-lg p-4 mb-6 border border-white/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lock size={12} className="text-white/30" />
+                        <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/30">Access</span>
+                      </div>
+                      <p className="text-sm font-mono text-white/80">{step.login}</p>
+                    </div>
+
+                    <Link
+                      href={step.primaryHref}
+                      target={step.primaryTarget}
+                      rel={step.primaryTarget ? 'noopener noreferrer' : undefined}
+                      className="w-full py-4 bg-[#C8F135] hover:bg-[#d4f84d] text-[#0A0A0A] font-barlow font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm mb-3"
+                    >
+                      {step.primaryLabel}
+                      <ExternalLink size={16} />
+                    </Link>
+
+                    {step.id === 'kiosk' && (
+                      <div className="opacity-70 hover:opacity-100 transition-opacity">
+                        <ArrivalQrDemoButton shopSlug="the-barber-room" shopName="The Barber Room" className="w-full py-3 text-xs !bg-white/10 !text-white hover:!bg-white/15" />
+                      </div>
+                    )}
+
+                    {i < steps.length - 1 && (
+                      <button
+                        onClick={() => setActiveStep(i + 1)}
+                        className="w-full mt-3 py-3 text-xs font-barlow font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors flex items-center justify-center gap-2"
+                      >
+                        Next: {steps[i + 1].title} <ArrowRight size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Visual placeholder — deliberately not an iframe. Embedding the real
+                      login page would invite typing a real passcode inside a frame on a
+                      marketing page, which is the shape of a clickjacking/phishing risk
+                      even same-origin. Click through instead via the button above. */}
+                  <div className="bg-black min-h-[420px] md:min-h-[520px] flex flex-col items-center justify-center gap-4 p-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-[#C8F135]/10 flex items-center justify-center">
+                      <step.icon size={28} className="text-[#C8F135]/60" />
+                    </div>
+                    <p className="text-white/25 text-xs font-barlow font-bold uppercase tracking-widest max-w-xs">
+                      Opens in a new tab so you keep your place here
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="py-20 px-6">
+        <div className="container mx-auto max-w-4xl">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-40px' }}
             variants={fadeUp}
-            className="mb-24"
+            className="mb-16"
           >
             <div className="text-center mb-10">
               <span className="badge-lime mb-4 inline-block">More to preview</span>
@@ -259,7 +276,7 @@ export default function DemoHubPage() {
                 <span className="text-[#C8F135]">of the shop.</span>
               </h2>
               <p className="text-white/48 font-inter text-base max-w-2xl mx-auto leading-relaxed">
-                Once the queue and Cut Passport make sense, these two previews show how YourBarber helps the shop look sharper to customers as well.
+                Once the queue and Cut Passport make sense, this shows how YourBarber helps the shop look sharper to customers as well.
               </p>
             </div>
 
@@ -272,50 +289,44 @@ export default function DemoHubPage() {
                   viewport={{ once: true, margin: '-40px' }}
                   custom={i + 1}
                   variants={fadeUp}
-                  className="group relative bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden hover:border-[#C8F135]/40 transition-all shadow-2xl hover:-translate-y-1"
+                  className={`relative bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden shadow-2xl p-8 ${screen.link ? 'hover:border-[#C8F135]/40 transition-all hover:-translate-y-1' : 'opacity-60'}`}
                 >
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C8F135]/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                  <div className="relative aspect-[16/10] overflow-hidden border-b border-white/8 bg-black">
-                    <Image
-                      src={screen.image}
-                      alt={screen.imageAlt}
-                      fill
-                      sizes="(min-width: 1024px) 50vw, 100vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent" />
+                  <div className="w-12 h-12 rounded-sm bg-[#C8F135]/10 flex items-center justify-center mb-6">
+                    <screen.icon size={24} className="text-[#C8F135]" />
                   </div>
 
-                  <div className="p-8">
-                    <div className="w-12 h-12 rounded-sm bg-[#C8F135]/10 flex items-center justify-center mb-6 group-hover:bg-[#C8F135]/20 transition-colors">
-                      <screen.icon size={24} className="text-[#C8F135]" />
+                  <div className="mb-6">
+                    <h3 className="font-barlow font-black text-2xl uppercase tracking-tight mb-1">{screen.title}</h3>
+                    <p className="font-barlow font-bold text-xs uppercase tracking-widest text-[#C8F135]/60">{screen.subtitle}</p>
+                  </div>
+
+                  <p className="text-white/52 text-sm font-inter leading-relaxed mb-8">{screen.desc}</p>
+
+                  <div className="bg-black/40 rounded-lg p-4 mb-8 border border-white/5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lock size={12} className="text-white/30" />
+                      <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/30">
+                        Preview access
+                      </span>
                     </div>
+                    <p className="text-sm font-mono text-white/80">{screen.status}</p>
+                  </div>
 
-                    <div className="mb-6">
-                      <h3 className="font-barlow font-black text-2xl uppercase tracking-tight mb-1">{screen.title}</h3>
-                      <p className="font-barlow font-bold text-xs uppercase tracking-widest text-[#C8F135]/60">{screen.subtitle}</p>
-                    </div>
-
-                    <p className="text-white/52 text-sm font-inter leading-relaxed mb-8 min-h-20">{screen.desc}</p>
-
-                    <div className="bg-black/40 rounded-lg p-4 mb-8 border border-white/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lock size={12} className="text-white/30" />
-                        <span className="text-[10px] font-barlow font-bold uppercase tracking-widest text-white/30">
-                          Preview access
-                        </span>
-                      </div>
-                      <p className="text-sm font-mono text-white/80">{screen.status}</p>
-                    </div>
-
+                  {screen.link ? (
                     <Link
                       href={screen.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full py-4 bg-white/5 hover:bg-[#C8F135] hover:text-[#0A0A0A] text-white font-barlow font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 rounded-sm border border-white/10 hover:border-transparent"
                     >
                       {screen.cta}
                       <ExternalLink size={16} />
                     </Link>
-                  </div>
+                  ) : (
+                    <div className="w-full py-4 bg-white/[0.02] text-white/25 font-barlow font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 rounded-sm border border-white/5">
+                      Not built yet
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -354,6 +365,12 @@ export default function DemoHubPage() {
                   <div className="text-xs font-barlow font-bold uppercase tracking-widest text-white/30">After each cut</div>
                 </div>
               </div>
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-2 mt-8 bg-[#C8F135] text-[#0A0A0A] px-8 py-4 rounded-sm font-barlow font-black uppercase tracking-widest text-sm hover:bg-white transition-colors"
+              >
+                Set up my shop <ArrowRight size={16} />
+              </Link>
             </div>
           </motion.div>
         </div>

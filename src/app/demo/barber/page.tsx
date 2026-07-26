@@ -106,11 +106,12 @@ function PassportView({ client, onBack }: { client: Client; onBack: () => void }
             {lastVisit ? `Last cut ${weeksAgo(lastVisit.visitedAt)}` : 'New client — no previous visit'}
           </div>
         </div>
+        {/* Static label, not a control — this whole screen IS the Cut Passport view for
+            this client. Deliberately borderless/flat so it doesn't read as clickable
+            (a bordered pill here was mistaken for a dead button during design review). */}
         <div style={{
-          background: 'rgba(200,241,53,0.1)', border: '1px solid rgba(200,241,53,0.2)',
-          borderRadius: 4, padding: '0.25rem 0.6rem',
           fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.12em', color: '#C8F135',
+          letterSpacing: '0.12em', color: 'rgba(200,241,53,0.5)',
           fontFamily: 'var(--font-barlow, sans-serif)',
         }}>
           Cut Passport
