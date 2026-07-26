@@ -73,7 +73,7 @@ export default function SignUpPage() {
                 type="text"
                 value={shopName}
                 onChange={e => setShopName(e.target.value)}
-                placeholder="The Barber Room"
+                placeholder="Your shop name"
                 required
                 autoFocus
                 style={inputStyle}
@@ -87,7 +87,7 @@ export default function SignUpPage() {
                 type="text"
                 value={yourName}
                 onChange={e => setYourName(e.target.value)}
-                placeholder="James"
+                placeholder="Your name"
                 required
                 style={inputStyle}
               />
