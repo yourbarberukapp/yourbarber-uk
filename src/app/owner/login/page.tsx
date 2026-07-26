@@ -13,7 +13,16 @@ function OwnerLoginForm() {
   const [loading, setLoading] = useState(false);
 
   const justSignedUp = searchParams.get('welcome') === '1';
-  const callbackUrl = searchParams.get('callbackUrl') || null;
+  const rawCallbackUrl = searchParams.get('callbackUrl');
+  // Only ever navigate to a same-origin relative path after login — never an
+  // absolute URL or protocol-relative "//host" (browsers treat that as
+  // absolute too). An unvalidated callbackUrl here is an open redirect: a
+  // crafted link shows the real login page, then bounces a successfully
+  // authenticated owner straight to an attacker's site after their passcode
+  // is submitted.
+  const callbackUrl = rawCallbackUrl && rawCallbackUrl.startsWith('/') && !rawCallbackUrl.startsWith('//') && !rawCallbackUrl.startsWith('/\\')
+    ? rawCallbackUrl
+    : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
