@@ -70,6 +70,23 @@ export default function ArriveClient({
   presetBarberId = null,
 }: Props) {
   const [step, setStep] = useState<Step>('queue_info');
+  // Every step but the first two ('queue_info' and 'notify_standby', which
+  // already had its own back button) has multiple possible predecessors
+  // depending on branches taken earlier (preset barber, returning vs new
+  // customer, family members) — a fixed "previous step" map can't capture
+  // that, so track the actual path taken as a stack instead.
+  const [stepHistory, setStepHistory] = useState<Step[]>([]);
+  function goToStep(next: Step) {
+    setStepHistory(h => [...h, step]);
+    setStep(next);
+  }
+  function goBack() {
+    setStepHistory(h => {
+      if (h.length === 0) return h;
+      setStep(h[h.length - 1]);
+      return h.slice(0, -1);
+    });
+  }
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
@@ -179,7 +196,7 @@ export default function ArriveClient({
       const data = await res.json();
       if (data.needsName) {
         // New customer — name already captured, go to service
-        setStep('service');
+        goToStep('service');
       } else if (data.customerName && data.alreadyWaiting) {
         saveArrivalStatus(shopSlug, data);
         setResult(data);
@@ -191,9 +208,9 @@ export default function ArriveClient({
         });
         if (data.familyMembers?.length > 0) {
           setSelectedMemberIds(['ME']);
-          setStep('who');
+          goToStep('who');
         } else {
-          setStep('service');
+          goToStep('service');
         }
       } else {
         setError('Something went wrong. Please try again.');
@@ -327,8 +344,13 @@ export default function ArriveClient({
       alignItems: 'center', justifyContent: 'center', padding: '1.5rem',
       position: 'relative',
     }}>
+      {/* A real customer arrived here by scanning the shop's physical QR — they have
+          no prior page to return to, so "/" (the marketing site) is the right default.
+          Someone exploring via /demo-hub arrived with real context to go back to, and
+          landing on the marketing homepage instead reads as being ejected from the demo
+          entirely. Send demo visitors back to the hub instead. */}
       <Link
-        href="/"
+        href={isDemoShop ? '/demo-hub' : '/'}
         className="home-nav-link"
         style={{
           position: 'absolute', top: '2rem', left: '2rem',
@@ -340,7 +362,7 @@ export default function ArriveClient({
         }}
       >
         <Home size={18} />
-        <span>Home</span>
+        <span>{isDemoShop ? 'Back to demo' : 'Home'}</span>
       </Link>
 
       <div style={{ width: '100%', maxWidth: 400 }}>
@@ -461,6 +483,12 @@ export default function ArriveClient({
           {/* ── Step: name ── */}
           {step === 'name' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <button
+                onClick={() => setStep('queue_info')}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ← Back
+              </button>
               <div style={{ textAlign: 'center', marginBottom: '0.25rem' }}>
                 <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
                   What&apos;s your name?
@@ -474,7 +502,7 @@ export default function ArriveClient({
                 onChange={e => setName(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && name.trim().length >= 1) {
-                    setStep(presetBarberId ? 'queue_confirm' : (barbers.length > 0 ? 'barber_choice' : 'queue_confirm'));
+                    goToStep(presetBarberId ? 'queue_confirm' : (barbers.length > 0 ? 'barber_choice' : 'queue_confirm'));
                   }
                 }}
                 autoFocus
@@ -482,7 +510,7 @@ export default function ArriveClient({
               <button
                 style={{ ...btnLime, opacity: name.trim().length < 1 ? 0.5 : 1 }}
                 disabled={name.trim().length < 1}
-                onClick={() => setStep(presetBarberId ? 'queue_confirm' : (barbers.length > 0 ? 'barber_choice' : 'queue_confirm'))}
+                onClick={() => goToStep(presetBarberId ? 'queue_confirm' : (barbers.length > 0 ? 'barber_choice' : 'queue_confirm'))}
               >
                 <ChevronRight size={16} /> Next
               </button>
@@ -492,6 +520,12 @@ export default function ArriveClient({
           {/* ── Step: barber_choice ── */}
           {step === 'barber_choice' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <button
+                onClick={() => setStep('name')}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ← Back
+              </button>
               <div style={{ textAlign: 'center', marginBottom: '0.25rem' }}>
                 <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
                   Who would you like?
@@ -532,7 +566,7 @@ export default function ArriveClient({
                 ))}
               </div>
 
-              <button style={btnLime} onClick={() => setStep('queue_confirm')}>
+              <button style={btnLime} onClick={() => goToStep('queue_confirm')}>
                 <ChevronRight size={16} /> Next
               </button>
             </div>
@@ -541,6 +575,12 @@ export default function ArriveClient({
           {/* ── Step: queue_confirm ── */}
           {step === 'queue_confirm' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <button
+                onClick={goBack}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ← Back
+              </button>
               <div style={{ textAlign: 'center' }}>
                 <p style={{ color: 'white', fontSize: '1.5rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
                   Hey, {name || 'there'}!
@@ -613,6 +653,12 @@ export default function ArriveClient({
           {/* ── Step: phone ── */}
           {step === 'phone' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <button
+                onClick={() => setStep('queue_confirm')}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ← Back
+              </button>
               <div style={{ textAlign: 'center', marginBottom: '0.25rem' }}>
                 <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
                   What&apos;s your number?
@@ -645,6 +691,12 @@ export default function ArriveClient({
           {/* ── Step: who (family selection) ── */}
           {step === 'who' && returningUser && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <button
+                onClick={() => setStep('phone')}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ← Back
+              </button>
               <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
                 <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
                   Who&apos;s getting cut?
@@ -687,7 +739,7 @@ export default function ArriveClient({
               <button
                 style={{ ...btnLime, opacity: selectedMemberIds.length === 0 ? 0.5 : 1, marginTop: '0.5rem' }}
                 disabled={selectedMemberIds.length === 0}
-                onClick={() => setStep('service')}
+                onClick={() => goToStep('service')}
               >
                 Next <ChevronRight size={16} />
               </button>
@@ -697,6 +749,12 @@ export default function ArriveClient({
           {/* ── Step: service ── */}
           {step === 'service' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <button
+                onClick={() => (stepHistory.length > 0 ? goBack() : setStep('phone'))}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                ← Back
+              </button>
               <div style={{ textAlign: 'center', marginBottom: '0.25rem' }}>
                 <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
                   What are you after?
