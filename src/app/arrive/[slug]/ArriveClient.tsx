@@ -96,18 +96,8 @@ export default function ArriveClient({
   const [googleWalletDone, setGoogleWalletDone] = useState(false);
   const [returningUser, setReturningUser] = useState<{ name: string; familyMembers: FamilyMember[] } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-  const [waitingCount, setWaitingCount] = useState(initialWaitingCount);
-  const [waitMinutes, setWaitMinutes] = useState(initialWaitMinutes);
-  const [notifySupported, setNotifySupported] = useState(false);
-  const [notifyPermission, setNotifyPermission] = useState<NotificationPermission>('default');
-  const prevWaitCountRef = useRef(initialWaitingCount);
-
-  useEffect(() => {
-    if ('Notification' in window) {
-      setNotifySupported(true);
-      setNotifyPermission(Notification.permission);
-    }
-  }, []);
+  const waitingCount = initialWaitingCount;
+  const waitMinutes = initialWaitMinutes;
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -116,33 +106,10 @@ export default function ArriveClient({
     else setWalletPlatform('other');
   }, []);
 
-  // Poll queue status while watching from standby
-  useEffect(() => {
-    if (step !== 'notify_standby') return;
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/arrive/queue-status?shopSlug=${shopSlug}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const prev = prevWaitCountRef.current;
-        setWaitingCount(data.waitingCount);
-        setWaitMinutes(data.waitMinutes);
-        if (notifyPermission === 'granted' && data.waitingCount < prev - 1) {
-          new Notification(`${shopName} — queue update`, {
-            body: data.waitingCount === 0
-              ? 'Queue has cleared — come on in!'
-              : `Queue is now ${data.waitingCount} ${data.waitingCount === 1 ? 'person' : 'people'} — about ${data.waitMinutes} min wait.`,
-            icon: '/icon-192.png',
-          });
-        }
-        prevWaitCountRef.current = data.waitingCount;
-      } catch { /* ignore */ }
-    };
-    const id = window.setInterval(poll, 30_000);
-    return () => window.clearInterval(id);
-  }, [step, shopSlug, shopName, notifyPermission]);
-
-  // Poll live position on done screen
+  // Poll live position on done screen — the real "you're nearly up" alert is
+  // the Wallet pass push (server-side, via notifyCustomer whenever the queue
+  // moves), not a browser notification; this just keeps the on-screen number
+  // fresh for anyone who left the tab open.
   useEffect(() => {
     if (step !== 'done' || !result || phone.length < 7) return;
     const refreshStatus = async () => {
@@ -155,7 +122,6 @@ export default function ArriveClient({
         if (!res.ok) return;
         const data = await res.json();
         if (!data.active) return;
-        const prevPos = result.position;
         setResult(prev => prev ? {
           ...prev,
           customerName: data.customerName ?? prev.customerName,
@@ -163,33 +129,12 @@ export default function ArriveClient({
           waitMinutes: data.waitMinutes,
           holdPlace: data.holdPlace,
         } : prev);
-        if (notifyPermission === 'granted' && data.position === 1 && prevPos > 1) {
-          new Notification(`${shopName} — you're next!`, {
-            body: "You're up next. Head to the chair!",
-            icon: '/icon-192.png',
-          });
-        }
       } catch { /* ignore */ }
     };
     const id = window.setInterval(refreshStatus, 10_000);
     refreshStatus();
     return () => window.clearInterval(id);
-  }, [phone, result, shopSlug, step, shopName, notifyPermission]);
-
-  async function requestNotify() {
-    if (!notifySupported) return;
-    const perm = await Notification.requestPermission();
-    setNotifyPermission(perm);
-    if (perm === 'granted' && isDemoShop) {
-      setTimeout(() => {
-        new Notification(`${shopName} — queue update`, {
-          body: "It's quieted down — just 1 person ahead now. Want to come back in?",
-          icon: '/icon-192.png',
-        });
-      }, 3000);
-    }
-    return perm;
-  }
+  }, [phone, result, shopSlug, step]);
 
   async function addToGoogleWallet() {
     if (googleWalletLoading || googleWalletDone) return;
@@ -635,40 +580,22 @@ export default function ArriveClient({
                 )}
               </div>
 
-              {/* Notification prompt */}
-              {notifySupported && notifyPermission === 'default' && waitingCount > 0 && (
-                <button
-                  onClick={requestNotify}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.875rem',
-                    padding: '1rem', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-                    border: '1px solid rgba(200,241,53,0.2)',
-                    background: 'rgba(200,241,53,0.06)',
-                  }}
-                >
-                  <Bell size={20} color="#C8F135" style={{ flexShrink: 0 }} />
-                  <div>
-                    <p style={{ color: 'white', fontSize: '0.875rem', fontWeight: 700, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
-                      Notify me when it&apos;s my turn
-                    </p>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', margin: '0.25rem 0 0', fontFamily: 'var(--font-inter, sans-serif)' }}>
-                      Get a browser alert — keep this tab open
-                    </p>
-                  </div>
-                </button>
-              )}
-
-              {notifyPermission === 'granted' && (
+              {waitingCount > 0 && (
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                  padding: '0.875rem 1rem', borderRadius: 12,
+                  display: 'flex', alignItems: 'center', gap: '0.875rem',
+                  padding: '1rem', borderRadius: 12,
                   border: '1px solid rgba(200,241,53,0.2)',
                   background: 'rgba(200,241,53,0.06)',
                 }}>
-                  <Check size={18} color="#C8F135" style={{ flexShrink: 0 }} />
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>
-                    Notifications on — we&apos;ll ping you when you&apos;re nearly up.
-                  </p>
+                  <Bell size={20} color="#C8F135" style={{ flexShrink: 0 }} />
+                  <div>
+                    <p style={{ color: 'white', fontSize: '0.875rem', fontWeight: 700, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
+                      We&apos;ll tell you when it&apos;s your turn
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', margin: '0.25rem 0 0', fontFamily: 'var(--font-inter, sans-serif)' }}>
+                      Add your Wallet card at the end — no app, no tab to keep open.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -896,63 +823,14 @@ export default function ArriveClient({
                   No worries.
                 </p>
                 <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.875rem', marginTop: '0.5rem', lineHeight: 1.5, fontFamily: 'var(--font-inter, sans-serif)' }}>
-                  {waitingCount > 0
-                    ? `Want us to ping you if the queue drops below ${Math.max(2, Math.ceil(waitingCount / 2))} people?`
-                    : 'Want us to let you know if the queue fills up?'}
+                  Join the queue now and step away — your spot is held. Add your Wallet card at the end and
+                  we&apos;ll push an update to your phone when you&apos;re nearly up, no need to keep this open.
                 </p>
               </div>
 
-              {notifySupported && notifyPermission !== 'granted' && (
-                <button
-                  onClick={requestNotify}
-                  style={{
-                    ...btnLime,
-                    background: 'rgba(200,241,53,0.1)',
-                    color: '#C8F135',
-                    border: '1px solid rgba(200,241,53,0.25)',
-                  }}
-                >
-                  <Bell size={16} /> Notify me when it&apos;s quieter
-                </button>
-              )}
-
-              {notifyPermission === 'granted' && (
-                <div style={{
-                  background: 'rgba(200,241,53,0.06)', border: '1px solid rgba(200,241,53,0.15)',
-                  borderRadius: 12, padding: '1.25rem',
-                  display: 'flex', flexDirection: 'column', gap: '0.5rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <Check size={18} color="#C8F135" />
-                    <span style={{ color: '#C8F135', fontSize: '0.875rem', fontWeight: 700, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
-                      Notifications on
-                    </span>
-                  </div>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', margin: 0, fontFamily: 'var(--font-inter, sans-serif)', lineHeight: 1.5 }}>
-                    Keep this tab open — we&apos;ll ping you when it gets quieter.
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#C8F135', animation: 'pulse 2s infinite' }} />
-                    <span style={{ color: 'rgba(200,241,53,0.7)', fontSize: '0.7rem', fontWeight: 700, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                      Watching — {waitingCount} waiting now
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <button style={btnLime} onClick={() => setStep('name')}>
-                  <ChevronRight size={16} /> Actually, I&apos;ll join the queue
-                </button>
-                {notifyPermission !== 'granted' && (
-                  <button
-                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.5rem' }}
-                    onClick={() => { /* just show the page doing nothing — they can close it */ }}
-                  >
-                    No thanks
-                  </button>
-                )}
-              </div>
+              <button style={btnLime} onClick={() => setStep('name')}>
+                <ChevronRight size={16} /> Join the queue
+              </button>
             </div>
           )}
 
@@ -1029,7 +907,8 @@ export default function ArriveClient({
                       color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', margin: '0.3rem 0 0',
                       fontFamily: 'var(--font-inter, sans-serif)', lineHeight: 1.5,
                     }}>
-                      Check in next time by showing your pass — no need to type your number again.
+                      Get a push to your lock screen when you&apos;re nearly up — no app, no tab to keep open. Also
+                      skips the phone number next time.
                     </p>
                   </div>
 
@@ -1084,39 +963,16 @@ export default function ArriveClient({
                 </div>
               )}
 
-              {/* Notification prompt if not yet granted */}
-              {notifySupported && notifyPermission !== 'granted' && notifyPermission !== 'denied' && (
-                <button
-                  onClick={requestNotify}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    padding: '0.875rem 1rem', borderRadius: 12, width: '100%',
-                    border: '1px solid rgba(200,241,53,0.2)',
-                    background: 'rgba(200,241,53,0.05)', cursor: 'pointer', textAlign: 'left',
-                  }}
-                >
-                  <Bell size={18} color="#C8F135" style={{ flexShrink: 0 }} />
-                  <div>
-                    <p style={{ color: 'white', fontSize: '0.8rem', fontWeight: 700, margin: 0, fontFamily: 'var(--font-barlow, sans-serif)', textTransform: 'uppercase' }}>
-                      Get notified when you&apos;re nearly up
-                    </p>
-                    <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.7rem', margin: '0.2rem 0 0', fontFamily: 'var(--font-inter, sans-serif)' }}>
-                      Tap to enable browser notifications
-                    </p>
-                  </div>
-                </button>
-              )}
-
-              {notifyPermission === 'granted' && (
+              {!walletPlatform && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '0.75rem',
                   padding: '0.875rem 1rem', borderRadius: 12, width: '100%',
-                  border: '1px solid rgba(200,241,53,0.15)',
-                  background: 'rgba(200,241,53,0.05)', textAlign: 'left',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(255,255,255,0.03)', textAlign: 'left',
                 }}>
-                  <Check size={18} color="#C8F135" style={{ flexShrink: 0 }} />
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>
-                    We&apos;ll notify you when you&apos;re nearly up.
+                  <Bell size={18} color="rgba(255,255,255,0.4)" style={{ flexShrink: 0 }} />
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', margin: 0, fontFamily: 'var(--font-inter, sans-serif)' }}>
+                    Keep an eye on your position above — refresh any time.
                   </p>
                 </div>
               )}
