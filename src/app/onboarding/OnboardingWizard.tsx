@@ -153,17 +153,31 @@ export default function OnboardingWizard({
     }
   }
 
+  // Banner strip on the pass is 375x144 (~2.6:1) — default the crop to that
+  // shape so the owner starts from a sensible banner-like selection instead
+  // of fighting a full-image square/free crop into a wide shape by hand.
+  // Logos have no fixed aspect (most are wordmarks or icons, not circles) —
+  // default there is the full image, trimmed by hand if wanted.
+  const BANNER_ASPECT = 375 / 144;
+
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { naturalWidth, naturalHeight } = e.currentTarget;
-    // No fixed aspect — most barbershop logos are wordmarks (wide) or icons
-    // (square), not circles. Default crop covers the full image; the owner
-    // drags the handles to trim if they want to.
-    const initialCrop = centerCrop(
-      makeAspectCrop({ unit: '%', width: 100 }, naturalWidth / naturalHeight, naturalWidth, naturalHeight),
-      naturalWidth,
-      naturalHeight
-    );
-    setCrop(initialCrop);
+    if (cropTarget === 'banner') {
+      const aspect = BANNER_ASPECT;
+      const initialCrop = centerCrop(
+        makeAspectCrop({ unit: '%', width: 90 }, aspect, naturalWidth, naturalHeight),
+        naturalWidth,
+        naturalHeight
+      );
+      setCrop(initialCrop);
+    } else {
+      const initialCrop = centerCrop(
+        makeAspectCrop({ unit: '%', width: 100 }, naturalWidth / naturalHeight, naturalWidth, naturalHeight),
+        naturalWidth,
+        naturalHeight
+      );
+      setCrop(initialCrop);
+    }
   }
 
   async function applyCrop() {
@@ -307,9 +321,15 @@ export default function OnboardingWizard({
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <div style={{ background: '#111', padding: '1.5rem', borderRadius: 12, maxWidth: '100%', maxHeight: '100%', display: 'flex', flexDirection: 'column' }}>
             <h3 style={{ color: 'white', marginTop: 0 }}>{cropTarget === 'banner' ? 'Crop Banner' : 'Crop Logo'}</h3>
+            {cropTarget === 'banner' && (
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '-0.5rem', marginBottom: '0.5rem' }}>
+                Locked to banner shape — drag the corners to reposition, the shape stays fixed.
+              </p>
+            )}
             <div style={{ overflow: 'auto', flex: 1, minHeight: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <ReactCrop
                 crop={crop}
+                aspect={cropTarget === 'banner' ? BANNER_ASPECT : undefined}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
               >
