@@ -21,6 +21,16 @@ export default async function ArrivePage({
         orderBy: { sortOrder: 'asc' },
         select: { id: true, name: true, price: true, duration: true },
       },
+      // Fallback quick-options when the shop hasn't set up bookable Services
+      // (a separate settings surface from Cut Styles) — Cut Styles are
+      // already configured for most shops via onboarding, so reuse them
+      // rather than showing an empty picker with only a free-text box.
+      styles: {
+        where: { active: true },
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, name: true },
+        take: 12,
+      },
       barbers: {
         where: { isActive: true, acceptsBookings: true },
         select: { id: true, name: true },
@@ -60,6 +70,7 @@ export default async function ArrivePage({
         duration: s.duration,
       }))}
       barbers={shop.barbers}
+      styleOptions={shop.services.length === 0 ? shop.styles.map(s => ({ id: s.id, name: s.name })) : []}
       initialWaitingCount={waitingCount}
       initialWaitMinutes={waitMinutes}
       isDemoShop={isDemoShop}

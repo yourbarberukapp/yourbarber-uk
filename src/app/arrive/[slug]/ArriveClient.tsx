@@ -23,10 +23,17 @@ interface FamilyMember {
   name: string;
 }
 
+interface StyleOption {
+  id: string;
+  name: string;
+}
+
 interface Props {
   shopSlug: string;
   shopName: string;
   services: ShopService[];
+  /** Cut Styles shown as quick-pick chips when the shop has no bookable Services configured. */
+  styleOptions?: StyleOption[];
   barbers: ShopBarber[];
   initialWaitingCount: number;
   initialWaitMinutes: number;
@@ -57,7 +64,7 @@ function saveArrivalStatus(
 const MAX_SERVICES_SHOWN = 5;
 
 export default function ArriveClient({
-  shopSlug, shopName, services, barbers,
+  shopSlug, shopName, services, styleOptions = [], barbers,
   initialWaitingCount, initialWaitMinutes,
   isDemoShop = false, demoWalkIn = false,
   presetBarberId = null,
@@ -67,6 +74,7 @@ export default function ArriveClient({
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([]);
   const [preferredBarberId, setPreferredBarberId] = useState<string>(presetBarberId || 'any');
   const presetBarberName = presetBarberId ? barbers.find((b) => b.id === presetBarberId)?.name : null;
   const [loading, setLoading] = useState(false);
@@ -256,10 +264,12 @@ export default function ArriveClient({
     setError('');
     setLoading(true);
     const selectedService = services.find(s => s.id === selectedServiceId);
+    const selectedStyleNames = styleOptions.filter(s => selectedStyleIds.includes(s.id)).map(s => s.name);
     const preferredBarber = barbers.find(b => b.id === preferredBarberId);
     const noteParts: string[] = [];
     if (preferredBarber) noteParts.push(`See: ${preferredBarber.name}`);
     if (selectedService) noteParts.push(selectedService.name);
+    if (selectedStyleNames.length > 0) noteParts.push(selectedStyleNames.join(', '));
     if (note.trim()) noteParts.push(note.trim());
     const noteText = noteParts.join(' · ') || undefined;
     try {
@@ -272,7 +282,7 @@ export default function ArriveClient({
           name: name || undefined,
           demoName: demoWalkIn ? 'Test Barber' : undefined,
           note: noteText,
-          preferredStyle: selectedService?.name || undefined,
+          preferredStyle: selectedService?.name || selectedStyleNames.join(', ') || undefined,
           familyMemberIds: selectedMemberIds,
           final: true,
         }),
@@ -492,11 +502,13 @@ export default function ArriveClient({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <button style={btnLime} onClick={() => setStep('name')}>
-                  <ChevronRight size={16} /> Join the queue
+                  <ChevronRight size={16} /> {waitingCount === 0 ? "I'm here — check me in" : 'Join the queue'}
                 </button>
-                <button style={btnGhost} onClick={() => setStep('notify_standby')}>
-                  Maybe later
-                </button>
+                {waitingCount > 0 && (
+                  <button style={btnGhost} onClick={() => setStep('notify_standby')}>
+                    Notify me instead of waiting here
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -662,7 +674,7 @@ export default function ArriveClient({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <button style={btnLime} onClick={() => setStep('phone')}>
-                  <Check size={16} /> Sounds good, I&apos;ll wait
+                  <Check size={16} /> {waitingCount === 0 ? "Let's go" : "Sounds good, I'll wait"}
                 </button>
                 <button style={btnGhost} onClick={() => setStep('notify_standby')}>
                   Not for me
@@ -679,7 +691,7 @@ export default function ArriveClient({
                   What&apos;s your number?
                 </p>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '0.375rem', fontFamily: 'var(--font-inter, sans-serif)' }}>
-                  Your number keeps your cut history across visits.
+                  So we can find your details next time — your grade, taper, and photos. We don&apos;t text or call you.
                 </p>
               </div>
               <input
@@ -804,6 +816,35 @@ export default function ArriveClient({
                       +{hiddenServiceCount} more service{hiddenServiceCount > 1 ? 's' : ''} available — just ask at the chair
                     </p>
                   )}
+                </div>
+              )}
+
+              {visibleServices.length === 0 && styleOptions.length > 0 && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', marginBottom: '0.5rem', fontFamily: 'var(--font-barlow, sans-serif)' }}>
+                    What are you after? <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional, pick any)</span>
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {styleOptions.map(style => {
+                      const active = selectedStyleIds.includes(style.id);
+                      return (
+                        <button
+                          key={style.id}
+                          type="button"
+                          onClick={() => setSelectedStyleIds(ids => active ? ids.filter(id => id !== style.id) : [...ids, style.id])}
+                          style={{
+                            padding: '0.5rem 0.875rem', borderRadius: 100, cursor: 'pointer',
+                            fontSize: '0.8rem', fontWeight: 700, fontFamily: 'var(--font-barlow, sans-serif)',
+                            border: active ? '1px solid #C8F135' : '1px solid rgba(255,255,255,0.15)',
+                            background: active ? 'rgba(200,241,53,0.1)' : 'transparent',
+                            color: active ? '#C8F135' : 'rgba(255,255,255,0.6)',
+                          }}
+                        >
+                          {style.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
