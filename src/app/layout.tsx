@@ -24,6 +24,12 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'YourBarber',
   },
+  other: {
+    // Next's appleWebApp.capable only emits the legacy apple-mobile-web-app-capable
+    // tag (still needed for older iOS Safari). Chrome/Android want the standardised
+    // mobile-web-app-capable tag too, or it logs a deprecation warning on every page.
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 import { DemoOverrideProvider } from '@/components/DemoOverrideProvider';
