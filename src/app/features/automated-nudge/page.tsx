@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { ArrowRight, BellRing, CalendarClock, CheckCircle2, MessageSquareText, Sparkles, Smartphone, UserCheck } from 'lucide-react';
+import { ArrowRight, BellRing, CalendarClock, CheckCircle2, Sparkles, Wallet, UserCheck } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeaturePager from '@/components/FeaturePager';
-import FeatureHero from '@/components/FeatureHero';
+import { WalletLockScreenMockup } from '@/components/marketing/PhoneMockups';
 
 const proofPoints = [
   'Regulars get a timely nudge before they drift away',
@@ -19,9 +19,9 @@ const reminderParts = [
     body: 'The reminder lands when a client is actually due back, not at random and not six weeks too late.',
   },
   {
-    icon: MessageSquareText,
-    title: 'Simple text message',
-    body: 'A short "time for a trim?" text is enough to bring regulars back without making the shop sound pushy.',
+    icon: Wallet,
+    title: 'A push, not a text',
+    body: 'A short "time for a trim?" nudge lands on their Wallet pass — free, no SMS cost, and it never gets lost in a spam filter.',
   },
   {
     icon: UserCheck,
@@ -38,7 +38,7 @@ const reminderParts = [
 const moments = [
   'A regular has not been in for a few weeks and is due back.',
   'The shop sees that they are ready for a reminder.',
-  'YourBarber sends a clean, polite text at the right moment.',
+  'YourBarber sends a clean, polite push to their Wallet pass at the right moment.',
   'The client rebooks or walks back in before they drift to another shop.',
 ];
 
@@ -47,21 +47,44 @@ export default function AutomatedNudgePage() {
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden selection:bg-[#C8F135] selection:text-[#0A0A0A]">
       <Navbar />
 
-      <FeatureHero
-        titleLines={['Bring regulars', 'back before', 'they drift.']}
-        description="YourBarber watches who is due back and gives the shop a clean way to nudge them at the right time. No chasing people manually, no guessing who has gone quiet, and no losing easy repeat business to the barbershop down the road."
-        primaryHref="/demo-hub"
-        primaryLabel="Try the demo"
-        secondaryHref="/login?callbackUrl=%2Freminders"
-        secondaryLabel="Open Reminders"
-        proofPoints={proofPoints}
-        imageSrc="/showcase-sms.png"
-        imageAlt="Reminder text message preview for a barber customer returning for their next trim"
-        leftLabel="What the client sees"
-        leftValue="A timely nudge."
-        rightLabel="What the shop gets"
-        rightValue="More return visits."
-      />
+      <section className="relative overflow-hidden pt-36 pb-20 lg:pt-44 lg:pb-28">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#C8F135]/6 via-transparent to-transparent" />
+        </div>
+        <div className="container relative mx-auto px-6 lg:px-12">
+          <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="max-w-3xl">
+              <span className="badge-lime mb-6 inline-block">Feature deep dive</span>
+              <h1 className="font-barlow font-black text-[clamp(3rem,7.5vw,5.75rem)] uppercase leading-[0.9] tracking-tight mb-6">
+                Bring regulars
+                <br />back before
+                <br /><span className="text-[#C8F135]">they drift.</span>
+              </h1>
+              <p className="max-w-2xl text-lg leading-relaxed text-white/62 font-inter mb-8">
+                YourBarber watches who is due back and gives the shop a clean way to nudge them at the right time. No chasing people manually, no guessing who has gone quiet, and no losing easy repeat business to the barbershop down the road.
+              </p>
+              <div className="flex flex-wrap gap-4 mb-10">
+                <Link href="/demo-hub" className="btn-lime px-8 py-4 text-base inline-flex items-center gap-2 shadow-[0_0_28px_rgba(200,241,53,0.24)]">
+                  Try the demo <ArrowRight size={17} />
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {proofPoints.map(point => (
+                  <div key={point} className="flex items-start gap-3 text-white/72 font-inter">
+                    <CheckCircle2 size={16} className="text-[#C8F135] mt-1 flex-shrink-0" />
+                    <span>{point}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative flex justify-center">
+              <div className="absolute -inset-6 rounded-[2rem] bg-[#C8F135]/8 blur-3xl pointer-events-none" />
+              <WalletLockScreenMockup />
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="bg-[#0f0f0f] py-20 lg:py-24">
         <div className="container mx-auto px-6 lg:px-12">
@@ -131,7 +154,7 @@ export default function AutomatedNudgePage() {
               <div className="space-y-4 border-t border-white/8 pt-6">
                 {[
                   'The shop can spot regulars who have gone quiet',
-                  'Messages go out without interrupting the day',
+                  'Pushes go out without interrupting the day',
                   'Return visits are driven by timing, not luck',
                   'Reminders go out without adding to the admin pile',
                 ].map(item => (
@@ -152,9 +175,6 @@ export default function AutomatedNudgePage() {
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link href="/demo-hub" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-[#C8F135] hover:text-white transition-colors">
                   Watch it in the demo <ArrowRight size={15} />
-                </Link>
-                <Link href="/login?callbackUrl=%2Freminders" className="inline-flex items-center gap-2 text-sm font-barlow font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors">
-                  Open Reminders <Smartphone size={15} />
                 </Link>
               </div>
             </div>

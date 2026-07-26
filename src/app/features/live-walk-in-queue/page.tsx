@@ -1,15 +1,15 @@
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, Coffee, MessageSquareText, QrCode, Smartphone, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Coffee, Wallet, QrCode, Smartphone, Users } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeaturePager from '@/components/FeaturePager';
-import FeatureHero from '@/components/FeatureHero';
+import { CustomerMockup } from '@/components/marketing/PhoneMockups';
 
 const proofPoints = [
   'Customers join from their own phone without stopping a barber mid-cut',
   'The queue stays visible, fair, and easy to trust',
   'People can leave the doorway instead of crowding the shop',
-  'Texts and live updates cut down the usual "how long?" interruptions',
+  'Wallet-pass push and live updates cut down the usual "how long?" interruptions',
 ];
 
 const queueParts = [
@@ -24,9 +24,9 @@ const queueParts = [
     body: 'Customers can see where they stand without hovering near the chair or asking who is next.',
   },
   {
-    icon: MessageSquareText,
-    title: 'Text when next',
-    body: 'They can step out for a coffee and come back when their turn is close instead of clogging the lobby.',
+    icon: Wallet,
+    title: 'Push when next',
+    body: 'They can step out for a coffee and get a free push to their Wallet pass when their turn is close, instead of clogging the lobby.',
   },
   {
     icon: Users,
@@ -47,21 +47,47 @@ export default function LiveWalkInQueuePage() {
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden selection:bg-[#C8F135] selection:text-[#0A0A0A]">
       <Navbar />
 
-      <FeatureHero
-        titleLines={['A live queue', 'the whole shop', 'can trust.']}
-        description="YourBarber gives walk-in shops a calmer front door. Customers scan the wall QR, join from their own phone, and see where they stand. Barbers see the same queue instantly, so the day moves without the usual shouting, crowding, and guesswork."
-        primaryHref="/demo-hub"
-        primaryLabel="Try the demo"
-        secondaryHref="/arrive/the-barber-room"
-        secondaryLabel="Open Customer Scan"
-        proofPoints={proofPoints}
-        imageSrc="/demo-kiosk.png"
-        imageAlt="Wall check-in screen showing the live walk-in queue in a barbershop"
-        leftLabel="What customers see"
-        leftValue="Where they stand."
-        rightLabel="What the shop gets"
-        rightValue="Less queue drama."
-      />
+      <section className="relative overflow-hidden pt-36 pb-20 lg:pt-44 lg:pb-28">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#C8F135]/6 via-transparent to-transparent" />
+        </div>
+        <div className="container relative mx-auto px-6 lg:px-12">
+          <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="max-w-3xl">
+              <span className="badge-lime mb-6 inline-block">Feature deep dive</span>
+              <h1 className="font-barlow font-black text-[clamp(3rem,7.5vw,5.75rem)] uppercase leading-[0.9] tracking-tight mb-6">
+                A live queue
+                <br />the whole shop
+                <br /><span className="text-[#C8F135]">can trust.</span>
+              </h1>
+              <p className="max-w-2xl text-lg leading-relaxed text-white/62 font-inter mb-8">
+                YourBarber gives walk-in shops a calmer front door. Customers scan the wall QR from their own phone and see where they stand. Barbers see the same queue instantly, so the day moves without the usual shouting, crowding, and guesswork.
+              </p>
+              <div className="flex flex-wrap gap-4 mb-10">
+                <Link href="/demo-hub" className="btn-lime px-8 py-4 text-base inline-flex items-center gap-2 shadow-[0_0_28px_rgba(200,241,53,0.24)]">
+                  Try the demo <ArrowRight size={17} />
+                </Link>
+                <Link href="/arrive/the-barber-room" className="px-8 py-4 text-base border border-white/20 text-white hover:border-white/45 transition-colors font-barlow font-bold uppercase tracking-wide rounded-sm inline-flex items-center gap-2">
+                  Open Customer Scan
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {proofPoints.map(point => (
+                  <div key={point} className="flex items-start gap-3 text-white/72 font-inter">
+                    <CheckCircle2 size={16} className="text-[#C8F135] mt-1 flex-shrink-0" />
+                    <span>{point}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative flex justify-center">
+              <div className="absolute -inset-6 rounded-[2rem] bg-[#C8F135]/8 blur-3xl pointer-events-none" />
+              <CustomerMockup />
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="bg-[#0f0f0f] py-20 lg:py-24">
         <div className="container mx-auto px-6 lg:px-12">

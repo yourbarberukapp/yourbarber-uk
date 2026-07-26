@@ -7,8 +7,8 @@ type FeatureHeroProps = {
   description: string;
   primaryHref: string;
   primaryLabel: string;
-  secondaryHref: string;
-  secondaryLabel: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
   proofPoints: string[];
   imageSrc: string;
   imageAlt: string;
@@ -58,9 +58,11 @@ export default function FeatureHero({
               <Link href={primaryHref} className="btn-lime px-8 py-4 text-base inline-flex items-center gap-2 shadow-[0_0_28px_rgba(200,241,53,0.24)]">
                 {primaryLabel} <ArrowRight size={17} />
               </Link>
-              <Link href={secondaryHref} className="px-8 py-4 text-base border border-white/20 text-white hover:border-white/45 transition-colors font-barlow font-bold uppercase tracking-wide rounded-sm inline-flex items-center gap-2">
-                {secondaryLabel}
-              </Link>
+              {secondaryHref && secondaryLabel && (
+                <Link href={secondaryHref} className="px-8 py-4 text-base border border-white/20 text-white hover:border-white/45 transition-colors font-barlow font-bold uppercase tracking-wide rounded-sm inline-flex items-center gap-2">
+                  {secondaryLabel}
+                </Link>
+              )}
             </div>
 
             <div className="space-y-3">

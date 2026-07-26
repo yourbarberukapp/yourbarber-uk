@@ -52,8 +52,6 @@ export default function CutPassportPage() {
         description="Your queue gets people in the chair. The Cut Passport is what makes them come back. It gives every barber in the shop the same memory: what the client had last time, what they liked, and what to repeat today."
         primaryHref="/demo-hub"
         primaryLabel="Try the demo"
-        secondaryHref="/login?callbackUrl=%2Fbarber"
-        secondaryLabel="Open Barber Mode"
         proofPoints={proofPoints}
         imageSrc="/showcase-record.png"
         imageAlt="Cut Passport preview showing haircut notes and photos on a tablet in a barbershop"
