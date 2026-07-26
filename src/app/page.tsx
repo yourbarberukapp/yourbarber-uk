@@ -76,6 +76,68 @@ function CustomerMockup() {
   );
 }
 
+function WalletLockScreenMockup() {
+  return (
+    <div
+      style={{
+        width: 300,
+        aspectRatio: '300 / 375',
+        borderRadius: 14,
+        overflow: 'hidden',
+        position: 'relative',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+        background: 'linear-gradient(160deg, #0d1f0d 0%, #06120a 55%, #030603 100%)',
+      }}
+    >
+      {/* Lock screen chrome */}
+      <div style={{ textAlign: 'center', paddingTop: 28 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', fontFamily: 'var(--font-inter)' }}>Friday, May 24</div>
+        <div style={{ fontSize: 52, fontWeight: 300, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.1, fontFamily: 'var(--font-inter)' }}>10:30</div>
+      </div>
+
+      {/* Wallet pass push notification */}
+      <div
+        style={{
+          margin: '28px 14px 0',
+          background: 'rgba(255,255,255,0.12)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: 14,
+          padding: '10px 12px',
+          display: 'flex',
+          gap: 10,
+          alignItems: 'flex-start',
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        <div
+          style={{
+            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+            background: '#C8F135', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <span style={{ fontSize: 13, fontWeight: 900, color: '#0a0a0a', fontFamily: 'var(--font-barlow)' }}>YB</span>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'white', fontFamily: 'var(--font-barlow)' }}>Wallet</span>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-inter)' }}>now</span>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'white', marginTop: 2, fontFamily: 'var(--font-inter)' }}>The Barber Room</div>
+          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginTop: 1, lineHeight: 1.3, fontFamily: 'var(--font-inter)' }}>
+            You&apos;re due back in — tap to see your usual, Marcus.
+          </div>
+        </div>
+      </div>
+
+      <div style={{ position: 'absolute', bottom: 18, left: 0, right: 0, textAlign: 'center' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-barlow)' }}>
+          Swipe up to unlock
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BarberMockup() {
   return (
     <PhoneChrome>
@@ -286,9 +348,11 @@ export default function Home() {
                   <Image src="/passport-ipad.webp" alt="Cut Passport on iPad" width={300} height={407} style={{ display: 'block', width: '100%', height: 'auto' }} />
                 </div>
 
-                {/* SMS reminder photo */}
-                <div style={{ marginTop: 16, width: 300, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
-                  <Image src="/sms-reminder.webp" alt="SMS reminder on phone lock screen" width={300} height={375} style={{ display: 'block', width: '100%', height: 'auto' }} />
+                {/* Wallet-pass push notification, replacing the old SMS mockup — the site
+                    sells "no SMS fees" right next to this image, so it must show the real
+                    channel (Wallet push), not a text-message bubble. */}
+                <div style={{ marginTop: 16 }}>
+                  <WalletLockScreenMockup />
                 </div>
               </div>
             </motion.div>
