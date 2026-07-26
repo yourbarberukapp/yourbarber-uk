@@ -26,6 +26,22 @@ function computeLabelColour(hexColour?: string): string {
   return `rgb(${Math.round(r + (255 - r) * 0.65)}, ${Math.round(g + (255 - g) * 0.65)}, ${Math.round(b + (255 - b) * 0.65)})`;
 }
 
+/**
+ * Primary text colour (name, stamps, reward value) — was hardcoded white,
+ * which is unreadable on a light/bright accent colour like lime green.
+ * Standard WCAG relative-luminance check: flips to near-black once the
+ * background is light enough that white text loses contrast.
+ */
+function computeForegroundColour(hexColour?: string): string {
+  const safe = /^#[0-9a-f]{6}$/i.test(hexColour || '') ? (hexColour || '').slice(1) : '111111';
+  const r = parseInt(safe.slice(0, 2), 16) / 255;
+  const g = parseInt(safe.slice(2, 4), 16) / 255;
+  const b = parseInt(safe.slice(4, 6), 16) / 255;
+  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  return luminance > 0.5 ? 'rgb(17, 17, 17)' : 'rgb(255, 255, 255)';
+}
+
 function buildStampDisplay(stampCount: number, target: number): string {
   const filled = Math.min(stampCount, target);
   if (target <= 10) {
@@ -197,7 +213,7 @@ export async function generateClientApplePass(input: ClientPassInput): Promise<{
     description: `${input.shopName} Digital Card`,
     logoText: input.shopName,
     backgroundColor: rgbString(input.accentColor),
-    foregroundColor: 'rgb(255, 255, 255)',
+    foregroundColor: computeForegroundColour(input.accentColor),
     labelColor: computeLabelColour(input.accentColor),
     storeCard: {
       primaryFields,
@@ -344,7 +360,7 @@ export async function generateOwnerApplePass(input: OwnerPassInput): Promise<{ p
     description: `${input.shopName} — ${roleLabel} Card`,
     logoText: input.shopName,
     backgroundColor: rgbString(input.accentColor),
-    foregroundColor: 'rgb(255, 255, 255)',
+    foregroundColor: computeForegroundColour(input.accentColor),
     labelColor: computeLabelColour(input.accentColor),
     generic: {
       primaryFields: [

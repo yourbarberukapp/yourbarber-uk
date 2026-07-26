@@ -14,9 +14,8 @@ export interface WizardState {
 }
 
 const STEPS = [
-  { key: 'logo', label: 'Logo' },
+  { key: 'branding', label: 'Branding' },
   { key: 'colour', label: 'Colour' },
-  { key: 'banner', label: 'Banner' },
   { key: 'loyalty', label: 'Loyalty' },
   { key: 'review', label: 'Review' },
 ] as const;

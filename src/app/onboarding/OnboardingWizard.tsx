@@ -12,6 +12,19 @@ const QRCodeSVG = dynamic(() => import('qrcode.react').then((m) => m.QRCodeSVG),
 
 const PRESET_COLORS = ['#111111', '#1A1D20', '#1C2541', '#2B1B17', '#1E3A2B', '#3A1E2B'];
 
+const LOYALTY_PRESETS = [
+  { target: 5, reward: 'Free Hot Towel' },
+  { target: 5, reward: '50% Off 5th Cut' },
+  { target: 10, reward: '50% Off 10th Cut' },
+  { target: 10, reward: 'Free Cut' },
+] as const;
+
+const QR_PLACEMENTS = [
+  { label: 'Front door', blurb: 'Clients scan on the way in' },
+  { label: 'Counter', blurb: 'Backup if they missed the door' },
+  { label: 'Each chair', blurb: 'Barbers can point to it too' },
+] as const;
+
 function computeLabelColour(hex: string): string {
   const safe = /^#[0-9a-f]{6}$/i.test(hex) ? hex.slice(1) : '111111';
   const r = parseInt(safe.slice(0, 2), 16);
@@ -62,14 +75,21 @@ export default function OnboardingWizard({
 
   const [scrapedImages, setScrapedImages] = useState<string[] | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<'logo' | 'banner'>('logo');
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const imageRef = useRef<HTMLImageElement>(null);
 
-  const steps = ['logo', 'colour', 'banner', 'loyalty', 'review'] as const;
+  const steps = ['branding', 'colour', 'loyalty', 'review'] as const;
   const step = steps[stepIndex];
 
-  function initCrop(file: File | Blob | string) {
+  function initCrop(file: File | Blob | string, target: 'logo' | 'banner' = 'logo') {
+    // A blob/object URL is always same-origin so the crop canvas can read
+    // it back out — a bare external URL (string) would "taint" the canvas
+    // and canvas.toBlob() throws SecurityError when we try to save the crop.
+    // Callers passing a string must first fetch it through our own
+    // same-origin proxy (see handleScrapeUrl / the "Found Images" picker).
+    setCropTarget(target);
     if (typeof file === 'string') {
       setCropSrc(file);
     } else {
@@ -78,7 +98,7 @@ export default function OnboardingWizard({
   }
 
   useEffect(() => {
-    if (step !== 'logo') return;
+    if (step !== 'branding') return;
     function handlePaste(e: ClipboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
@@ -135,8 +155,11 @@ export default function OnboardingWizard({
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { naturalWidth, naturalHeight } = e.currentTarget;
+    // No fixed aspect — most barbershop logos are wordmarks (wide) or icons
+    // (square), not circles. Default crop covers the full image; the owner
+    // drags the handles to trim if they want to.
     const initialCrop = centerCrop(
-      makeAspectCrop({ unit: '%', width: 90 }, 1, naturalWidth, naturalHeight),
+      makeAspectCrop({ unit: '%', width: 100 }, naturalWidth / naturalHeight, naturalWidth, naturalHeight),
       naturalWidth,
       naturalHeight
     );
@@ -171,8 +194,12 @@ export default function OnboardingWizard({
     canvas.toBlob(async (blob) => {
       if (!blob) return;
       setCropSrc(null);
-      const file = new File([blob], 'logo-cropped.jpg', { type: 'image/jpeg' });
-      await uploadLogoFile(file);
+      const file = new File([blob], `${cropTarget}-cropped.jpg`, { type: 'image/jpeg' });
+      if (cropTarget === 'banner') {
+        await handleBannerUpload(file);
+      } else {
+        await uploadLogoFile(file);
+      }
     }, 'image/jpeg', 0.95);
   }
 
@@ -279,16 +306,14 @@ export default function OnboardingWizard({
       {cropSrc && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <div style={{ background: '#111', padding: '1.5rem', borderRadius: 12, maxWidth: '100%', maxHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ color: 'white', marginTop: 0 }}>Crop Logo</h3>
+            <h3 style={{ color: 'white', marginTop: 0 }}>{cropTarget === 'banner' ? 'Crop Banner' : 'Crop Logo'}</h3>
             <div style={{ overflow: 'auto', flex: 1, minHeight: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <ReactCrop
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
-                aspect={1}
-                circularCrop
               >
-                <img ref={imageRef} src={cropSrc} alt="Crop" style={{ maxHeight: '60vh', objectFit: 'contain' }} onLoad={onImageLoad} />
+                <img ref={imageRef} src={cropSrc} alt="Crop" crossOrigin="anonymous" style={{ maxHeight: '60vh', objectFit: 'contain' }} onLoad={onImageLoad} />
               </ReactCrop>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
@@ -308,9 +333,22 @@ export default function OnboardingWizard({
               {scrapedImages.map((src, i) => (
                 <button
                   key={i}
-                  onClick={() => {
+                  onClick={async () => {
                     setScrapedImages(null);
-                    initCrop(src);
+                    setUploadingLogo(true);
+                    try {
+                      // Fetch through our own proxy so the resulting blob URL is
+                      // same-origin — cropping a bare external URL taints the
+                      // canvas and canvas.toBlob() throws when saving.
+                      const res = await fetch(`/api/settings/scrape-image?url=${encodeURIComponent(src)}`);
+                      if (!res.ok) throw new Error('Could not fetch image');
+                      const blob = await res.blob();
+                      initCrop(blob);
+                    } catch {
+                      alert('Failed to load that image — try another one.');
+                    } finally {
+                      setUploadingLogo(false);
+                    }
                   }}
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100 }}
                 >
@@ -325,63 +363,107 @@ export default function OnboardingWizard({
         </div>
       )}
 
-      {step === 'logo' && (
+      {step === 'branding' && (
         <div style={cardStyle}>
-          <h2 style={headingStyle}>Add your logo</h2>
+          <h2 style={headingStyle}>Add your branding</h2>
           <p style={subStyle}>
-            This appears on your Wallet pass and shop page. You can skip this and add it later in Settings.
+            Two different things: your <strong>logo</strong> is the small mark shown in the corner of every pass.
+            Your <strong>banner</strong> is an optional wide image across the top of the card — think of it like a
+            photo of your shopfront or chair. Both are shown live in the preview on the right as you add them.
+            You can skip either and add them later in Settings.
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-            {state.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={state.logoUrl} alt="" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)' }} />
-            ) : (
-              <div style={{ width: 64, height: 64, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)' }} />
-            )}
-            <button
-              type="button"
-              onClick={() => logoInputRef.current?.click()}
-              disabled={uploadingLogo}
-              className="btn-lime"
-              style={{ padding: '0.75rem 1.25rem', borderRadius: 4, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700 }}
-            >
-              {uploadingLogo ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              {uploadingLogo ? 'Uploading...' : state.logoUrl ? 'Change logo' : 'Upload logo'}
-            </button>
-            <input
-              ref={logoInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) initCrop(file);
-                e.target.value = '';
-              }}
-            />
+
+          <div style={{ marginTop: '1.5rem' }}>
+            <label style={labelStyle}>Logo</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+              {state.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={state.logoUrl} alt="" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)' }} />
+              ) : (
+                <div style={{ width: 64, height: 64, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)' }} />
+              )}
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={uploadingLogo}
+                className="btn-lime"
+                style={{ padding: '0.75rem 1.25rem', borderRadius: 4, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700 }}
+              >
+                {uploadingLogo ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                {uploadingLogo ? 'Uploading...' : state.logoUrl ? 'Change logo' : 'Upload logo'}
+              </button>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) initCrop(file, 'logo');
+                  e.target.value = '';
+                }}
+              />
+            </div>
+            <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="url"
+                placeholder="Or paste an image URL or website..."
+                value={logoUrlInput}
+                onChange={(e) => setLogoUrlInput(e.target.value)}
+                style={{ ...inputStyle, flex: 1 }}
+                onKeyDown={(e) => e.key === 'Enter' && handleScrapeUrl(logoUrlInput)}
+              />
+              <button
+                type="button"
+                onClick={() => handleScrapeUrl(logoUrlInput)}
+                disabled={!logoUrlInput || uploadingLogo}
+                style={{ padding: '0.75rem 1rem', borderRadius: 4, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}
+              >
+                <LinkIcon size={16} /> Grab
+              </button>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+              Tip: You can also press <strong>Ctrl+V</strong> to paste a logo directly from your clipboard.
+            </p>
           </div>
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="url"
-              placeholder="Or paste an image URL or website..."
-              value={logoUrlInput}
-              onChange={(e) => setLogoUrlInput(e.target.value)}
-              style={{ ...inputStyle, flex: 1 }}
-              onKeyDown={(e) => e.key === 'Enter' && handleScrapeUrl(logoUrlInput)}
-            />
-            <button
-              type="button"
-              onClick={() => handleScrapeUrl(logoUrlInput)}
-              disabled={!logoUrlInput || uploadingLogo}
-              style={{ padding: '0.75rem 1rem', borderRadius: 4, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}
-            >
-              <LinkIcon size={16} /> Grab
-            </button>
+
+          <div style={{ marginTop: '1.75rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <label style={labelStyle}>Banner (optional)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+              {state.stripUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={state.stripUrl} alt="" style={{ width: 120, height: 46, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)' }} />
+              ) : (
+                <div style={{ width: 120, height: 46, borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)' }} />
+              )}
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                disabled={uploadingBanner}
+                className="btn-lime"
+                style={{ padding: '0.75rem 1.25rem', borderRadius: 4, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700 }}
+              >
+                {uploadingBanner ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                {uploadingBanner ? 'Uploading...' : state.stripUrl ? 'Change banner' : 'Upload banner'}
+              </button>
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) initCrop(file, 'banner');
+                  e.target.value = '';
+                }}
+              />
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+              Skip this and your accent colour fills the banner space instead.
+            </p>
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '0.75rem' }}>
-            Tip: You can also press <strong>Ctrl+V</strong> to paste a logo directly from your clipboard.
-          </p>
-          <StepNav onNext={goNext} nextLabel={state.logoUrl ? 'Next' : 'Skip for now'} showBack={false} />
+
+          <StepNav onNext={goNext} nextLabel={state.logoUrl || state.stripUrl ? 'Next' : 'Skip for now'} showBack={false} />
         </div>
       )}
 
@@ -433,50 +515,39 @@ export default function OnboardingWizard({
         </div>
       )}
 
-      {step === 'banner' && (
-        <div style={cardStyle}>
-          <h2 style={headingStyle}>Banner image (optional)</h2>
-          <p style={subStyle}>
-            A wide image across the top of the card. Skip this and your accent colour is used instead.
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-            {state.stripUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={state.stripUrl} alt="" style={{ width: 120, height: 46, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)' }} />
-            ) : (
-              <div style={{ width: 120, height: 46, borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)' }} />
-            )}
-            <button
-              type="button"
-              onClick={() => bannerInputRef.current?.click()}
-              disabled={uploadingBanner}
-              className="btn-lime"
-              style={{ padding: '0.75rem 1.25rem', borderRadius: 4, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700 }}
-            >
-              {uploadingBanner ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              {uploadingBanner ? 'Uploading...' : state.stripUrl ? 'Change banner' : 'Upload banner'}
-            </button>
-            <input
-              ref={bannerInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleBannerUpload(file);
-                e.target.value = '';
-              }}
-            />
-          </div>
-          <StepNav onNext={goNext} onBack={goBack} nextLabel={state.stripUrl ? 'Next' : 'Skip for now'} />
-        </div>
-      )}
-
       {step === 'loyalty' && (
         <div style={cardStyle}>
           <h2 style={headingStyle}>Loyalty reward</h2>
-          <p style={subStyle}>What do regulars earn, and how many cuts does it take?</p>
-          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <p style={subStyle}>What do regulars earn, and how many cuts does it take? Pick a quick preset or write your own.</p>
+
+          <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {LOYALTY_PRESETS.map((preset) => {
+              const active = state.loyaltyTarget === preset.target && state.loyaltyReward === preset.reward;
+              return (
+                <button
+                  key={preset.reward}
+                  type="button"
+                  onClick={() => {
+                    update('loyaltyTarget', preset.target);
+                    update('loyaltyReward', preset.reward);
+                  }}
+                  style={{
+                    textAlign: 'left', padding: '0.75rem 1rem', borderRadius: 6, cursor: 'pointer',
+                    background: active ? 'rgba(200,241,53,0.1)' : 'rgba(255,255,255,0.03)',
+                    border: active ? '1px solid #C8F135' : '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  }}
+                >
+                  <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: 600 }}>{preset.reward}</span>
+                  <span style={{ color: active ? '#C8F135' : 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                    {preset.target} cuts
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={labelStyle}>Cuts required</label>
               <select
@@ -501,6 +572,11 @@ export default function OnboardingWizard({
               />
             </div>
           </div>
+
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1rem' }}>
+            This is a single starter reward to get you going. Want to stack several offers (e.g. a free hot towel at 5 cuts <em>and</em> 50% off at 10)? Set up multiple loyalty offers any time in Settings → Pass Studio.
+          </p>
+
           <StepNav onNext={goNext} onBack={goBack} />
         </div>
       )}
@@ -508,34 +584,40 @@ export default function OnboardingWizard({
       {step === 'review' && (
         <div style={cardStyle}>
           <h2 style={headingStyle}>You&apos;re all set</h2>
-          <p style={subStyle}>Add your own card to Wallet, then print your arrival QR for the shop.</p>
+          <p style={subStyle}>
+            Your shop and pass are ready. Here&apos;s how clients actually check in — everything below happens in
+            the dashboard, not here.
+          </p>
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-            <a
-              href="/api/wallet/owner/apple"
-              className="btn-lime"
-              style={{ flex: 1, padding: '0.875rem', borderRadius: 4, textAlign: 'center', fontSize: '0.875rem', fontWeight: 700, textDecoration: 'none' }}
-            >
-              Add to Apple Wallet
-            </a>
-            <a
-              href="/api/wallet/owner/google"
-              target="_blank"
-              rel="noreferrer"
-              style={{ flex: 1, padding: '0.875rem', borderRadius: 4, textAlign: 'center', fontSize: '0.875rem', fontWeight: 700, textDecoration: 'none', background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
-            >
-              Add to Google Wallet
-            </a>
-          </div>
-
-          <div style={{ background: 'white', borderRadius: 12, padding: '1.25rem', marginTop: '1.5rem', textAlign: 'center' }}>
-            <QRCodeSVG value={`https://yourbarber.uk/arrive/${shopSlug}`} size={140} fgColor="#0A0A0A" bgColor="white" />
-            <p style={{ color: '#666', fontSize: '0.7rem', marginTop: '0.5rem', fontFamily: 'monospace' }}>
-              yourbarber.uk/arrive/{shopSlug}
-            </p>
+          {/* Where the QR goes — simple three-spot mockup */}
+          <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+            {QR_PLACEMENTS.map((spot) => (
+              <div key={spot.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
+                <div style={{ width: 40, height: 40, margin: '0 auto 0.5rem', borderRadius: 6, background: '#141414', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <QRCodeSVG value={`https://yourbarber.uk/arrive/${shopSlug}`} size={26} fgColor="#C8F135" bgColor="#141414" />
+                </div>
+                <p style={{ color: 'white', fontSize: '0.7rem', fontWeight: 700, margin: 0, textTransform: 'uppercase' }}>{spot.label}</p>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', margin: '0.15rem 0 0' }}>{spot.blurb}</p>
+              </div>
+            ))}
           </div>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', marginTop: '0.75rem', lineHeight: 1.5 }}>
-            Print this and put it on the wall or front desk - clients scan it to join your queue.
+            Once you&apos;re in the dashboard, go to <strong>Arrival QR</strong> to print or download this code —
+            clients scan it on their own phone to join the queue. No app for them to install.
+          </p>
+
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <p style={{ color: 'white', fontSize: '0.85rem', fontWeight: 700, margin: 0 }}>Your Wallet business card</p>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', marginTop: '0.4rem', lineHeight: 1.5 }}>
+              From the dashboard sidebar, tap <strong>My Owner Card</strong> to add your own Apple or Google Wallet
+              card — it carries your sign-in passcode, so it doubles as your login. Add staff from <strong>Team</strong>{' '}
+              and each of them gets their own card the same way.
+            </p>
+          </div>
+
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1rem' }}>
+            Everything here — logo, colour, banner, loyalty reward — stays editable any time in Settings → Pass
+            Studio.
           </p>
 
           <button

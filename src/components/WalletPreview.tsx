@@ -2,6 +2,23 @@
 
 import React from 'react';
 
+/**
+ * Primary text colour on the pass — flips to near-black once the accent
+ * background is light enough that white text loses contrast (e.g. lime
+ * green). Standard WCAG relative-luminance check; mirrors
+ * computeForegroundColour in src/lib/wallet/passGenerator.ts so the preview
+ * matches the real generated pass.
+ */
+function computeForegroundColour(hex?: string): string {
+  const safe = /^#[0-9a-f]{6}$/i.test(hex || '') ? (hex as string).slice(1) : '111111';
+  const r = parseInt(safe.slice(0, 2), 16) / 255;
+  const g = parseInt(safe.slice(2, 4), 16) / 255;
+  const b = parseInt(safe.slice(4, 6), 16) / 255;
+  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  return luminance > 0.5 ? '#111111' : '#ffffff';
+}
+
 interface Props {
   shopName: string;
   customerName?: string;
@@ -29,6 +46,11 @@ export function AppleWalletPreview({
 }: Props) {
   const filled = Math.min(loyaltyStamps, loyaltyTarget);
   const stampDots = '●'.repeat(filled) + '○'.repeat(Math.max(0, loyaltyTarget - filled));
+  const fg = computeForegroundColour(accentColor);
+  const fgMuted = fg === '#ffffff' ? 'rgba(255,255,255,0.8)' : 'rgba(17,17,17,0.7)';
+  const fgBorder = fg === '#ffffff' ? 'rgba(255,255,255,0.15)' : 'rgba(17,17,17,0.15)';
+  const fgSubtleBg = fg === '#ffffff' ? 'rgba(255,255,255,0.06)' : 'rgba(17,17,17,0.06)';
+  const fgIconBg = fg === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(17,17,17,0.1)';
 
   return (
     <div
@@ -37,13 +59,13 @@ export function AppleWalletPreview({
         height: 440,
         borderRadius: 16,
         background: accentColor || '#111111',
-        border: '1px solid rgba(255,255,255,0.15)',
+        border: `1px solid ${fgBorder}`,
         padding: '1.25rem',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        color: 'white',
+        color: fg,
         boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
         position: 'relative',
         overflow: 'hidden',
@@ -56,11 +78,11 @@ export function AppleWalletPreview({
           <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: labelColor }}>
             BARBERSHOP PASS
           </span>
-          <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', color: 'white', lineHeight: 1.1 }}>
+          <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, textTransform: 'uppercase', color: fg, lineHeight: 1.1 }}>
             {shopName || 'BENJ BARBERS'}
           </h4>
         </div>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: fgIconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -84,7 +106,7 @@ export function AppleWalletPreview({
         <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: labelColor }}>
           LOYALTY STAMPS
         </span>
-        <div style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '0.15em', color: 'white', marginTop: 4 }}>
+        <div style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '0.15em', color: fg, marginTop: 4 }}>
           {stampDots}
         </div>
       </div>
@@ -95,7 +117,7 @@ export function AppleWalletPreview({
           <span style={{ fontSize: '0.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: labelColor }}>
             REWARD
           </span>
-          <p style={{ margin: '2px 0 0', fontSize: '0.8rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>
+          <p style={{ margin: '2px 0 0', fontSize: '0.8rem', fontWeight: 800, color: fg, lineHeight: 1.2 }}>
             {rewardName}
           </p>
         </div>
@@ -103,18 +125,18 @@ export function AppleWalletPreview({
           <span style={{ fontSize: '0.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: labelColor }}>
             CLIENT
           </span>
-          <p style={{ margin: '2px 0 0', fontSize: '0.8rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>
+          <p style={{ margin: '2px 0 0', fontSize: '0.8rem', fontWeight: 800, color: fg, lineHeight: 1.2 }}>
             {customerName}
           </p>
         </div>
       </div>
 
       {promoMessage && (
-        <div style={{ marginTop: '0.75rem', background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ marginTop: '0.75rem', background: fgSubtleBg, borderRadius: 8, padding: '0.5rem 0.75rem', border: `1px solid ${fgBorder}` }}>
           <span style={{ fontSize: '0.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: labelColor }}>
             PROMO OFFER
           </span>
-          <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>
+          <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: fgMuted }}>
             {promoMessage}
           </p>
         </div>
