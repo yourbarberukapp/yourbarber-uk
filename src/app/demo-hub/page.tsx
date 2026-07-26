@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Monitor,
@@ -14,6 +14,7 @@ import {
   LogOut,
   Scissors,
   ArrowRight,
+  Radio,
 } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
@@ -121,8 +122,41 @@ const previewScreens = [
   },
 ];
 
+type LiveClient = { id: string; name: string | null; walkInId: string | null };
+
+/** Polls the same endpoint Barber Mode reads from, so a name that shows up
+ * here after checking in via Customer Scan proves it's genuinely one
+ * connected system, not three separate demos. */
+function useLiveQueue() {
+  const [clients, setClients] = useState<LiveClient[]>([]);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    function poll() {
+      fetch('/api/demo/queue', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => {
+          if (cancelled) return;
+          setIsLive(!!d.isLive);
+          setClients(d.isLive ? (d.clients ?? []) : []);
+        })
+        .catch(() => {});
+    }
+    poll();
+    const interval = setInterval(poll, 5_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  return { clients, isLive };
+}
+
 export default function DemoHubPage() {
   const [activeStep, setActiveStep] = useState(0);
+  const { clients: liveClients, isLive } = useLiveQueue();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -142,7 +176,7 @@ export default function DemoHubPage() {
               <span className="text-[#C8F135]">walk-in flow.</span>
             </h1>
             <p className="text-white/48 font-inter text-lg max-w-xl mx-auto leading-relaxed">
-              Four steps, in order: a customer joins the queue, the barber opens their history, you see the Cut Passport up close, then the owner's view of the whole shop.
+              Check in as a real customer on step 1, then watch their name follow them into Barber Mode and the owner's live queue — same person, same system, no re-entering anything.
             </p>
           </motion.div>
 
@@ -164,13 +198,24 @@ export default function DemoHubPage() {
             ))}
           </div>
 
+          {/* Live proof this is one connected system: whoever just checked in via
+              Customer Scan shows up here by name, the same name Barber Mode and
+              the Owner Dashboard will show. */}
           <div className="flex justify-center mb-12">
-            <button
-              onClick={() => signOut({ callbackUrl: '/demo-hub' })}
-              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/30 hover:text-[#C8F135] transition-colors"
-            >
-              <LogOut size={12} /> Switching views? Sign out first
-            </button>
+            {isLive && liveClients.length > 0 ? (
+              <div className="flex items-center gap-3 bg-[#C8F135]/8 border border-[#C8F135]/25 rounded-full px-5 py-2.5">
+                <Radio size={12} className="text-[#C8F135]" />
+                <span className="text-xs font-barlow font-bold uppercase tracking-widest text-[#C8F135]">
+                  Live now: {liveClients.map(c => c.name ?? 'Someone').join(', ')} {liveClients.length === 1 ? 'is' : 'are'} in the queue
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 bg-white/[0.03] border border-white/8 rounded-full px-5 py-2.5">
+                <span className="text-xs font-barlow font-bold uppercase tracking-widest text-white/35">
+                  Queue is empty — check in on step 1 and watch their name appear everywhere else
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Active step panel */}
@@ -228,6 +273,18 @@ export default function DemoHubPage() {
                       <div className="opacity-70 hover:opacity-100 transition-opacity">
                         <ArrivalQrDemoButton shopSlug="the-barber-room" shopName="The Barber Room" className="w-full py-3 text-xs !bg-white/10 !text-white hover:!bg-white/15" />
                       </div>
+                    )}
+
+                    {/* Only the owner step needs real auth — if a previous demo
+                        session left you signed in as a different role, that's the
+                        one place it could get in the way. */}
+                    {step.id === 'owner' && (
+                      <button
+                        onClick={() => signOut({ callbackUrl: '/demo-hub' })}
+                        className="w-full mt-3 py-2 text-xs font-barlow font-bold uppercase tracking-widest text-white/30 hover:text-[#C8F135] transition-colors flex items-center justify-center gap-2"
+                      >
+                        <LogOut size={12} /> Signed in as someone else? Sign out first
+                      </button>
                     )}
 
                     {i < steps.length - 1 && (
